@@ -9,22 +9,21 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
 requires = [
+    'geoalchemy',
     'gevent-socketio',
+	 'pyodbc',
     'pyramid',
     'pyramid_chameleon',
     'pyramid_debugtoolbar',
     'pyramid_tm',
     'sqlalchemy',
-    'geoalchemy',
-    'pyodbc',
     'transaction',
     'zope.sqlalchemy',
-    'waitress',
     ]
 
-setup(name='app',
+setup(name='ecoReleve-Sensor',
       version='0.0',
-      description='app',
+      description='ecoReleve-Sensor',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -32,14 +31,14 @@ setup(name='app',
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
         ],
-      author='',
+      author='Natural Solutions (Thomas Peel)',
       author_email='',
       url='',
       keywords='web wsgi bfg pylons pyramid',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      test_suite='app',
+      test_suite='ecorelevesensor',
       install_requires=requires,
       entry_points="""\
       [paste.app_factory]
