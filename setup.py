@@ -42,8 +42,7 @@ setup(name='ecoReleve-Sensor',
       install_requires=requires,
       entry_points="""\
       [paste.app_factory]
-      main = app:main
+      main = ecorelevesensor:main
       [console_scripts]
-      initialize_app_db = app.scripts.initializedb:main
       """,
       )
