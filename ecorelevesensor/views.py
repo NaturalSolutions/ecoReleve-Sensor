@@ -10,6 +10,7 @@ import json
 from .models import (
     DBSession,
     Argos,
+    Gps
     )
 
 
@@ -39,9 +40,12 @@ try it again.
 
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
-    argos = DBSession.query(cast(Argos.date, Date), func.count(Argos.id)).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 60)).group_by(cast(Argos.date, Date))
-    #print argos.all()
-    return argos.all()
-#gps = DBSession.query(Argos).filter(date__gte = datetime.date.today()-datetime.timedelta(days=7))
-#data = serializers.serialize('json', ArgosData)
+    data = {str(datetime.date.today() - datetime.timedelta(days = i)):{'nbArgos':0, 'nbGps':0} for i in range (1, 8)}
+    argos_query = DBSession.query(cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 8)).group_by(cast(Argos.date, Date))
+    gps_query = DBSession.query(cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')).filter(Gps.date >= datetime.date.today() - datetime.timedelta(days = 8)).group_by(cast(Gps.date, Date))
+    for date, nb in argos_query:
+        data[str(date)]['nbArgos'] = nb
+    for date, nb in gps_query:
+        data[str(date)]['nbGps'] = nb
+    return data
     
