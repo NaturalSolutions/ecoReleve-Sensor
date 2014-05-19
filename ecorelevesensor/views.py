@@ -4,7 +4,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import func, cast, Date, desc
+from sqlalchemy import func, cast, Date, String, desc
 
 import datetime
 
@@ -65,24 +65,25 @@ def weekData(request):
 @view_config(route_name='unchecked', renderer='json')
 def uncheckedData(request):
 	# Get all unchecked data
-	argos_data = DBSession.query(Argos.ptt, Argos.date, Argos.lat, Argos.lon).filter(Argos.checked == False).order_by(Argos.ptt, desc(Argos.date))
-	gps_data = DBSession.query(Gps.ptt, Gps.date, Gps.lat, Gps.lon).filter(Gps.checked == False).order_by(Gps.ptt, desc(Gps.date))
+	argos_data = DBSession.query(Argos.ptt, Argos.date, cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon')).filter(Argos.checked == False).order_by(Argos.ptt, desc(Argos.date))
+	gps_data = DBSession.query(Gps.ptt, Gps.date, cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon')).filter(Gps.checked == False).order_by(Gps.ptt, desc(Gps.date))
+
+	# Get all ptts with unchecked data
+	argos_ptt = DBSession.query(Argos.ptt.label('ptt')).filter(Argos.checked == False)
+	gps_ptt = DBSession.query(Gps.ptt.label('ptt')).filter(Gps.checked == False)
+	ptts = argos_ptt.union(gps_ptt).order_by('ptt').distinct()
 
 	# Initialize json object
 	data = OrderedDict()
+	for row in ptts:
+		data[str(row.ptt)] = []
 	
 	# Type 0 = Argos data
 	for ptt, date, lat, lon in argos_data:
-		if str(ptt) not in data.keys():
-			data[str(ptt)] = [{'type':0, 'date':str(date), 'lat':str(lat), 'lon':str(lon)}]
-		else:
-			data[str(ptt)].append({'type':0, 'date':str(date), 'lat':str(lat), 'lon':str(lon)})
+		data[str(ptt)].append({'type':0, 'date':str(date), 'lat':lat, 'lon':lon})
 	
 	# Type 1 = Gps data
 	for ptt, date, lat, lon in gps_data:
-		if str(ptt) not in data.keys():
-			data[str(ptt)] = [{'type':1, 'date':str(date), 'lat':str(lat), 'lon':str(lon)}]
-		else:
-			data[str(ptt)].append({'type':1, 'date':str(date), 'lat':str(lat), 'lon':str(lon)})
+		data[str(ptt)].append({'type':1, 'date':str(date), 'lat':lat, 'lon':lon})
 	
-		return data
+	return data
