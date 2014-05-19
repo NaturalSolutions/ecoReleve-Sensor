@@ -18,5 +18,6 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     config.add_route('home', '/ecoReleve-Sensor')
     config.add_route('weekData', 'ecoReleve-Sensor/weekData')
+    config.add_route('unchecked', 'ecoReleve-Sensor/unchecked')
     config.scan()
     return config.make_wsgi_app()

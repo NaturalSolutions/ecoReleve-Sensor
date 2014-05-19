@@ -5,7 +5,6 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy import func, cast, Date
 
 import datetime
-import json
 
 from .models import (
     DBSession,
@@ -40,12 +39,23 @@ try it again.
 
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
-    data = {str(datetime.date.today() - datetime.timedelta(days = i)):{'nbArgos':0, 'nbGps':0} for i in range (1, 8)}
-    argos_query = DBSession.query(cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 8)).group_by(cast(Argos.date, Date))
-    gps_query = DBSession.query(cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')).filter(Gps.date >= datetime.date.today() - datetime.timedelta(days = 8)).group_by(cast(Gps.date, Date))
-    for date, nb in argos_query:
-        data[str(date)]['nbArgos'] = nb
-    for date, nb in gps_query:
-        data[str(date)]['nbGps'] = nb
+	data = {
+		'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
+		'nbArgos': [0] * 8,
+		'nbGPS': [0] * 8
+	}
+	argos_query = DBSession.query(cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Argos.date, Date))
+	gps_query = DBSession.query(cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')).filter(Gps.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Gps.date, Date))
+	for date, nb in argos_query.all():
+		i = data['label'].index(str(date))
+		data['nbArgos'][i] = nb
+	for date, nb in gps_query.all():
+		i = data['label'].index(str(date))
+		data['nbGPS'][i] = nb
+	return data
+
+@view_config(route_name='unchecked', renderer='json')
+def uncheckedData(request):
+    argos_data = DBSession.query(Argos).filter(Argos.checked == False).order_by(Argos.ptt)
+    data = {argos.ptt:{'date': str(argos.date), 'lat':str(argos.lat), 'lon':str(argos.lon)} for argos in argos_data.all()}
     return data
-    
