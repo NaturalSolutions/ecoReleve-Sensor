@@ -52,10 +52,14 @@ def weekData(request):
 		try:
 			i = data['label'].index(str(date))
 			data['nbArgos'][i] = nb
+		except:
+			pass
 	for date, nb in gps_query.all():
 		try:
 			i = data['label'].index(str(date))
 			data['nbGPS'][i] = nb
+		except:
+			pass
 	return data
 
 @view_config(route_name='unchecked', renderer='json')
