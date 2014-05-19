@@ -41,8 +41,8 @@ try it again.
 def weekData(request):
 	data = {
 		'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
-		'nbArgos': [0] * 8,
-		'nbGPS': [0] * 8
+		'nbArgos': [0] * 7,
+		'nbGPS': [0] * 7
 	}
 	argos_query = DBSession.query(cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Argos.date, Date))
 	gps_query = DBSession.query(cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')).filter(Gps.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Gps.date, Date))
