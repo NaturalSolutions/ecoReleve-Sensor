@@ -1,8 +1,10 @@
+from collections import OrderedDict
+
 from pyramid.response import Response
 from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func, cast, Date, desc
 
 import datetime
 
@@ -47,15 +49,36 @@ def weekData(request):
 	argos_query = DBSession.query(cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Argos.date, Date))
 	gps_query = DBSession.query(cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')).filter(Gps.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Gps.date, Date))
 	for date, nb in argos_query.all():
-		i = data['label'].index(str(date))
-		data['nbArgos'][i] = nb
+		try:
+			i = data['label'].index(str(date))
+			data['nbArgos'][i] = nb
 	for date, nb in gps_query.all():
-		i = data['label'].index(str(date))
-		data['nbGPS'][i] = nb
+		try:
+			i = data['label'].index(str(date))
+			data['nbGPS'][i] = nb
 	return data
 
 @view_config(route_name='unchecked', renderer='json')
 def uncheckedData(request):
-    argos_data = DBSession.query(Argos).filter(Argos.checked == False).order_by(Argos.ptt)
-    data = {argos.ptt:{'date': str(argos.date), 'lat':str(argos.lat), 'lon':str(argos.lon)} for argos in argos_data.all()}
-    return data
+	# Get all unchecked data
+	argos_data = DBSession.query(Argos.ptt, Argos.date, Argos.lat, Argos.lon).filter(Argos.checked == False).order_by(Argos.ptt, desc(Argos.date))
+	gps_data = DBSession.query(Gps.ptt, Gps.date, Gps.lat, Gps.lon).filter(Gps.checked == False).order_by(Gps.ptt, desc(Gps.date))
+
+	# Initialize json object
+	data = OrderedDict()
+	
+	# Type 0 = Argos data
+	for ptt, date, lat, lon in argos_data:
+		if str(ptt) not in data.keys():
+			data[str(ptt)] = [{'type':0, 'date':str(date), 'lat':str(lat), 'lon':str(lon)}]
+		else:
+			data[str(ptt)].append({'type':0, 'date':str(date), 'lat':str(lat), 'lon':str(lon)})
+	
+	# Type 1 = Gps data
+	for ptt, date, lat, lon in gps_data:
+		if str(ptt) not in data.keys():
+			data[str(ptt)] = [{'type':1, 'date':str(date), 'lat':str(lat), 'lon':str(lon)}]
+		else:
+			data[str(ptt)].append({'type':1, 'date':str(date), 'lat':str(lat), 'lon':str(lon)})
+	
+		return data
