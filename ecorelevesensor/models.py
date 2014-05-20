@@ -22,15 +22,16 @@ DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
 class Argos(Base):
-    __tablename__ = 'Targos'
-    __table_args__ = {'schema': 'ecoReleve_Sensor.dbo'}
-    id = Column('PK_id', Integer, primary_key=True)
-    ptt = Column('FK_ptt', Integer, nullable = False)
-    date = Column('date', DateTime, nullable = False)
-    lat = Column('lat1', Numeric(9, 5), nullable = False)
-    lon = Column('lon1', Numeric(9, 5), nullable = False)
-    checked = Column('checked', Boolean, nullable = False, default = False)
-    imported = Column('imported', Boolean, nullable = False, default = False)
+	__tablename__ = 'Targos'
+	__table_args__ = {'schema': 'ecoReleve_Sensor.dbo'}
+	id = Column('PK_id', Integer, primary_key=True)
+	ptt = Column('FK_ptt', Integer, nullable = False)
+	date = Column('date', DateTime, nullable = False)
+	lat = Column('lat', Numeric(9, 5), nullable = False)
+	lon = Column('lon', Numeric(9, 5), nullable = False)
+	ele = Column('ele', Integer)
+	checked = Column('checked', Boolean, nullable = False, default = False)
+	imported = Column('imported', Boolean, nullable = False, default = False)
 
 class Gps(Base):
     __tablename__ = 'Tgps'
