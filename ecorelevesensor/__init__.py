@@ -1,10 +1,19 @@
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
+from pyramid.request import Request, Response
 
 from .models import (
     DBSession,
     Base,
     )
+
+# Define a new request factory allowing cross-domain AJAX calls.
+def request_factory(env):
+	request = Request(env)
+	request.response = Response()
+	request.response.headerlist = []
+	request.response.headerlist.extend( [('Access-Control-Allow-Origin', '*')] )
+	return request
 
 
 def main(global_config, **settings):
@@ -19,5 +28,6 @@ def main(global_config, **settings):
     config.add_route('home', '/ecoReleve-Sensor')
     config.add_route('weekData', 'ecoReleve-Sensor/weekData')
     config.add_route('unchecked', 'ecoReleve-Sensor/unchecked')
+    config.set_request_factory(request_factory)
     config.scan()
     return config.make_wsgi_app()
