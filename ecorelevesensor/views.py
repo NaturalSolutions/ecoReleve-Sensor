@@ -4,7 +4,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import func, cast, Date, String, desc
+from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text
 
 import datetime
 
@@ -55,6 +55,32 @@ def weekData(request):
 		except:
 			pass
 	for date, nb in gps_query.all():
+		try:
+			i = data['label'].index(str(date))
+			data['nbGPS'][i] = nb
+		except:
+			pass
+	return data
+
+engine = create_engine('mssql+pyodbc://eReleveApplication:123456@localhost\SQLSERVER2008/ecoReleve_Sensor')
+DBConnection = engine.connect()
+
+@view_config(route_name='weekDataRawSQL', renderer='json')
+def weekDataRawSQL(request):
+	data = {
+		'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
+		'nbArgos': [0] * 7,
+		'nbGPS': [0] * 7
+	}
+	argos_query = DBConnection.execute(text('select cast(date as DATE) as date, count(*) as nb from Targos where date >=:date group by cast(date as DATE)'), date = str(datetime.date.today() - datetime.timedelta(days = 7)))
+	for date, nb in argos_query.fetchall():
+		try:
+			i = data['label'].index(str(date))
+			data['nbArgos'][i] = nb
+		except:
+			pass
+	gps_query = DBConnection.execute(text('select cast(date as DATE) as date, count(*) as nb from Targos where date >=:date group by cast(date as DATE)'), date = str(datetime.date.today() - datetime.timedelta(days = 7)))
+	for date, nb in gps_query.fetchall():
 		try:
 			i = data['label'].index(str(date))
 			data['nbGPS'][i] = nb
