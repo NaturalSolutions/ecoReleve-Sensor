@@ -46,3 +46,9 @@ class Gps(Base):
     course = Column('course', Integer)
     checked = Column('checked', Boolean, nullable = False, default = False)
     imported = Column('imported', Boolean, nullable = False, default = False)
+
+class Bird(Base):
+   __tablename__ = 'TViewIndividual'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   id = Column('Individual_Obj_PK', Integer, primary_key = True)
+   ptt = Column('id19@TCarac_PTT', Integer)
