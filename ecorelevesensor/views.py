@@ -113,7 +113,7 @@ def uncheckedData(request):
       data['locations'].append({'type':type, 'date':date, 'lat':lat, 'lon':lon})
    
    try:
-      data['ptt'].ptt, data['ptt'].manufacturer, data['ptt'].model = DBSession.execute(ptt_infos).fetchone()
+      data['ptt']['ptt'], data['ptt']['manufacturer'], data['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
    except TypeError:
       data['ptt'] = {}
    
