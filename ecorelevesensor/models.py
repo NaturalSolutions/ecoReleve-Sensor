@@ -6,6 +6,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     Text,
+    String
     )
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -47,8 +48,16 @@ class Gps(Base):
     checked = Column('checked', Boolean, nullable = False, default = False)
     imported = Column('imported', Boolean, nullable = False, default = False)
 
-class Bird(Base):
+class Birds(Base):
    __tablename__ = 'TViewIndividual'
    __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
    id = Column('Individual_Obj_PK', Integer, primary_key = True)
    ptt = Column('id19@TCarac_PTT', Integer)
+
+class Sat_Trx(Base):
+   __tablename__ = 'TViewTrx_Sat'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   id = Column('Trx_Sat_Obj_PK', Integer, primary_key = True)
+   ptt = Column('id19@TCarac_PTT', Integer)
+   manufacturer = Column('id42@TCaracThes_Company_Precision', String)
+   model = Column('id41@TCaracThes_Model_Precision', String)

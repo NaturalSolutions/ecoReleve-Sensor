@@ -4,14 +4,19 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text
+from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_
+from sqlalchemy.sql.expression import label
+
+from pyramid.httpexceptions import HTTPBadRequest
 
 import datetime
 
 from .models import (
     DBSession,
     Argos,
-    Gps
+    Gps,
+    Birds,
+    Sat_Trx
     )
 
 @view_config(route_name='home', renderer='templates/mytemplate.pt')
@@ -86,44 +91,51 @@ def weekDataRawSQL(request):
 
 @view_config(route_name='unchecked', renderer='json')
 def uncheckedData(request):
-	# Get all unchecked data
-	argos_data = DBSession.query(Argos.ptt, Argos.date, cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon')).filter(Argos.checked == False).order_by(Argos.ptt, desc(Argos.date))
-	gps_data = DBSession.query(Gps.ptt, Gps.date, cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon')).filter(Gps.checked == False).order_by(Gps.ptt, desc(Gps.date))
+   
+   try:
+      ptt = int(request.GET['id'])
+   except:
+      raise HTTPBadRequest()
 
-	# Get all ptts with unchecked data
-	argos_ptt = DBSession.query(Argos.ptt.label('ptt')).filter(Argos.checked == False)
-	gps_ptt = DBSession.query(Gps.ptt.label('ptt')).filter(Gps.checked == False)
-	ptts = argos_ptt.union(gps_ptt).order_by('ptt').distinct()
+   # Get all unchecked data for this ptt
+   argos_data = select([Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), 0]).where(and_(Argos.checked == False, Argos.ptt == ptt))
+   gps_data = select([Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), 1]).where(and_(Gps.checked == False, Gps.ptt == ptt))
+   all_data = union(argos_data, gps_data)
 
-	# Initialize json object
-	data = OrderedDict()
-	for row in ptts:
-		data[str(row.ptt)] = []
-	
-	# Type 0 = Argos data
-	for ptt, date, lat, lon in argos_data:
-		data[str(ptt)].append({'type':0, 'date':str(date), 'lat':lat, 'lon':lon})
-	
-	# Type 1 = Gps data
-	for ptt, date, lat, lon in gps_data:
-		data[str(ptt)].append({'type':1, 'date':str(date), 'lat':lat, 'lon':lon})
-	
-	return data
+   # Get information for this ptt
+   ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
+
+   # Initialize json object
+   data = {'ptt':{}, 'locations':[], 'bird':{}}
+   
+   # Type 0 = Argos data, type 1 = GPS data
+   for date, lat, lon, type in DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall():
+      data['locations'].append({'type':type, 'date':date, 'lat':lat, 'lon':lon})
+   
+   try:
+      data['ptt'].ptt, data['ptt'].manufacturer, data['ptt'].model = DBSession.execute(ptt_infos).fetchone()
+   except TypeError:
+      data['ptt'] = {}
+   
+   return data
 
 @view_config(route_name='unchecked_summary', renderer='json')
 def uncheckedSummary(request):
-	# Initialize json object
-	data = OrderedDict()
-	
-	# SQL query
-	unchecked_data = DBSession.execute(text("""select ptt, nb, Individual_Obj_PK as ind_id from 
-   (select ptt, sum(nb) as nb from ( select FK_ptt as ptt, count(*) as nb from Targos where checked = 0 group by FK_ptt union select FK_ptt as ptt, count(*) as nb from Tgps where checked = 0 group by FK_ptt) as T group by ptt) as data
-   left outer join ecoReleve_Data.dbo.TViewIndividual indivs on indivs.id19@TCarac_PTT = data.ptt order by ptt"""))
-	
-	for row in unchecked_data.fetchall():
-		data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})
-	
-	return data
+   # Initialize json object
+   data = OrderedDict()
+   # SQL query
+   unchecked = union(
+                  select([Argos.id.label('id'), Argos.ptt.label('ptt')]).where(Argos.checked == 0),
+                  select([Gps.id.label('id'), Gps.ptt.label('ptt')]).where(Gps.checked == 0)
+               ).alias()
+   # Sum GPS and Argos locations for each ptt.
+   count_by_ptt = select([unchecked.c.ptt, func.count().label('nb')]).group_by(unchecked.c.ptt).alias()
+   # Add the bird associated to each ptt.
+   unchecked_data = DBSession.execute(select([count_by_ptt.c.ptt, count_by_ptt.c.nb, Birds.id.label('ind_id')]).select_from(count_by_ptt.outerjoin(Birds, count_by_ptt.c.ptt == Birds.ptt)).order_by(count_by_ptt.c.ptt))
+   # Populate Json object
+   for row in unchecked_data.fetchall():
+      data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})
+   return data
 
 @view_config(route_name='uncheckedRaw', renderer='json')
 def uncheckedRaw(request):
