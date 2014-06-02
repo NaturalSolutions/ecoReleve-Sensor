@@ -9,7 +9,7 @@ from sqlalchemy.sql.expression import label
 
 from pyramid.httpexceptions import HTTPBadRequest
 
-import datetime
+import datetime, operator
 
 from .models import (
    DBSession,
@@ -104,7 +104,7 @@ def uncheckedSummary(request):
 @view_config(route_name = 'station_graph', renderer = 'json')
 def station_graph(request):
    # Initialize Json object
-   data = OrderedDict()
+   data = []
 
    # Calculate the bounds
    today = datetime.date.today()
@@ -112,11 +112,11 @@ def station_graph(request):
    end_date = datetime.date(day = 1, month = today.month, year = today.year)
 
    # Query
-   query = select([func.count(Station.id).label('nb'), func.year(Station.date), func.month(Station.date)]
-                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date)).order_by(func.year(Station.date), func.month(Station.date))
+   query = select([func.count(Station.id).label('nb'), func.year(Station.date).label('year'), func.month(Station.date).label('month')]
+                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date))
 
-   # Execute and fetch result
-   for nb, y, m in DBSession.execute(query).fetchall():
-      data[str(y) + ' ' + datetime.date(day = 1, month = m, year = y).strftime('%b')] = nb
+   # Execute query and sort result by year, month (faster than an order_by clause in this case)
+   for nb, y, m in sorted(DBSession.execute(query).fetchall(), key = operator.itemgetter(1,2)):
+      data.append({datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y): nb})
 
    return data
