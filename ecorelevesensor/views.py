@@ -15,33 +15,9 @@ from .models import (
     DBSession,
     Argos,
     Gps,
-    Birds,
+    Individuals,
     Sat_Trx
     )
-
-@view_config(route_name='home', renderer='templates/mytemplate.pt')
-def my_view(request):
-    try:
-        one = DBSession.query(Argos.date).count()
-    except DBAPIError as e:
-        return Response(conn_err_msg, content_type='text/plain', status_int=500)
-    return {'one': one, 'project': 'app'}
-
-conn_err_msg = """\
-Pyramid is having a problem using your SQL database.  The problem
-might be caused by one of the following things:
-
-1.  You may need to run the "initialize_app_db" script
-    to initialize your database tables.  Check your virtual 
-    environment's "bin" directory for this script and try to run it.
-
-2.  Your database server may not be running.  Check that the
-    database server referred to by the "sqlalchemy.url" setting in
-    your "development.ini" file is running.
-
-After you fix the problem, please restart the Pyramid application to
-try it again.
-"""
 
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
@@ -102,21 +78,27 @@ def uncheckedData(request):
    gps_data = select([Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), 1]).where(and_(Gps.checked == False, Gps.ptt == ptt))
    all_data = union(argos_data, gps_data)
 
-   # Get information for this ptt
-   ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
-
    # Initialize json object
-   data = {'ptt':{}, 'locations':[], 'bird':{}}
+   data = {'ptt':{}, 'locations':[], 'indiv':{}}
    
    # Type 0 = Argos data, type 1 = GPS data
    for date, lat, lon, type in DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall():
       data['locations'].append({'type':type, 'date':date, 'lat':lat, 'lon':lon})
-   
+      
+   # Get informations for this ptt
+   ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
    try:
       data['ptt']['ptt'], data['ptt']['manufacturer'], data['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
    except TypeError:
-      data['ptt'] = {}
+      pass
    
+   # Get informations for the individual
+   indiv_infos = select([Individuals.id, Individuals.age, Individuals.sex, Individuals.specie, Individuals.status, Individuals.origin]).where(Individuals.ptt == ptt)
+   try:
+      data['indiv']['id'], data['indiv']['age'], data['indiv']['sex'], data['indiv']['specie'], data['indiv']['status'], data['indiv']['origin'] = DBSession.execute(indiv_infos).fetchone()
+   except TypeError:
+      pass
+
    return data
 
 @view_config(route_name='unchecked_summary', renderer='json')
@@ -131,7 +113,7 @@ def uncheckedSummary(request):
    # Sum GPS and Argos locations for each ptt.
    count_by_ptt = select([unchecked.c.ptt, func.count().label('nb')]).group_by(unchecked.c.ptt).alias()
    # Add the bird associated to each ptt.
-   unchecked_data = DBSession.execute(select([count_by_ptt.c.ptt, count_by_ptt.c.nb, Birds.id.label('ind_id')]).select_from(count_by_ptt.outerjoin(Birds, count_by_ptt.c.ptt == Birds.ptt)).order_by(count_by_ptt.c.ptt))
+   unchecked_data = DBSession.execute(select([count_by_ptt.c.ptt, count_by_ptt.c.nb, Individuals.id.label('ind_id')]).select_from(count_by_ptt.outerjoin(Individuals, count_by_ptt.c.ptt == Individuals.ptt)).order_by(count_by_ptt.c.ptt))
    # Populate Json object
    for row in unchecked_data.fetchall():
       data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})

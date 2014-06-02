@@ -48,11 +48,16 @@ class Gps(Base):
     checked = Column('checked', Boolean, nullable = False, default = False)
     imported = Column('imported', Boolean, nullable = False, default = False)
 
-class Birds(Base):
+class Individuals(Base):
    __tablename__ = 'TViewIndividual'
    __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
    id = Column('Individual_Obj_PK', Integer, primary_key = True)
    ptt = Column('id19@TCarac_PTT', Integer)
+   sex = Column('id30@TCaracThes_Sex_Precision', String)
+   age = Column('id2@Thes_Age_Precision', String)
+   origin = Column('id33@Thes_Origin_Precision', String)
+   specie = Column('id34@TCaracThes_Species_Precision', String)
+   status = Column('id59@TCaracThes_Individual_Status', String)
 
 class Sat_Trx(Base):
    __tablename__ = 'TViewTrx_Sat'

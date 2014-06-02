@@ -21,7 +21,7 @@ requires = [
     'zope.sqlalchemy',
     ]
 
-setup(name='ecoReleve-Sensor',
+setup(name='ecorelevesensor',
       version='0.0',
       description='ecoReleve-Sensor',
       long_description=README + '\n\n' + CHANGES,
