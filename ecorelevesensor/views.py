@@ -15,6 +15,7 @@ from .models import (
    DBSession,
    Argos,
    Gps,
+   Station,
    Individuals,
    Sat_Trx
 )
@@ -98,4 +99,24 @@ def uncheckedSummary(request):
    # Populate Json object
    for row in unchecked_data.fetchall():
       data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})
+   return data
+
+@view_config(route_name = 'station_graph', renderer = 'json')
+def station_graph(request):
+   # Initialize Json object
+   data = OrderedDict()
+
+   # Calculate the bounds
+   today = datetime.date.today()
+   begin_date = datetime.date(day = 1, month = today.month, year = today.year - 1)
+   end_date = datetime.date(day = 1, month = today.month, year = today.year)
+
+   # Query
+   query = select([func.count(Station.id).label('nb'), func.year(Station.date), func.month(Station.date)]
+                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date))
+
+   # Execute and fetch result
+   for nb, y, m in DBSession.execute(query).fetchall():
+      data[str(y) + ' ' + datetime.date(day = 1, month = m, year = y).strftime('%b')] = nb
+
    return data

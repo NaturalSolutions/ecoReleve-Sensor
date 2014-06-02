@@ -66,3 +66,9 @@ class Sat_Trx(Base):
    ptt = Column('id19@TCarac_PTT', Integer)
    manufacturer = Column('id42@TCaracThes_Company_Precision', String)
    model = Column('id41@TCaracThes_Model_Precision', String)
+
+class Station(Base):
+   __tablename__ = 'TStations'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   id = Column('TSta_PK_ID', Integer, primary_key = True)
+   date = Column('DATE', DateTime)
