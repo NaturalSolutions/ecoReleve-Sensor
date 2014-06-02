@@ -12,58 +12,41 @@ from pyramid.httpexceptions import HTTPBadRequest
 import datetime
 
 from .models import (
-    DBSession,
-    Argos,
-    Gps,
-    Individuals,
-    Sat_Trx
-    )
+   DBSession,
+   Argos,
+   Gps,
+   Individuals,
+   Sat_Trx
+)
 
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
-	data = {
-		'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
-		'nbArgos': [0] * 7,
-		'nbGPS': [0] * 7
-	}
-	argos_query = DBSession.query(cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')).filter(Argos.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Argos.date, Date))
-	gps_query = DBSession.query(cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')).filter(Gps.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Gps.date, Date))
-	for date, nb in argos_query.all():
-		try:
-			i = data['label'].index(str(date))
-			data['nbArgos'][i] = nb
-		except:
-			pass
-	for date, nb in gps_query.all():
-		try:
-			i = data['label'].index(str(date))
-			data['nbGPS'][i] = nb
-		except:
-			pass
-	return data
+   # Initialize Json object
+   data = {
+      'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
+      'nbArgos': [0] * 7,
+      'nbGPS': [0] * 7
+   }
 
-@view_config(route_name='weekDataRawSQL', renderer='json')
-def weekDataRawSQL(request):
-	data = {
-		'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
-		'nbArgos': [0] * 7,
-		'nbGPS': [0] * 7
-	}
-	argos_query = DBConnection.execute(text('select cast(date as DATE) as date, count(*) as nb from Targos where date >=:date group by cast(date as DATE)'), date = str(datetime.date.today() - datetime.timedelta(days = 7)))
-	for date, nb in argos_query.fetchall():
-		try:
-			i = data['label'].index(str(date))
-			data['nbArgos'][i] = nb
-		except:
-			pass
-	gps_query = DBConnection.execute(text('select cast(date as DATE) as date, count(*) as nb from Targos where date >=:date group by cast(date as DATE)'), date = str(datetime.date.today() - datetime.timedelta(days = 7)))
-	for date, nb in gps_query.fetchall():
-		try:
-			i = data['label'].index(str(date))
-			data['nbGPS'][i] = nb
-		except:
-			pass
-	return data
+   # Argos data
+   argos_query = select([cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')]).where(Argos.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Argos.date, Date))
+   for date, nb in DBSession.execute(argos_query).fetchall():
+      try:
+         i = data['label'].index(str(date))
+         data['nbArgos'][i] = nb
+      except:
+         pass
+
+   # GPS data
+   gps_query = select([cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')]).where(Gps.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Gps.date, Date))
+   for date, nb in DBSession.execute(gps_query).fetchall():
+      try:
+         i = data['label'].index(str(date))
+         data['nbGPS'][i] = nb
+      except:
+         pass
+   
+   return data
 
 @view_config(route_name='unchecked', renderer='json')
 def uncheckedData(request):
@@ -106,10 +89,8 @@ def uncheckedSummary(request):
    # Initialize json object
    data = OrderedDict()
    # SQL query
-   unchecked = union(
-                  select([Argos.id.label('id'), Argos.ptt.label('ptt')]).where(Argos.checked == 0),
-                  select([Gps.id.label('id'), Gps.ptt.label('ptt')]).where(Gps.checked == 0)
-               ).alias()
+   unchecked = union(select([Argos.id.label('id'), Argos.ptt.label('ptt')]).where(Argos.checked == 0),
+                  select([Gps.id.label('id'), Gps.ptt.label('ptt')]).where(Gps.checked == 0)).alias()
    # Sum GPS and Argos locations for each ptt.
    count_by_ptt = select([unchecked.c.ptt, func.count().label('nb')]).group_by(unchecked.c.ptt).alias()
    # Add the bird associated to each ptt.
@@ -118,17 +99,3 @@ def uncheckedSummary(request):
    for row in unchecked_data.fetchall():
       data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})
    return data
-
-@view_config(route_name='uncheckedRaw', renderer='json')
-def uncheckedRaw(request):
-	# Initialize json object
-	data = OrderedDict()
-	
-	# SQL query
-	unchecked_data = DBSession.execute(text("""select FK_ptt as ptt, cast(date as VARCHAR) as date, cast(lat as VARCHAR) as lat, cast(lon as VARCHAR) as lon, type
-		from ( select FK_ptt, date, lat, lon, 0 as type from Targos where checked = 0 union select FK_ptt, date, lat, lon, 1 as type from Tgps where checked = 0) as T order by ptt, date"""))
-	
-	for row in unchecked_data.fetchall():
-		data.setdefault(row.ptt, []).append({'type':row.type, 'date':row.date, 'lat':row.lat, 'lon':row.lon})
-	
-	return data

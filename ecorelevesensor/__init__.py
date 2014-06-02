@@ -27,12 +27,9 @@ def main(global_config, **settings):
    config.include('pyramid_chameleon')
    # Views
    config.add_static_view('static', 'static', cache_max_age=3600)
-   config.add_route('home', '/ecoReleve-Sensor')
    config.add_route('weekData', 'ecoReleve-Sensor/weekData')
-   config.add_route('weekDataRawSQL', 'ecoReleve-Sensor/weekDataRawSQL')
    config.add_route('unchecked', 'ecoReleve-Sensor/unchecked')
    config.add_route('unchecked_summary', 'ecoReleve-Sensor/unchecked_summary')
-   config.add_route('uncheckedRaw', 'ecoReleve-Sensor/uncheckedRaw')
    config.set_request_factory(request_factory)
    config.scan()
    return config.make_wsgi_app()
