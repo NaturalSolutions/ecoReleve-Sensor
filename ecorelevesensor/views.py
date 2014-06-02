@@ -113,7 +113,7 @@ def station_graph(request):
 
    # Query
    query = select([func.count(Station.id).label('nb'), func.year(Station.date), func.month(Station.date)]
-                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date))
+                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date)).order_by(func.year(Station.date), func.month(Station.date))
 
    # Execute and fetch result
    for nb, y, m in DBSession.execute(query).fetchall():
