@@ -104,7 +104,7 @@ def uncheckedSummary(request):
 @view_config(route_name = 'station_graph', renderer = 'json')
 def station_graph(request):
    # Initialize Json object
-   data = []
+   data = OrderedDict()
 
    # Calculate the bounds
    today = datetime.date.today()
@@ -117,7 +117,7 @@ def station_graph(request):
 
    # Execute query and sort result by year, month (faster than an order_by clause in this case)
    for nb, y, m in sorted(DBSession.execute(query).fetchall(), key = operator.itemgetter(1,2)):
-      data.append({datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y): nb})
+      data[datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y)] = nb
 
    return data
 
