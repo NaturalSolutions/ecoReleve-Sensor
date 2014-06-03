@@ -120,3 +120,10 @@ def station_graph(request):
       data.append({datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y): nb})
 
    return data
+
+@view_config(route_name = 'individuals_count', renderer = 'json')
+def individuals_count(request):
+   # Query
+   query = select([func.count(Individuals.id).label('nb')])
+
+   return DBSession.execute(query).fetchone()['nb']
