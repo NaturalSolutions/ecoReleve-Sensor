@@ -58,16 +58,16 @@ def uncheckedData(request):
       raise HTTPBadRequest()
 
    # Get all unchecked data for this ptt
-   argos_data = select([Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), 0]).where(and_(Argos.checked == False, Argos.ptt == ptt))
-   gps_data = select([Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), 1]).where(and_(Gps.checked == False, Gps.ptt == ptt))
+   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), 0]).where(and_(Argos.checked == False, Argos.ptt == ptt))
+   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), 1]).where(and_(Gps.checked == False, Gps.ptt == ptt))
    all_data = union(argos_data, gps_data)
 
    # Initialize json object
    data = {'ptt':{}, 'locations':[], 'indiv':{}}
    
    # Type 0 = Argos data, type 1 = GPS data
-   for date, lat, lon, type in DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall():
-      data['locations'].append({'type':type, 'date':date, 'lat':lat, 'lon':lon})
+   for id, date, lat, lon, type in DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall():
+      data['locations'].append({'id': id, 'type':type, 'date':date, 'lat':lat, 'lon':lon})
       
    # Get informations for this ptt
    ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
