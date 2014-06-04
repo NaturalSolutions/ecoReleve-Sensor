@@ -25,6 +25,7 @@ def main(global_config, **settings):
    Base.metadata.bind = engine
    config = Configurator(settings=settings)
    config.include('pyramid_chameleon')
+   config.include('pyramid_tm')
    # Views
    config.add_static_view('static', 'static', cache_max_age=3600)
    config.add_route('weekData', 'ecoReleve-Sensor/weekData')

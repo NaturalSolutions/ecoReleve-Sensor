@@ -4,14 +4,12 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_
+from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_, insert
 from sqlalchemy.sql.expression import label
 
 from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated
 
 import datetime, operator
-
-import json, urllib2
 
 from .models import (
    DBSession,
@@ -135,13 +133,18 @@ def individuals_count(request):
 def argos_insert(request):
    list_of_ptts = request.json_body
    nb_gps, nb_argos, nb_ptt = 0, 0, 0
+   argos_stations = []
+   gps_locations_id = []
    for ptt_obj in list_of_ptts:
-      ptt = ptt_obj.ptt
-      ind_id = ptt_obj.ind_id
+      ptt = ptt_obj['ptt']
+      ind_id = ptt_obj['ind_id']
       nb_ptt += 1
-      for location in ptt_obj.locations:
-         if location.type == 0:
-            nb_argos += 1
-         elif location.type == 1:
+      for location in ptt_obj['locations']:
+         if location['type'] == 0:
+            argos_data = DBSession.query(Argos).filter_by(id=location['id']).one()
+            station = Station(date = argos_data.date, name = 'ARGOS', fieldActivityId = 27, fieldActivityName = 'Argos', lat = argos_data.lat, lon = argos_data.lon, ele = argos_data.ele, protocol_argos = ProtocolArgos(ind_id = ind_id))
+            argos_stations.append(station)
+         elif location['type'] == 1:
             nb_gps += 1
+      DBSession.add_all(argos_stations)
    return {'ptt':nb_ptt, 'argos':nb_argos, 'gps':nb_gps}

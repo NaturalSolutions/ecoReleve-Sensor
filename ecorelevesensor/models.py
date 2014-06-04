@@ -2,6 +2,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     Numeric,
@@ -13,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.orm import (
+   backref,
    relationship,
    scoped_session,
    sessionmaker,
@@ -21,20 +23,29 @@ from sqlalchemy.orm import (
 from zope.sqlalchemy import ZopeTransactionExtension
 import decimal
 
+# Create a database session : one for the whole application
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
 class Argos(Base):
-	__tablename__ = 'Targos'
-	__table_args__ = {'schema': 'ecoReleve_Sensor.dbo'}
-	id = Column('PK_id', Integer, primary_key=True)
-	ptt = Column('FK_ptt', Integer, nullable = False)
-	date = Column('date', DateTime, nullable = False)
-	lat = Column('lat', Numeric(9, 5), nullable = False)
-	lon = Column('lon', Numeric(9, 5), nullable = False)
-	ele = Column('ele', Integer)
-	checked = Column('checked', Boolean, nullable = False, default = False)
-	imported = Column('imported', Boolean, nullable = False, default = False)
+   __tablename__ = 'Targos'
+   __table_args__ = {'schema': 'ecoReleve_Sensor.dbo'}
+   id = Column('PK_id', Integer, primary_key=True)
+   ptt = Column('FK_ptt', Integer, nullable = False)
+   date = Column('date', DateTime, nullable = False)
+   lat = Column('lat', Numeric(9, 5), nullable = False)
+   lon = Column('lon', Numeric(9, 5), nullable = False)
+   ele = Column('ele', Integer)
+   lc = Column('lc', String(1))
+   iq = Column('iq', Integer)
+   nbMsg = Column('nbMsg', Integer)
+   nbMsg120 = Column('nbMsg>-120dB', Integer)
+   bestLvl = Column('bestLevel', Integer)
+   passDuration = Column('passDuration', Integer)
+   nopc = Column('nopc', Integer)
+   frequency = Column('freq', Float)
+   checked = Column('checked', Boolean, nullable = False, default = False)
+   imported = Column('imported', Boolean, nullable = False, default = False)
 
 class Gps(Base):
     __tablename__ = 'Tgps'
@@ -71,8 +82,8 @@ class Sat_Trx(Base):
 
 class Station(Base):
    __tablename__ = 'TStations'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
-   id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   id = Column('TSta_PK_ID', Integer, primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
    fieldActivityId = Column('FieldActivity_ID', Integer)
@@ -83,13 +94,14 @@ class Station(Base):
    precision = Column('Precision', Integer)
    creator = Column('Creator', Integer)
    creationDate = Column('Creation_date', DateTime)
-   protocol_argos = relationship('ProtocolArgos', uselist=False, backref='station')
+   protocol_argos = relationship('ProtocolArgos', uselist=False, backref='Station')
+   #protocol_gps = relationship('ProtocolGps', uselist=False, backref='station')
 
 class ProtocolArgos(Base):
    __tablename__ = 'TProtocol_ArgosDataArgos'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataArgos_pk_id'), primary_key = True)
-   station = Column('FK_TSta_ID', Integer, ForeignKey('station.id'))
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable = False)
    lc = Column('TADA_LC', String(1))
    iq = Column('TADA_IQ', Integer)
@@ -99,4 +111,14 @@ class ProtocolArgos(Base):
    passDuration = Column('TADA_PassDuration', Integer)
    nopc = Column('TADA_NOPC', Integer)
    frequency = Column('TADA_Frequency', Numeric(10,1))
-   comment = Column('TADA_Comments', String)
+   comment = Column('TADA_Comments', String(250))
+
+class ProtocolGps(Base):
+   __tablename__ = 'TProtocol_ArgosDataGps'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key = True)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
+   ind_id = Column('FK_TInd_ID', Integer, nullable = False)
+   course = Column('TADG_Course', Integer)
+   speed = Column('TADG_Speed', Integer)
+   comment = Column('TADG_Comments', String(250))
