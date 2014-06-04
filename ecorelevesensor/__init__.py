@@ -32,6 +32,7 @@ def main(global_config, **settings):
    config.add_route('unchecked_summary', 'ecoReleve-Sensor/unchecked_summary')
    config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
    config.add_route('individuals_count', 'ecoReleve-Core/individuals/count')
+   config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
    config.set_request_factory(request_factory)
    config.scan()
    return config.make_wsgi_app()

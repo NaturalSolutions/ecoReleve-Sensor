@@ -7,14 +7,17 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_
 from sqlalchemy.sql.expression import label
 
-from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated
 
 import datetime, operator
+
+import json, urllib2
 
 from .models import (
    DBSession,
    Argos,
    Gps,
+   ProtocolArgos,
    Station,
    Individuals,
    Sat_Trx
@@ -127,3 +130,18 @@ def individuals_count(request):
    query = select([func.count(Individuals.id).label('nb')])
 
    return DBSession.execute(query).fetchone()['nb']
+
+@view_config(route_name = 'argos/insert', renderer = 'json')
+def argos_insert(request):
+   list_of_ptts = request.json_body
+   nb_gps, nb_argos, nb_ptt = 0, 0, 0
+   for ptt_obj in list_of_ptts:
+      ptt = ptt_obj.ptt
+      ind_id = ptt_obj.ind_id
+      nb_ptt += 1
+      for location in ptt_obj.locations:
+         if location.type == 0:
+            nb_argos += 1
+         elif location.type == 1:
+            nb_gps += 1
+   return {'ptt':nb_ptt, 'argos':nb_argos, 'gps':nb_gps}
