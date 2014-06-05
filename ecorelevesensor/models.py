@@ -95,7 +95,7 @@ class Station(Base):
    creator = Column('Creator', Integer)
    creationDate = Column('Creation_date', DateTime)
    protocol_argos = relationship('ProtocolArgos', uselist=False, backref='Station')
-   #protocol_gps = relationship('ProtocolGps', uselist=False, backref='station')
+   protocol_gps = relationship('ProtocolGps', uselist=False, backref='station')
 
 class ProtocolArgos(Base):
    __tablename__ = 'TProtocol_ArgosDataArgos'

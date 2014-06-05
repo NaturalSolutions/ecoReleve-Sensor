@@ -116,7 +116,8 @@ def argos_insert(request):
 
    # Query that check for duplicate stations
    check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.name == bindparam('name'), Station.lat == bindparam('lat'), Station.lon == bindparam('lon'), Station.ele == bindparam('ele')))
-      
+   
+   print request.json_body
    # For each objet in the request body
    for ptt_obj in request.json_body:
       ptt = ptt_obj['ptt']
