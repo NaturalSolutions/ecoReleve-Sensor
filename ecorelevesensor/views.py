@@ -70,7 +70,7 @@ def uncheckedData(request):
    
    # Type 0 = Argos data, type 1 = GPS data
    for id, date, lat, lon, type in DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall():
-      data['locations'].append({'id': id, 'type':type, 'date':date, 'lat':lat, 'lon':lon})
+      data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon})
       
    # Get informations for this ptt
    ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
@@ -114,62 +114,68 @@ def argos_insert(request):
    argos_id = array('i')
    gps_id = array('i')
 
-   # Query that check for duplicate stations
-   check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.name == bindparam('name'), Station.lat == bindparam('lat'), Station.lon == bindparam('lon'), Station.ele == bindparam('ele')))
+   try:
+      # Query that check for duplicate stations
+      check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.name == bindparam('name'), Station.lat == bindparam('lat'), Station.lon == bindparam('lon'), Station.ele == bindparam('ele')))
    
-   print request.json_body
-   # For each objet in the request body
-   for ptt_obj in request.json_body:
-      ptt = ptt_obj['ptt']
-      ind_id = ptt_obj['ind_id']
+      # For each objet in the request body
+      for ptt_obj in request.json_body:
+         ptt = ptt_obj['ptt']
+         ind_id = ptt_obj['ind_id']
          
-      # For each location associated with this object
-      for location in ptt_obj['locations']:
-         # Argos
-         if location['type'] == 0:
-            target = Argos
-            # Get all the informations about the sensor data
-            argos_data = DBSession.query(target).filter_by(id=location['id']).one()
-            name = 'ARGOS_' + str(argos_data.ptt) + '_' + argos_data.date.strftime('%Y%m%d%H%M%S')
-            if DBSession.execute(check_duplicate_station, {'name':name, 'lat':argos_data.lat, 'lon':argos_data.lon, 'ele':argos_data.ele}).scalar() == 0:
-               argos = ProtocolArgos(ind_id=ind_id, lc=argos_data.lc, iq=argos_data.iq, nbMsg=argos_data.nbMsg, nbMsg120=argos_data.nbMsg120,
-                                       bestLvl=argos_data.bestLvl, passDuration=argos_data.passDuration, nopc=argos_data.nopc)
-               station = Station(date=argos_data.date, name=name, fieldActivityId=27, fieldActivityName='Argos', lat=argos_data.lat, lon=argos_data.lon, ele=argos_data.ele, protocol_argos=argos)
-               # Add the station in the list
-               argos_id.append(location['id'])
-               stations.append(station)
-         # Gps
-         elif location['type'] == 1:
-            gps_data = DBSession.query(Gps).filter_by(id=location['id']).one()
-            name = 'ARGOS_' + str(gps_data.ptt) + '_' + gps_data.date.strftime('%Y%m%d%H%M%S')
-            if DBSession.execute(check_duplicate_station, {'name':name, 'lat':argos_data.lat, 'lon':argos_data.lon, 'ele':argos_data.ele}).scalar() == 0:    
-               gps = ProtocolGps(ind_id=ind_id, course=gps_data.course, speed=gps_data.speed)
-               station = Station(date=argos_data.date, name=name, fieldActivityId=27, fieldActivityName='Argos', lat=argos_data.lat, lon=argos_data.lon, ele=argos_data.ele, protocol_gps=gps)
-               # Add the station in the list
-               gps_id.append(location['id'])
-               stations.append(station)
+         # For each location associated with this object
+         for location in ptt_obj['locations']:
+            # Argos
+            if location['type'] == 0:
+               target = Argos
+               # Get all the informations about the sensor data
+               argos_data = DBSession.query(target).filter_by(id=location['id']).one()
+               name = 'ARGOS_' + str(argos_data.ptt) + '_' + argos_data.date.strftime('%Y%m%d%H%M%S')
+               if DBSession.execute(check_duplicate_station, {'name':name, 'lat':argos_data.lat, 'lon':argos_data.lon, 'ele':argos_data.ele}).scalar() == 0:
+                  argos = ProtocolArgos(ind_id=ind_id, lc=argos_data.lc, iq=argos_data.iq, nbMsg=argos_data.nbMsg, nbMsg120=argos_data.nbMsg120,
+                                          bestLvl=argos_data.bestLvl, passDuration=argos_data.passDuration, nopc=argos_data.nopc)
+                  station = Station(date=argos_data.date, name=name, fieldActivityId=27, fieldActivityName='Argos', lat=argos_data.lat, lon=argos_data.lon, ele=argos_data.ele, protocol_argos=argos)
+                  # Add the station in the list
+                  argos_id.append(location['id'])
+                  stations.append(station)
+            # Gps
+            elif location['type'] == 1:
+               gps_data = DBSession.query(Gps).filter_by(id=location['id']).one()
+               name = 'ARGOS_' + str(gps_data.ptt) + '_' + gps_data.date.strftime('%Y%m%d%H%M%S')
+               if DBSession.execute(check_duplicate_station, {'name':name, 'lat':argos_data.lat, 'lon':argos_data.lon, 'ele':argos_data.ele}).scalar() == 0:    
+                  gps = ProtocolGps(ind_id=ind_id, course=gps_data.course, speed=gps_data.speed)
+                  station = Station(date=argos_data.date, name=name, fieldActivityId=27, fieldActivityName='Argos', lat=argos_data.lat, lon=argos_data.lon, ele=argos_data.ele, protocol_gps=gps)
+                  # Add the station in the list
+                  gps_id.append(location['id'])
+                  stations.append(station)
       # Insert the stations (and protocols thanks to ORM)
       DBSession.add_all(stations)
       # Update the sensor database
       DBSession.execute(update(Argos).where(Argos.id.in_(argos_id)).values(checked=True, imported=True))
       DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True, imported=True))
       return {'newStations':len(stations), 'newArgos':len(argos_id), 'newGps':len(gps_id)}
+   except Exception as e:
+      return {'exception':e.message}
+
 
 @view_config(route_name = 'argos/check', renderer = 'json')
 def argos_check(request):
    argos_id = array('i')
    gps_id = array('i')
-   for ptt_obj in request.json_body:
-      ptt = ptt_obj['ptt']
-      ind_id = ptt_obj['ind_id']
-      for location in ptt_obj['locations']:
-         if location['type'] == 0:
-            argos_id.append(location['id'])
-         elif location['type'] == 1:
-            gps_id.append(location['id'])
-   DBSession.execute(update(Argos).where(Argos.id.in_(argos_id)).values(checked=True))
-   DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True))
-   return {'argosChecked': len(argos_id), 'gpsChecked':len(gps_id)}
+   try:
+      for ptt_obj in request.json_body:
+         ptt = ptt_obj['ptt']
+         ind_id = ptt_obj['ind_id']
+         for location in ptt_obj['locations']:
+            if location['type'] == 0:
+               argos_id.append(location['id'])
+            elif location['type'] == 1:
+               gps_id.append(location['id'])
+      DBSession.execute(update(Argos).where(Argos.id.in_(argos_id)).values(checked=True))
+      DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True))
+      return {'argosChecked': len(argos_id), 'gpsChecked':len(gps_id)}
+   except Exception as e:
+      return {'exception':e.message}
 
 @view_config(route_name = 'station_graph', renderer = 'json')
 def station_graph(request):
