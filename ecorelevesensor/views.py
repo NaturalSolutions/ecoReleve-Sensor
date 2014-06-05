@@ -52,7 +52,7 @@ def weekData(request):
    
    return data
 
-@view_config(route_name='unchecked', renderer='json')
+@view_config(route_name='argos/unchecked', renderer='json')
 def uncheckedData(request):
    
    try:
@@ -88,7 +88,7 @@ def uncheckedData(request):
 
    return data
 
-@view_config(route_name='unchecked_summary', renderer='json')
+@view_config(route_name='argos/unchecked/list', renderer='json')
 def uncheckedSummary(request):
    # Initialize json object
    data = OrderedDict()
@@ -104,32 +104,9 @@ def uncheckedSummary(request):
       data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})
    return data
 
-@view_config(route_name = 'station_graph', renderer = 'json')
-def station_graph(request):
-   # Initialize Json object
-   data = OrderedDict()
-
-   # Calculate the bounds
-   today = datetime.date.today()
-   begin_date = datetime.date(day = 1, month = today.month, year = today.year - 1)
-   end_date = datetime.date(day = 1, month = today.month, year = today.year)
-
-   # Query
-   query = select([func.count(Station.id).label('nb'), func.year(Station.date).label('year'), func.month(Station.date).label('month')]
-                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date))
-
-   # Execute query and sort result by year, month (faster than an order_by clause in this case)
-   for nb, y, m in sorted(DBSession.execute(query).fetchall(), key = operator.itemgetter(1,2)):
-      data[datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y)] = nb
-
-   return data
-
-@view_config(route_name = 'individuals_count', renderer = 'json')
-def individuals_count(request):
-   # Query
-   query = select([func.count(Individuals.id).label('nb')])
-
-   return DBSession.execute(query).fetchone()['nb']
+@view_config(route_name = 'argos/unchecked/count', renderer = 'json')
+def argos_unchecked_count(request):
+   return DBSession.execute(select([func.count(Argos.id)]).where(Argos.checked == 0)).scalar()
 
 @view_config(route_name = 'argos/insert', renderer = 'json')
 def argos_insert(request):
@@ -178,7 +155,6 @@ def argos_insert(request):
          DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True, imported=True))
          return {'newStations':len(stations), 'newArgos':len(argos_id), 'newGps':len(gps_id)}
    except:
-      raise
       return HTTPServerError()
 
 @view_config(route_name = 'argos/check', renderer = 'json')
@@ -200,6 +176,29 @@ def argos_check(request):
    except:
       return HTTPServerError()
 
-@view_config(route_name = 'argos/unchecked/count', renderer = 'json')
-def argos_unchecked_count(request):
-   return DBSession.execute(select([func.count(Argos.id)]).where(Argos.checked == 0)).scalar()
+@view_config(route_name = 'station_graph', renderer = 'json')
+def station_graph(request):
+   # Initialize Json object
+   data = OrderedDict()
+
+   # Calculate the bounds
+   today = datetime.date.today()
+   begin_date = datetime.date(day = 1, month = today.month, year = today.year - 1)
+   end_date = datetime.date(day = 1, month = today.month, year = today.year)
+
+   # Query
+   query = select([func.count(Station.id).label('nb'), func.year(Station.date).label('year'), func.month(Station.date).label('month')]
+                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date))
+
+   # Execute query and sort result by year, month (faster than an order_by clause in this case)
+   for nb, y, m in sorted(DBSession.execute(query).fetchall(), key = operator.itemgetter(1,2)):
+      data[datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y)] = nb
+
+   return data
+
+@view_config(route_name = 'individuals_count', renderer = 'json')
+def individuals_count(request):
+   # Query
+   query = select([func.count(Individuals.id).label('nb')])
+
+   return DBSession.execute(query).fetchone()['nb']
