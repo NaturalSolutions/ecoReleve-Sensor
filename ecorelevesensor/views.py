@@ -155,7 +155,7 @@ def argos_insert(request):
       DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True, imported=True))
       return {'newStations':len(stations), 'newArgos':len(argos_id), 'newGps':len(gps_id)}
    except Exception as e:
-      return {'exception':str(e)}
+      raise
 
 
 @view_config(route_name = 'argos/check', renderer = 'json')
@@ -175,7 +175,7 @@ def argos_check(request):
       DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True))
       return {'argosChecked': len(argos_id), 'gpsChecked':len(gps_id)}
    except Exception as e:
-      return {'exception':str(e)}
+      raise
 
 @view_config(route_name = 'station_graph', renderer = 'json')
 def station_graph(request):
