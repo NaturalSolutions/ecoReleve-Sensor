@@ -30,6 +30,7 @@ def main(global_config, **settings):
    config.add_static_view('static', 'static', cache_max_age=3600)
    config.add_route('weekData', 'ecoReleve-Sensor/weekData')
    config.add_route('unchecked', 'ecoReleve-Sensor/unchecked')
+   config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
    config.add_route('unchecked_summary', 'ecoReleve-Sensor/unchecked_summary')
    config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
    config.add_route('individuals_count', 'ecoReleve-Core/individuals/count')

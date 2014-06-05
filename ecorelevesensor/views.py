@@ -148,3 +148,7 @@ def argos_insert(request):
             nb_gps += 1
       DBSession.add_all(argos_stations)
    return {'ptt':nb_ptt, 'argos':nb_argos, 'gps':nb_gps}
+
+@view_config(route_name = 'argos/unchecked/count', renderer = 'json')
+def argos_unchecked_count(request):
+   return DBSession.execute(select([func.count(Argos.id).label('nb')]).where(Argos.checked == 0)).fetchone()['nb']
