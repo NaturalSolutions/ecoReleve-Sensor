@@ -115,7 +115,7 @@ class ProtocolArgos(Base):
 
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable = False)
