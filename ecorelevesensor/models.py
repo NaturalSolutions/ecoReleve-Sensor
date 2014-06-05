@@ -83,7 +83,7 @@ class Sat_Trx(Base):
 class Station(Base):
    __tablename__ = 'TStations'
    __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
-   id = Column('TSta_PK_ID', Integer, primary_key = True)
+   id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
    fieldActivityId = Column('FieldActivity_ID', Integer)
