@@ -122,3 +122,23 @@ class ProtocolGps(Base):
    course = Column('TADG_Course', Integer)
    speed = Column('TADG_Speed', Integer)
    comment = Column('TADG_Comments', String(250))
+
+class ProtocolIndividualEquipment(Base):
+   __tablename__ =  'TProtocol_Individual_Equipment'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   id = Column('PK_ID', Integer, Sequence('TProtocol_Individual_Equipment_pk_id'), primary_key = True)
+   sat_id = Column('FK_SAT_ID', Integer)
+   ind_id = Column('FK_IND_ID', Integer)
+   begin_date = Column(DateTime)
+   end_date = Column(DateTime)
+
+class ObjCaracValue(Base):
+   __tablename__ = 'TObj_Carac_value'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   id = Column('Carac_value_Pk', Integer, Sequence('TObj_Carac_value_pk_id'), primary_key = True)
+   fk_carac = Column('Fk_carac', Integer)
+   fk_object = Column('fk_object', Integer)
+   value = Column('value', String)
+   object_type = Column(String)
+   begin_date = Column('begin_date', DateTime)
+   end_date = Column('end_date', DateTime)

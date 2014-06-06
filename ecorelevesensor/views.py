@@ -5,7 +5,7 @@ from pyramid.response import Response
 from pyramid.view import view_config
 
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_, insert, bindparam, Sequence, update
+from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_, insert, bindparam, Sequence, update, or_, literal_column
 from sqlalchemy.sql.expression import label
 
 from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated, HTTPServerError
@@ -16,7 +16,9 @@ from .models import (
    DBSession,
    Argos,
    Gps,
+   ObjCaracValue,
    ProtocolArgos,
+   ProtocolIndividualEquipment,
    ProtocolGps,
    Station,
    Individuals,
@@ -53,55 +55,61 @@ def weekData(request):
    return data
 
 @view_config(route_name='argos/unchecked', renderer='json')
-def uncheckedData(request):
+def argos_unchecked(request):
    
    try:
-      ptt = int(request.GET['id'])
+      ptt = int(request.GET['ptt'])
+      ind_id = int(request.GET['ind_id'])
    except:
       raise HTTPBadRequest()
 
-   # Get all unchecked data for this ptt
-   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), 0]).where(and_(Argos.checked == False, Argos.ptt == ptt))
-   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), 1]).where(and_(Gps.checked == False, Gps.ptt == ptt))
-   all_data = union(argos_data, gps_data)
+   # Get all unchecked data for this ptt and this individual
+   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), literal_column('0').label('type')]).where(and_(Argos.checked == False, Argos.ptt == ptt))
+   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), literal_column('1').label('type')]).where(and_(Gps.checked == False, Gps.ptt == ptt))
+   unchecked = union(argos_data, gps_data).alias('unchecked')
+   all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.type]).select_from(
+      unchecked.join(Sat_Trx, Sat_Trx.ptt == ptt).join(ProtocolIndividualEquipment, and_(
+         Sat_Trx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(
+            unchecked.c.date < ProtocolIndividualEquipment.end_date, ProtocolIndividualEquipment.end_date == None
+            )
+         )
+      )
+   ).where(
+      ProtocolIndividualEquipment.ind_id == ind_id
+   )
 
    # Initialize json object
    data = {'ptt':{}, 'locations':[], 'indiv':{}}
    
    # Type 0 = Argos data, type 1 = GPS data
-   for id, date, lat, lon, type in DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall():
+   for id, date, lat, lon, type in DBSession.execute(all_data.order_by(desc('date'))).fetchall():
       data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon})
       
    # Get informations for this ptt
    ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
-   try:
-      data['ptt']['ptt'], data['ptt']['manufacturer'], data['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
-   except TypeError:
-      pass
+   data['ptt']['ptt'], data['ptt']['manufacturer'], data['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
    
    # Get informations for the individual
-   indiv_infos = select([Individuals.id, Individuals.age, Individuals.sex, Individuals.specie, Individuals.status, Individuals.origin]).where(Individuals.ptt == ptt)
-   try:
-      data['indiv']['id'], data['indiv']['age'], data['indiv']['sex'], data['indiv']['specie'], data['indiv']['status'], data['indiv']['origin'] = DBSession.execute(indiv_infos).fetchone()
-   except TypeError:
-      pass
+   indiv_infos = select([Individuals.id, Individuals.age, Individuals.sex, Individuals.specie, Individuals.status, Individuals.origin]).where(Individuals.id == ind_id)
+   data['indiv']['id'], data['indiv']['age'], data['indiv']['sex'], data['indiv']['specie'], data['indiv']['status'], data['indiv']['origin'] = DBSession.execute(indiv_infos).fetchone()
 
    return data
 
 @view_config(route_name='argos/unchecked/list', renderer='json')
-def uncheckedSummary(request):
-   # Initialize json object
-   data = OrderedDict()
+def argos_unchecked_list(request):
+   # Initialize Json array
+   data = []
    # SQL query
-   unchecked = union(select([Argos.id.label('id'), Argos.ptt.label('ptt')]).where(Argos.checked == 0),
-                  select([Gps.id.label('id'), Gps.ptt.label('ptt')]).where(Gps.checked == 0)).alias()
-   # Sum GPS and Argos locations for each ptt.
-   count_by_ptt = select([unchecked.c.ptt, func.count().label('nb')]).group_by(unchecked.c.ptt).alias()
+   unchecked = union(select([Argos.id.label('id'), Argos.ptt.label('ptt'), Argos.date.label('date')]).where(Argos.checked == 0),
+                  select([Gps.id.label('id'), Gps.ptt.label('ptt'), Gps.date.label('date')]).where(Gps.checked == 0)).alias()
    # Add the bird associated to each ptt.
-   unchecked_data = DBSession.execute(select([count_by_ptt.c.ptt, count_by_ptt.c.nb, Individuals.id.label('ind_id')]).select_from(count_by_ptt.outerjoin(Individuals, count_by_ptt.c.ptt == Individuals.ptt)).order_by(count_by_ptt.c.ptt))
-   # Populate Json object
-   for row in unchecked_data.fetchall():
-      data.setdefault(row.ptt, []).append({'count':row.nb, 'ind_id':row.ind_id})
+   unchecked_with_ind = select([ProtocolIndividualEquipment.ind_id.label('ind_id'), 'ptt', func.count('id').label('nb')]).select_from(
+      unchecked.join(Sat_Trx, Sat_Trx.ptt == unchecked.c.ptt).outerjoin(
+      ProtocolIndividualEquipment, and_(Sat_Trx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(unchecked.c.date < ProtocolIndividualEquipment.end_date, ProtocolIndividualEquipment.end_date == None)))
+      ).group_by('ptt', ProtocolIndividualEquipment.ind_id).order_by('ptt')
+   # Populate Json array
+   for ind_id, ptt, nb in DBSession.execute(unchecked_with_ind).fetchall():
+      data.append({'ptt':ptt,'ind_id':ind_id, 'count':nb})
    return data
 
 @view_config(route_name = 'argos/unchecked/count', renderer = 'json')
@@ -133,7 +141,7 @@ def argos_insert(request):
                name = 'ARGOS_' + str(argos_data.ptt) + '_' + argos_data.date.strftime('%Y%m%d%H%M%S')
                if DBSession.execute(check_duplicate_station, {'name':name, 'lat':argos_data.lat, 'lon':argos_data.lon, 'ele':argos_data.ele}).scalar() == 0:
                   argos = ProtocolArgos(ind_id=ind_id, lc=argos_data.lc, iq=argos_data.iq, nbMsg=argos_data.nbMsg, nbMsg120=argos_data.nbMsg120,
-                                          bestLvl=argos_data.bestLvl, passDuration=argos_data.passDuration, nopc=argos_data.nopc)
+                                          bestLvl=argos_data.bestLvl, passDuration=argos_data.passDuration, nopc=argos_data.nopc, frequency=argos_data.frequency)
                   station = Station(date=argos_data.date, name=name, fieldActivityId=27, fieldActivityName='Argos', lat=argos_data.lat, lon=argos_data.lon, ele=argos_data.ele, protocol_argos=argos)
                   # Add the station in the list
                   argos_id.append(location['id'])
