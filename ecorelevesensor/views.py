@@ -17,6 +17,8 @@ from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.sensor import Argos, Gps
 from ecorelevesensor.models.data import (
    Individuals,
+   ProtocolArgos,
+   ProtocolGps,
    ProtocolIndividualEquipment,
    SatTrx,
    Station
