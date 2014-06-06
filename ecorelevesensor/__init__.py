@@ -3,9 +3,9 @@ from sqlalchemy import engine_from_config
 from pyramid.request import Request, Response
 from sqlalchemy.engine import Connection
 
-from .models import (
+from ecorelevesensor.models import (
    DBSession,
-   Base,
+   Base
 )
 
 # Define a new request factory allowing cross-domain AJAX calls.
@@ -24,6 +24,7 @@ def main(global_config, **settings):
    DBSession.configure(bind=engine)
    Base.metadata.bind = engine
    config = Configurator(settings=settings)
+   # config.scan('ecorelevesensor.models')
    config.include('pyramid_chameleon')
    config.include('pyramid_tm')
    # Views
@@ -35,7 +36,7 @@ def main(global_config, **settings):
    config.add_route('argos/check', 'ecoReleve-Sensor/argos/check')
    config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
    config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
-   config.add_route('individuals_count', 'ecoReleve-Core/individuals/count')
+   config.add_route('individuals/count', 'ecoReleve-Core/individuals/count')
    config.set_request_factory(request_factory)
    config.scan()
    return config.make_wsgi_app()

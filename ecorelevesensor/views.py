@@ -12,18 +12,15 @@ from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated, HTTPServerError
 
 import datetime, operator
 
-from .models import (
-   DBSession,
-   Argos,
-   Gps,
-   ObjCaracValue,
-   ProtocolArgos,
-   ProtocolIndividualEquipment,
-   ProtocolGps,
-   Station,
+from ecorelevesensor.models import DBSession
+
+from ecorelevesensor.models.sensor import Argos, Gps
+from ecorelevesensor.models.data import (
    Individuals,
-   Sat_Trx
-)
+   ProtocolIndividualEquipment,
+   SatTrx,
+   Station
+   )
 
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
@@ -64,12 +61,14 @@ def argos_unchecked(request):
       raise HTTPBadRequest()
 
    # Get all unchecked data for this ptt and this individual
-   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), literal_column('0').label('type')]).where(and_(Argos.checked == False, Argos.ptt == ptt))
-   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), literal_column('1').label('type')]).where(and_(Gps.checked == False, Gps.ptt == ptt))
+   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), literal_column('0').label('type')]
+                       ).where(and_(Argos.checked == False, Argos.ptt == ptt))
+   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), literal_column('1').label('type')]
+                     ).where(and_(Gps.checked == False, Gps.ptt == ptt))
    unchecked = union(argos_data, gps_data).alias('unchecked')
    all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.type]).select_from(
-      unchecked.join(Sat_Trx, Sat_Trx.ptt == ptt).join(ProtocolIndividualEquipment, and_(
-         Sat_Trx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(
+      unchecked.join(SatTrx, SatTrx.ptt == ptt).join(ProtocolIndividualEquipment, and_(
+         SatTrx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(
             unchecked.c.date < ProtocolIndividualEquipment.end_date, ProtocolIndividualEquipment.end_date == None
             )
          )
@@ -86,7 +85,7 @@ def argos_unchecked(request):
       data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon})
       
    # Get informations for this ptt
-   ptt_infos = select([Sat_Trx.ptt, Sat_Trx.manufacturer, Sat_Trx.model]).where(Sat_Trx.ptt == ptt)
+   ptt_infos = select([SatTrx.ptt, SatTrx.manufacturer, SatTrx.model]).where(SatTrx.ptt == ptt)
    data['ptt']['ptt'], data['ptt']['manufacturer'], data['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
    
    # Get informations for the individual
@@ -104,8 +103,8 @@ def argos_unchecked_list(request):
                   select([Gps.id.label('id'), Gps.ptt.label('ptt'), Gps.date.label('date')]).where(Gps.checked == 0)).alias()
    # Add the bird associated to each ptt.
    unchecked_with_ind = select([ProtocolIndividualEquipment.ind_id.label('ind_id'), 'ptt', func.count('id').label('nb')]).select_from(
-      unchecked.join(Sat_Trx, Sat_Trx.ptt == unchecked.c.ptt).outerjoin(
-      ProtocolIndividualEquipment, and_(Sat_Trx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(unchecked.c.date < ProtocolIndividualEquipment.end_date, ProtocolIndividualEquipment.end_date == None)))
+      unchecked.join(SatTrx, SatTrx.ptt == unchecked.c.ptt).outerjoin(
+      ProtocolIndividualEquipment, and_(SatTrx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(unchecked.c.date < ProtocolIndividualEquipment.end_date, ProtocolIndividualEquipment.end_date == None)))
       ).group_by('ptt', ProtocolIndividualEquipment.ind_id).order_by('ptt')
    # Populate Json array
    for ind_id, ptt, nb in DBSession.execute(unchecked_with_ind).fetchall():
@@ -205,9 +204,6 @@ def station_graph(request):
 
    return data
 
-@view_config(route_name = 'individuals_count', renderer = 'json')
+@view_config(route_name = 'individuals/count', renderer = 'json')
 def individuals_count(request):
-   # Query
-   query = select([func.count(Individuals.id).label('nb')])
-
-   return DBSession.execute(query).fetchone()['nb']
+   return DBSession.execute(select([func.count(Individuals.id).label('nb')])).scalar()
