@@ -136,9 +136,8 @@ def argos_insert(request):
          for location in ptt_obj['locations']:
             # Argos
             if location['type'] == 0:
-               target = Argos
                # Get all the informations about the sensor data
-               argos_data = DBSession.query(target).filter_by(id=location['id']).one()
+               argos_data = DBSession.query(Argos).filter_by(id=location['id']).one()
                name = 'ARGOS_' + str(argos_data.ptt) + '_' + argos_data.date.strftime('%Y%m%d%H%M%S')
                if DBSession.execute(check_duplicate_station, {'name':name, 'lat':argos_data.lat, 'lon':argos_data.lon, 'ele':argos_data.ele}).scalar() == 0:
                   argos = ProtocolArgos(ind_id=ind_id, lc=argos_data.lc, iq=argos_data.iq, nbMsg=argos_data.nbMsg, nbMsg120=argos_data.nbMsg120,
@@ -165,7 +164,6 @@ def argos_insert(request):
       return {'newStations':len(stations), 'newArgos':len(argos_id), 'newGps':len(gps_id)}
    except Exception as e:
       raise
-
 
 @view_config(route_name = 'argos/check', renderer = 'json')
 def argos_check(request):
