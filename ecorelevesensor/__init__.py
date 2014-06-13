@@ -27,8 +27,9 @@ def add_routes(config):
    config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
    config.add_route('individuals/count', 'ecoReleve-Core/individuals/count')
    ##### Map routes #####
-   config.add_route('map/create', 'ecoReleve-Sensor/map/create/{name}')
    config.add_route('map/add', 'ecoReleve-Sensor/map/add/{name}')
+   config.add_route('map/create', 'ecoReleve-Sensor/map/create/{name}')
+   config.add_route('map/closest_to', 'ecoReleve-Sensor/map/{name}/closest_to')
    config.add_route('map/drop', 'ecoReleve-Sensor/map/drop/{name}')
    
 def add_views(config):

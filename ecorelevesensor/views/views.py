@@ -8,7 +8,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy import func, cast, Date, String, desc, select, create_engine, text, union, and_, insert, bindparam, Sequence, update, or_, literal_column
 from sqlalchemy.sql.expression import label
 
-from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated, HTTPServerError
+from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated, HTTPServerError, HTTPOk
 
 import datetime, operator
 
@@ -168,8 +168,7 @@ def argos_insert(request):
    # Update the sensor database
    DBSession.execute(update(Argos).where(Argos.id.in_(argos_id)).values(checked=True, imported=True))
    DBSession.execute(update(Gps).where(Gps.id.in_(gps_id)).values(checked=True, imported=True))
-   
-   return {'newStations':len(stations), 'newArgos':len(argos_id), 'newGps':len(gps_id)}
+   return {'status':'ok'}
 
 @view_config(route_name = 'argos/check', renderer = 'json')
 def argos_check(request):
