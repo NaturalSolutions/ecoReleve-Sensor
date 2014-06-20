@@ -53,6 +53,7 @@ def weekData(request):
    
    return data
 
+# Unchecked data for one PTT.
 @view_config(route_name='argos/unchecked', renderer='json')
 def argos_unchecked(request):
    
@@ -63,16 +64,16 @@ def argos_unchecked(request):
       raise HTTPBadRequest()
 
    # Get all unchecked data for this ptt and this individual
-   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), literal_column('0').label('type')]
+   argos_data = select([Argos.id.label('id'), Argos.date.label('date'), cast(Argos.lat, String).label('lat'), cast(Argos.lon, String).label('lon'), Argos.lc.label('lc'), literal_column('0').label('type')]
                        ).where(and_(Argos.checked == False, Argos.ptt == ptt))
-   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), literal_column('1').label('type')]
+   gps_data = select([Gps.id.label('id'), Gps.date.label('date'), cast(Gps.lat, String).label('lat'), cast(Gps.lon, String).label('lon'), literal_column('NULL').label('lc'),literal_column('1').label('type')]
                      ).where(and_(Gps.checked == False, Gps.ptt == ptt))
    unchecked = union(argos_data, gps_data).alias('unchecked')
 
    # ind_id is a facultative parameter
    try:
       ind_id = int(request.GET['ind_id'])
-      all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.type]).select_from(
+      all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.lc, unchecked.c.type]).select_from(
          unchecked.join(SatTrx, SatTrx.ptt == ptt).join(ProtocolIndividualEquipment, and_(
             SatTrx.id == ProtocolIndividualEquipment.sat_id, unchecked.c.date >= ProtocolIndividualEquipment.begin_date, or_(
                unchecked.c.date < ProtocolIndividualEquipment.end_date, ProtocolIndividualEquipment.end_date == None
@@ -83,15 +84,15 @@ def argos_unchecked(request):
          ProtocolIndividualEquipment.ind_id == ind_id
       )
    except KeyError, TypeError:
-      all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.type])
+      all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.lc, unchecked.c.type])
       ind_id = None
 
    # Initialize json object
    data = {'ptt':{}, 'locations':[], 'indiv':{}}
    
    # Type 0 = Argos data, type 1 = GPS data
-   for id, date, lat, lon, type in DBSession.execute(all_data.order_by(desc('date'))).fetchall():
-      data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon})
+   for id, date, lat, lon, lc, type in DBSession.execute(all_data.order_by(desc('date'))).fetchall():
+      data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon, 'lc':lc})
       
    # Get informations for this ptt
    ptt_infos = select([SatTrx.ptt, SatTrx.manufacturer, SatTrx.model]).where(SatTrx.ptt == ptt)
