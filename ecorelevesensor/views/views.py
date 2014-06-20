@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from array import array
+from geopy.distance import vincenty
 
 from pyramid.response import Response
 from pyramid.view import view_config
@@ -92,7 +93,12 @@ def argos_unchecked(request):
    
    # Type 0 = Argos data, type 1 = GPS data
    for id, date, lat, lon, lc, type in DBSession.execute(all_data.order_by(desc('date'))).fetchall():
-      data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon, 'lc':lc})
+      data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon, 'lc':lc, 'dist':0})
+      try:
+         # Distance from last location
+         data['locations'][-1]['dist'] = int(vincenty((data['locations'][-1]['lat'], data['locations'][-1]['lon']), (data['locations'][-2]['lat'], data['locations'][-2]['lon'])).meters)
+      except:
+         pass
       
    # Get informations for this ptt
    ptt_infos = select([SatTrx.ptt, SatTrx.manufacturer, SatTrx.model]).where(SatTrx.ptt == ptt)
