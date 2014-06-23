@@ -25,6 +25,7 @@ from ecorelevesensor.models.data import (
    Station
    )
 
+# Data imported from the CLS WS during the last week.
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
    # Initialize Json object
@@ -96,8 +97,8 @@ def argos_unchecked(request):
       data['locations'].append({'id': id, 'type':type, 'date':str(date), 'lat':lat, 'lon':lon, 'lc':lc, 'dist':0})
       try:
          # Distance from last location
-         data['locations'][-1]['dist'] = int(vincenty((data['locations'][-1]['lat'], data['locations'][-1]['lon']), (data['locations'][-2]['lat'], data['locations'][-2]['lon'])).meters)
-      except:
+         data['locations'][-2]['dist'] = round(vincenty((data['locations'][-2]['lat'], data['locations'][-2]['lon']), (data['locations'][-1]['lat'], data['locations'][-1]['lon'])).kilometers, 3)
+      except IndexError:
          pass
       
    # Get informations for this ptt
@@ -106,11 +107,17 @@ def argos_unchecked(request):
 
    # Get informations for the individual
    if ind_id is not None:
-      indiv_infos = select([Individuals.id, Individuals.age, Individuals.sex, Individuals.specie, Individuals.status, Individuals.origin]).where(Individuals.id == ind_id)
-      data['indiv']['id'], data['indiv']['age'], data['indiv']['sex'], data['indiv']['specie'], data['indiv']['status'], data['indiv']['origin'] = DBSession.execute(indiv_infos).fetchone()
+      indiv_infos = select([Individuals.id, Individuals.age, Individuals.sex, Individuals.specie, Individuals.monitoring_status, Individuals.origin, Individuals.survey_type]).where(Individuals.id == ind_id)
+      data['indiv']['id'], data['indiv']['age'], data['indiv']['sex'], data['indiv']['specie'], data['indiv']['monitoring_status'], data['indiv']['origin'], data['indiv']['survey_type'] = DBSession.execute(indiv_infos).fetchone()
+      # Last known location
+      data['indiv']['last_loc'] = {}
+      last_loc = data['indiv']['last_loc']
+      query = 'select convert(varchar, StaDate, 120), convert(float, LAT), convert(float, LON) from ecoReleve_Data.dbo.fn_v_qry_GetMaxStation(:ind_id)'
+      last_loc['date'], last_loc['lat'], last_loc['lon'] = DBSession.execute(text(query), {'ind_id':ind_id}).fetchone()
 
    return data
 
+# List all PTTs having unchecked locations, with individual id and number of locations.
 @view_config(route_name='argos/unchecked/list', renderer='json')
 def argos_unchecked_list(request):
    # Initialize Json array
@@ -128,6 +135,7 @@ def argos_unchecked_list(request):
       data.append({'ptt':ptt,'ind_id':ind_id, 'count':nb})
    return data
 
+# Count the number of unchecked data.
 @view_config(route_name = 'argos/unchecked/count', renderer = 'json')
 def argos_unchecked_count(request):
    return DBSession.execute(select([func.count(Argos.id)]).where(Argos.checked == 0)).scalar()

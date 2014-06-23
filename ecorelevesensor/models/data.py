@@ -56,6 +56,8 @@ class Individuals(Base):
    age = Column('id2@Thes_Age_Precision', String)
    origin = Column('id33@Thes_Origin_Precision', String)
    specie = Column('id34@TCaracThes_Species_Precision', String)
+   monitoring_status = Column('id60@TCaracThes_Monitoring_Status_Precision', String)
+   survey_type = Column('id61@TCaracThes_Survey_type_Precision', String)
    status = Column('id59@TCaracThes_Individual_Status', String)
 
 class ProtocolGps(Base):
