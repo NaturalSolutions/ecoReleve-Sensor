@@ -11,7 +11,6 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 requires = [
     'geoalchemy',
     'geopy',
-    'gevent-socketio',
 	 'pyodbc',
     'pyramid',
     'pyramid_chameleon',
@@ -19,6 +18,7 @@ requires = [
     'pyramid_tm',
     'sqlalchemy',
     'transaction',
+    'waitress',
     'zope.sqlalchemy',
     ]
 
