@@ -86,3 +86,10 @@ class ProtocolArgos(Base):
    nopc = Column('TADA_NOPC', Integer)
    frequency = Column('TADA_Frequency', Numeric(10,1))
    comment = Column('TADA_Comments', String(250))
+
+class ProtocolReleaseIndividual(Base):
+   __tablename__ = 'TProtocol_Release_Individual'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
+   ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
