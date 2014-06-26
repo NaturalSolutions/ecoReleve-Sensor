@@ -23,8 +23,15 @@ def core_individuals_stations(request):
 @view_config(route_name=route_prefix + 'released/values', renderer='json')
 def core_individuals_stations(request):
    try:
-      field = request.params['field_name']
+      if request.params['field_name']   == 'releasedArea':
+         field = 'Area'
+      elif request.params['field_name'] == 'releasedYear':
+         field = 'year(date)'
+      elif request.params['field_name'] == 'specie':
+         field = 'id34@TCaracThes_Species_Precision'
+      else:
+         return []
       query = select([field]).select_from(join(ProtocolReleaseIndividual,Individuals).join(Station)).distinct()
       return [item[0] for item in DBSession.execute(query).fetchall()]
    except:
-      raise
+      return []
