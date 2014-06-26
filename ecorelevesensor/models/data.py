@@ -52,13 +52,14 @@ class Individuals(Base):
    __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
    id = Column('Individual_Obj_PK', Integer, primary_key = True)
    ptt = Column('id19@TCarac_PTT', Integer)
-   sex = Column('id30@TCaracThes_Sex_Precision', String)
    age = Column('id2@Thes_Age_Precision', String)
+   sex = Column('id30@TCaracThes_Sex_Precision', String)
+   release_ring_code = Column('id9@TCarac_Release_Ring_Code', String)
    origin = Column('id33@Thes_Origin_Precision', String)
    specie = Column('id34@TCaracThes_Species_Precision', String)
+   status = Column('id59@TCaracThes_Individual_Status', String)
    monitoring_status = Column('id60@TCaracThes_Monitoring_Status_Precision', String)
    survey_type = Column('id61@TCaracThes_Survey_type_Precision', String)
-   status = Column('id59@TCaracThes_Individual_Status', String)
 
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'

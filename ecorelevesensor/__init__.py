@@ -26,6 +26,8 @@ def add_routes(config):
    config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
    config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
    config.add_route('individuals/count', 'ecoReleve-Core/individuals/count')
+   ##### Autocomplete routes #####
+   config.add_route('core/autocomplete', 'ecoReleve-Core/autocomplete')
    ##### Map routes #####
    config.add_route('map/add', 'ecoReleve-Sensor/map/add/{name}')
    config.add_route('map/create', 'ecoReleve-Sensor/map/create/{name}')
