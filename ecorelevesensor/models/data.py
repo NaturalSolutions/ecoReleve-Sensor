@@ -7,11 +7,15 @@ from sqlalchemy import (
    Integer,
    Numeric,
    Sequence,
-   String
+   String,
+   Table
  )
 
 from sqlalchemy.orm import relationship
-from ecorelevesensor.models import Base
+from ecorelevesensor.models import Base, dbConfig
+
+data_schema = dbConfig['data_schema']
+print data_schema
 
 class Station(Base):
    __tablename__ = 'TStations'
@@ -19,6 +23,7 @@ class Station(Base):
    id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
+   area = Column('Area', String)
    fieldActivityId = Column('FieldActivity_ID', Integer)
    fieldActivityName = Column('FieldActivity_Name', String)
    lat = Column('lat', Numeric(9,5), nullable = False)
@@ -93,3 +98,30 @@ class ProtocolReleaseIndividual(Base):
    id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
+
+class ProtocolCaptureIndividual(Base):
+   __tablename__ = 'TProtocol_Capture_Individual'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
+   ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
+
+##### Views #####
+V_AllIndivs_Released_YearArea = Table('V_Qry_AllIndivs_Released_YearArea', Base.metadata,
+                                      Column('FK_TInd_ID', ForeignKey(Individuals.id)),
+                                      schema=data_schema, autoload=True)
+
+V_Search_Indiv = Table('V_Search_Indiv', Base.metadata,
+                       Column('id', Integer, primary_key = True),
+                       Column('age', String),
+                       Column('specie', String),
+                       Column('ptt', Integer),
+                       Column('sex', String),
+                       Column('origin', String),
+                       Column('monitoringStatus', String),
+                       Column('surveyType', String),
+                       Column('releaseArea', String),
+                       Column('releaseYear', Integer),
+                       Column('captureArea', String),
+                       Column('captureYear', Integer),
+                       schema=data_schema, autoload=True)

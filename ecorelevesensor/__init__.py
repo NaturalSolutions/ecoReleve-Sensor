@@ -5,7 +5,8 @@ from sqlalchemy.engine import Connection
 
 from ecorelevesensor.models import (
    DBSession,
-   Base
+   Base,
+   dbConfig
 )
 
 # Define a new request factory allowing cross-domain AJAX calls.
@@ -28,7 +29,8 @@ def add_routes(config):
    config.add_route('individuals/count', 'ecoReleve-Core/individuals/count')
    ##### Individuals routes #####
    config.add_route('core/individuals/stations', 'ecoReleve-Core/individuals/stations')
-   config.add_route('core/individuals/released/values', 'ecoReleve-Core/individuals/released/values')
+   config.add_route('core/individuals/search/values', 'ecoReleve-Core/individuals/search/values')
+   config.add_route('core/individuals/search', 'ecoReleve-Core/individuals/search')
    ##### Autocomplete routes #####
    config.add_route('core/autocomplete', 'ecoReleve-Core/autocomplete')
    ##### Map routes #####
@@ -44,6 +46,7 @@ def main(global_config, **settings):
    """ This function returns a Pyramid WSGI application.
    """
    engine = engine_from_config(settings, 'sqlalchemy.')
+   dbConfig['data_schema'] = settings['data_schema']
    DBSession.configure(bind=engine)
    Base.metadata.bind = engine
    config = Configurator(settings=settings)
