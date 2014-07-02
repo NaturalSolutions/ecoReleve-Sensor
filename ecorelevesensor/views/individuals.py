@@ -7,11 +7,16 @@ route_prefix = 'core/individuals/'
 
 @view_config(route_name=route_prefix + 'search/values', renderer='json')
 def core_individuals_values(request):
-   ''' Get the different values of the field given in parameter '''
+   ''' Get the different values of the field_name given in parameter.
+       If a parameter limit is passed, then limit the number of values returned.
+   '''
    try:
       column = request.params['field_name']
+      limit = request.params.get('limit', 0)
       if column in V_Search_Indiv.columns:
          query = select([V_Search_Indiv.columns[column]]).where(V_Search_Indiv.columns[column]!=None).order_by(V_Search_Indiv.columns[column]).distinct()
+         if limit > 0:
+            query = query.limit(limit)
          return [item[column] for item in DBSession.execute(query).fetchall()]
       else:
          return []
@@ -20,6 +25,12 @@ def core_individuals_values(request):
 
 @view_config(route_name=route_prefix + 'search', renderer='json', request_method='POST')
 def core_individuals_search(request):
+   ''' Search individuals by posting a JSON object containing the fields :
+      - criteria : dict object with column_name:value fields
+      - order_by : dict object with column_name:'asc' or column_name:'desc' fields
+      - offset   : int
+      - limit    : int
+   '''
    try:
       query = select(V_Search_Indiv.c)
       # Look over the criteria list
