@@ -2,6 +2,7 @@ from sqlalchemy import select
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.data import V_Search_Indiv
 from pyramid.view import view_config
+from collections import OrderedDict
 
 route_prefix = 'core/individuals/'
 
@@ -12,7 +13,7 @@ def core_individuals_values(request):
    '''
    try:
       column = request.params['field_name']
-      limit = request.params.get('limit', 0)
+      limit  = int(request.params.get('limit', 0))
       if column in V_Search_Indiv.columns:
          query = select([V_Search_Indiv.columns[column]]).where(V_Search_Indiv.columns[column]!=None).order_by(V_Search_Indiv.columns[column]).distinct()
          if limit > 0:
@@ -39,8 +40,8 @@ def core_individuals_search(request):
          if column in V_Search_Indiv.columns:
             query = query.where(V_Search_Indiv.columns[column] == value)
       # Define the limit and offset if exist
-      limit = request.json_body.get('limit', 0)
-      offset = request.json_body.get('offset', 0)
+      limit = int(request.json_body.get('limit', 0))
+      offset = int(request.json_body.get('offset', 0))
       if limit > 0:
          query = query.limit(limit)
       if offset > 0:
@@ -59,7 +60,7 @@ def core_individuals_search(request):
       # Run query
       result = []
       for row in DBSession.execute(query).fetchall():
-         result.append({column:row[column] for column in row.keys()})
+         result.append(OrderedDict(row))
       return result
    except:
       return []
