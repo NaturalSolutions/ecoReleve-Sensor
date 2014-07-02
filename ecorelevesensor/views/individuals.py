@@ -7,10 +7,11 @@ route_prefix = 'core/individuals/'
 
 @view_config(route_name=route_prefix + 'search/values', renderer='json')
 def core_individuals_values(request):
+   ''' Get the different values of the field given in parameter '''
    try:
       column = request.params['field_name']
       if column in V_Search_Indiv.columns:
-         query = select([V_Search_Indiv.columns[column]]).distinct()
+         query = select([V_Search_Indiv.columns[column]]).where(V_Search_Indiv.columns[column]!=None).distinct()
          return [item[column] for item in DBSession.execute(query).fetchall()]
       else:
          return []

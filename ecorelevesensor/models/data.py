@@ -15,7 +15,6 @@ from sqlalchemy.orm import relationship
 from ecorelevesensor.models import Base, dbConfig
 
 data_schema = dbConfig['data_schema']
-print data_schema
 
 class Station(Base):
    __tablename__ = 'TStations'
@@ -113,15 +112,7 @@ V_AllIndivs_Released_YearArea = Table('V_Qry_AllIndivs_Released_YearArea', Base.
 
 V_Search_Indiv = Table('V_Search_Indiv', Base.metadata,
                        Column('id', Integer, primary_key = True),
-                       Column('age', String),
-                       Column('specie', String),
                        Column('ptt', Integer),
-                       Column('sex', String),
-                       Column('origin', String),
-                       Column('monitoringStatus', String),
-                       Column('surveyType', String),
-                       Column('releaseArea', String),
                        Column('releaseYear', Integer),
-                       Column('captureArea', String),
                        Column('captureYear', Integer),
                        schema=data_schema, autoload=True)
