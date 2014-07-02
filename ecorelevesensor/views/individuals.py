@@ -11,7 +11,7 @@ def core_individuals_values(request):
    try:
       column = request.params['field_name']
       if column in V_Search_Indiv.columns:
-         query = select([V_Search_Indiv.columns[column]]).where(V_Search_Indiv.columns[column]!=None).distinct()
+         query = select([V_Search_Indiv.columns[column]]).where(V_Search_Indiv.columns[column]!=None).order_by(V_Search_Indiv.columns[column]).distinct()
          return [item[column] for item in DBSession.execute(query).fetchall()]
       else:
          return []
