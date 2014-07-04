@@ -116,3 +116,10 @@ V_Search_Indiv = Table('V_Search_Indiv', Base.metadata,
                        Column('releaseYear', Integer),
                        Column('captureYear', Integer),
                        schema=data_schema, autoload=True)
+
+TViewStations = Table('TViewStations', Base.metadata,
+                      Column('FK_IND_ID', Integer),
+                      Column('lat', Numeric),
+                      Column('lon', Numeric),
+                      Column('date', DateTime),
+                      schema=data_schema)

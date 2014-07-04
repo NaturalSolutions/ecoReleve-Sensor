@@ -1,8 +1,9 @@
-from sqlalchemy import select
+from sqlalchemy import select, cast, Float
 from ecorelevesensor.models import DBSession
-from ecorelevesensor.models.data import V_Search_Indiv
+from ecorelevesensor.models.data import V_Search_Indiv, TViewStations
 from pyramid.view import view_config
 from collections import OrderedDict
+from datetime import datetime
 
 route_prefix = 'core/individuals/'
 
@@ -63,4 +64,19 @@ def core_individuals_search(request):
          result.append(OrderedDict(row))
       return result
    except:
+      return []
+
+@view_config(route_name=route_prefix + 'stations', renderer='json')
+def core_individuals_search(request):
+   ''' Get the stations of an identified individual. Parameter is : id (int)'''
+   try:
+      id = int(request.params['id'])
+      # Look over the criteria list
+      query = select([cast(TViewStations.c.lat, Float), cast(TViewStations.c.lon, Float), TViewStations.c.date]).where(TViewStations.c.FK_IND_ID == id).order_by(TViewStations.c.date)
+      result = {'type':'FeatureCollection', 'features':[]}
+      for lat, lon, date in DBSession.execute(query).fetchall():
+         result['features'].append({'type':'Feature', 'properties':{'date':int((date-datetime.utcfromtimestamp(0)).total_seconds())}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
+      return result
+   except:
+      raise
       return []
