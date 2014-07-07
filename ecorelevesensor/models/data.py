@@ -123,3 +123,36 @@ TViewStations = Table('TViewStations', Base.metadata,
                       Column('lon', Numeric),
                       Column('date', DateTime),
                       schema=data_schema)
+
+class ViewRfid(Base):
+   __tablename__ = 'TViewRFID'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   id = Column('RFID_Obj_pk', Integer, primary_key = True)
+   serial_number = Column('id65@TCarac_rfid_Serial_number',Integer)
+   model = Column('id41@TCaracThes_Model',Integer)
+   model_precision = Column('id41@TCaracThes_Model_Precision',String(50))
+   company = Column('id42@TCaracThes_Company',Integer)
+   company_precision = Column('id42@TCaracThes_Company_Precision',String(50))
+   comment = Column('id37@Comments',String)
+   protocolStationEquipment_rfid = relationship('ProtocolStationEquipment', uselist=False, backref='ViewRfid.id')
+
+class MonitoredStation(Base):
+   __tablename__ = 'TMonitoredStations'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   id = Column('TGeo_pk_id', Integer, primary_key = True)
+   name = Column('Name', String(50))
+   creation_date = Column('Creation_date',DateTime)
+   creator = Column('Creator',Integer)
+   active = Column('Active', Integer)
+   id_type = Column('id_Type', Integer)
+   name_type = Column('name_Type',String(50))
+   protocolStationEquipment_geo = relationship('ProtocolStationEquipment', uselist=False, backref='MonitoredStation.id')
+
+class ProtocolStationEquipment(Base):
+   __tablename__ = 'TProtocol_Station_equipment_new'
+   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   id = Column('PK_id',Integer, Sequence('TProtocol_Station_equipment_new_pk_id'), primary_key = True)
+   fk_rfid = Column(Integer, ForeignKey(ViewRfid.id))
+   fk_geo = Column(Integer, ForeignKey(MonitoredStation.id))
+   begin_date = Column('beginDATE', DateTime, nullable = False)
+   end_date = Column('endDATE', DateTime, nullable = True)

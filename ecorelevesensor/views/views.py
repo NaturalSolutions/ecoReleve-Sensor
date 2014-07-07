@@ -11,18 +11,24 @@ from sqlalchemy.sql.expression import label
 
 from pyramid.httpexceptions import HTTPBadRequest, HTTPCreated, HTTPServerError, HTTPOk
 
-import datetime, operator
+import datetime, operator, time
+import re
+
+
 
 from ecorelevesensor.models import DBSession
 
-from ecorelevesensor.models.sensor import Argos, Gps
+from ecorelevesensor.models.sensor import Argos, Gps, Rfid
 from ecorelevesensor.models.data import (
    Individuals,
    ProtocolArgos,
    ProtocolGps,
    ProtocolIndividualEquipment,
    SatTrx,
-   Station
+   Station,
+   ViewRfid,
+   MonitoredStation,
+   ProtocolStationEquipment
    )
 
 # Data imported from the CLS WS during the last week.
@@ -227,3 +233,136 @@ def station_graph(request):
 @view_config(route_name = 'individuals/count', renderer = 'json')
 def individuals_count(request):
    return DBSession.execute(select([func.count(Individuals.id).label('nb')])).scalar()
+
+@view_config(route_name = 'rfid_import', renderer = 'string')
+def rfid_import(request):
+   data = []
+   message = ""
+   field_label = []
+   isHead = False
+   try:
+      content = request.POST['data']
+      if re.compile('\r\n').search(content):
+         data = content.split('\r\n')
+      elif re.compile('\n').search(content):
+         data = content.split('\n')
+      elif re.compile('\r').search(content):
+         data = content.split('\r')
+
+      fieldtype1 = {'NB':'no','TYPE':'type','"PUCE "':'code','DATE':'no','TIME':'no'}
+      fieldtype2 = {'#':'no','Transponder Type:':'type','Transponder Code:':'code','Date:':'no','Time:':'no','Event:':'Event','Unit #:':'Unit','Antenna #:':'Antenna','Memo:':'Memo','Custom:':'Custom','':''}
+      fieldtype3 = {'Transponder Type:':'type','Transponder Code:':'code','Date:':'no','Time:':'no','Event:':'Event','Unit #:':'Unit','Antenna #:':'Antenna','Memo:':'Memo','Custom:':'Custom'}
+   
+      entete = data[0] 
+      if re.compile('\t').search(entete):
+         separateur = '\t'
+      elif re.compile(';').search(entete):
+         separateur = ';'
+      entete = entete.split(separateur)
+      #file with head
+      if (sorted(entete) == sorted(fieldtype1.keys())):# or len(entete) == len(fieldtype1.keys())):
+         field_label = ["no","Type","Code","date","time"]
+         isHead = True
+      elif (sorted(entete) == sorted(fieldtype2.keys())):# or len(entete) == len(fieldtype2.keys())):
+         field_label = ["no","Type","Code","date","time","no","no","no","no","no"]
+         isHead = True
+      elif (sorted(entete) == sorted(fieldtype3.keys())):# or len(entete) == len(fieldtype3.keys())):
+         field_label = ["Type","Code","date","time","no","no","no","no","no"]  
+         isHead = True
+      else:# without head
+         isHead = False
+         if separateur == ';':
+            field_label = ["no","Type","Code","date","time","no","no","no","no","no"]
+         else:
+            if len(entete) > 5:
+               field_label = ["Type","Code","date","time","no","no","no","no","no"]
+               if entete[0] == 'Transponder Type:':
+                  isHead = True
+            else: 
+               field_label = ["no","Type","Code","date","time"]
+
+      j=0
+      code = ""
+      date = ""
+      dt = ""
+      Rfids = []
+      if (isHead):
+         j=1
+      #parsing data
+      while j < len(data):
+         i = 0
+         if data[j] != "":
+            row = data[j].replace('"','').split(separateur)
+            while i < len(field_label):
+               if field_label[i] == 'Code':
+                  code = row[i]
+               if field_label[i] == 'date':
+                  date = row[i]
+               if field_label[i] == 'time':
+                  #time = 
+                  time = re.sub('\s','',row[i])
+                  format_dt = '%d/%m/%Y %H:%M:%S'
+                  if re.search('PM|AM',time):
+                     format_dt = '%d/%m/%Y %I:%M:%S%p'
+                  dt = date+' '+time
+                  dt = datetime.datetime.strptime(dt, format_dt).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+               i=i+1
+         if DBSession.execute(select([Rfid.id]).where(and_(Rfid.code == code,  Rfid.date == dt))).scalar() is None:
+            Rfids.append({'_code':code, '_date':dt})
+         j=j+1 
+      try:
+         if len(Rfids) > 0:
+            if DBSession.execute(insert(Rfid).values(code=bindparam('_code'), date=bindparam('_date')),Rfids):
+               message = str(len(Rfids))+' rows inserted'
+         else:
+            message = 'The data already exists'
+      except Exception as e:
+         message = e
+   except Exception as e:
+      message = e   
+   return message
+   
+@view_config(route_name = 'rfid_list', renderer = 'json')
+def rfid_list(request):
+   data = []
+   try:
+      for id in DBSession.execute(select([ViewRfid.id])).fetchall():
+         data.append({'id':id[0]})
+      return data
+   except Exception as e:
+      print e
+
+@view_config(route_name = 'monitored_station_list', renderer = 'json')
+def monitored_station_list(request):
+   data = []
+   try:
+      for id in DBSession.execute(select([MonitoredStation.id])).fetchall():
+         data.append({'id':id[0]})
+      return data
+   except Exception as e:
+      print e
+
+@view_config(route_name = 'rifd_monitored_add', renderer = 'string')
+def rifd_monitored_add(request):
+   message = ""
+   try:
+
+      begin_date = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+      fk_rfid = request.GET['rfid']
+      fk_geo = request.GET['site']
+      data = [{'_fk_rfid':int(fk_rfid), '_fk_geo':int(fk_geo), '_begin_date':begin_date}]
+      print data
+      print DBSession.execute(insert(ProtocolStationEquipment).values({"fk_rfid":int(fk_rfid), "fk_geo":int(fk_geo)}))
+      #fk_rfid=bindparam('_fk_rfid'), fk_geo=bindparam('_fk_geo'), begin_date = bindparam('_begin_date')),data)
+   except Exception as e:
+      print e
+      message = e
+   return ''
+
+
+
+
+
+
+
+

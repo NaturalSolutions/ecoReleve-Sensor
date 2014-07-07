@@ -45,3 +45,10 @@ class Gps(Base):
    course = Column('course', Integer)
    checked = Column('checked', Boolean, nullable = False, default = False)
    imported = Column('imported', Boolean, nullable = False, default = False)
+
+class Rfid(Base):
+   __tablename__ = 'Trfid'
+   __table_args__ = {'schema': 'ecoReleve_Sensor.dbo'}
+   id = Column('PK_id', Integer, Sequence('Trfid_pk_id'), primary_key=True)
+   code = Column('code', String, nullable=False)
+   date = Column('date', DateTime, nullable=False)

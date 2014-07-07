@@ -11,7 +11,7 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
 requires = [
     'geoalchemy',
     'geopy',
-	 'pyodbc',
+	  'pyodbc',
     'pyramid',
     'pyramid_chameleon',
     'pyramid_debugtoolbar',
