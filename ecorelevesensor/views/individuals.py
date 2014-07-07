@@ -67,7 +67,7 @@ def core_individuals_search(request):
       return []
 
 @view_config(route_name=route_prefix + 'stations', renderer='json')
-def core_individuals_search(request):
+def core_individuals_stations(request):
    ''' Get the stations of an identified individual. Parameter is : id (int)'''
    try:
       id = int(request.params['id'])
@@ -78,5 +78,4 @@ def core_individuals_search(request):
          result['features'].append({'type':'Feature', 'properties':{'date':int((date-datetime.utcfromtimestamp(0)).total_seconds())}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
       return result
    except:
-      raise
       return []

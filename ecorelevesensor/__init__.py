@@ -13,7 +13,6 @@ from ecorelevesensor.models import (
 def request_factory(env):
 	request = Request(env)
 	request.response = Response()
-	request.response.headerlist = []
 	request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
 	return request
 
