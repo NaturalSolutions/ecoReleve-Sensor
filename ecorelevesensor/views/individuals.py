@@ -1,6 +1,6 @@
 from sqlalchemy import select, cast, Float
 from ecorelevesensor.models import DBSession
-from ecorelevesensor.models.data import V_Search_Indiv, TViewStations
+from ecorelevesensor.models.data import V_Search_Indiv, V_Individuals_LatLonDate
 from pyramid.view import view_config
 from collections import OrderedDict
 from datetime import datetime
@@ -72,7 +72,8 @@ def core_individuals_stations(request):
    try:
       id = int(request.params['id'])
       # Look over the criteria list
-      query = select([cast(TViewStations.c.lat, Float), cast(TViewStations.c.lon, Float), TViewStations.c.date]).where(TViewStations.c.FK_IND_ID == id).order_by(TViewStations.c.date)
+      query = select([cast(V_Individuals_LatLonDate.c.lat, Float), cast(V_Individuals_LatLonDate.c.lon, Float), V_Individuals_LatLonDate.c.date]
+                     ).where(V_Individuals_LatLonDate.c.indID == id).order_by(V_Individuals_LatLonDate.c.date)
       result = {'type':'FeatureCollection', 'features':[]}
       for lat, lon, date in DBSession.execute(query).fetchall():
          result['features'].append({'type':'Feature', 'properties':{'date':int((date-datetime.utcfromtimestamp(0)).total_seconds())}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
