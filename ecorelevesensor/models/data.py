@@ -18,7 +18,7 @@ data_schema = dbConfig['data_schema']
 
 class Station(Base):
    __tablename__ = 'TStations'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
@@ -36,7 +36,7 @@ class Station(Base):
 
 class ProtocolIndividualEquipment(Base):
    __tablename__ =  'TProtocol_Individual_Equipment'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK_ID', Integer, Sequence('TProtocol_Individual_Equipment_pk_id'), primary_key = True)
    sat_id = Column('FK_SAT_ID', Integer)
    ind_id = Column('FK_IND_ID', Integer)
@@ -45,7 +45,7 @@ class ProtocolIndividualEquipment(Base):
 
 class SatTrx(Base):
    __tablename__ = 'TViewTrx_Sat'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   __table_args__ = {'schema': data_schema}
    id = Column('Trx_Sat_Obj_PK', Integer, primary_key = True)
    ptt = Column('id19@TCarac_PTT', Integer)
    manufacturer = Column('id42@TCaracThes_Company_Precision', String)
@@ -53,7 +53,7 @@ class SatTrx(Base):
 
 class Individuals(Base):
    __tablename__ = 'TViewIndividual'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   __table_args__ = {'schema': data_schema}
    id = Column('Individual_Obj_PK', Integer, primary_key = True)
    ptt = Column('id19@TCarac_PTT', Integer)
    age = Column('id2@Thes_Age_Precision', String)
@@ -67,7 +67,7 @@ class Individuals(Base):
 
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable = False)
@@ -77,7 +77,7 @@ class ProtocolGps(Base):
 
 class ProtocolArgos(Base):
    __tablename__ = 'TProtocol_ArgosDataArgos'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataArgos_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable = False)
@@ -93,14 +93,14 @@ class ProtocolArgos(Base):
 
 class ProtocolReleaseIndividual(Base):
    __tablename__ = 'TProtocol_Release_Individual'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
 
 class ProtocolCaptureIndividual(Base):
    __tablename__ = 'TProtocol_Capture_Individual'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
@@ -126,7 +126,7 @@ TViewStations = Table('TViewStations', Base.metadata,
 
 class ViewRfid(Base):
    __tablename__ = 'TViewRFID'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   __table_args__ = {'schema': data_schema}
    id = Column('RFID_Obj_pk', Integer, primary_key = True)
    serial_number = Column('id65@TCarac_rfid_Serial_number',Integer)
    model = Column('id41@TCaracThes_Model',Integer)
@@ -138,7 +138,7 @@ class ViewRfid(Base):
 
 class MonitoredStation(Base):
    __tablename__ = 'TMonitoredStations'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
+   __table_args__ = {'schema': data_schema}
    id = Column('TGeo_pk_id', Integer, primary_key = True)
    name = Column('Name', String(50))
    creation_date = Column('Creation_date',DateTime)
@@ -150,7 +150,7 @@ class MonitoredStation(Base):
 
 class ProtocolStationEquipment(Base):
    __tablename__ = 'TProtocol_Station_equipment_new'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo', 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK_id',Integer, Sequence('TProtocol_Station_equipment_new_pk_id'), primary_key = True)
    fk_rfid = Column(Integer, ForeignKey(ViewRfid.id))
    fk_geo = Column(Integer, ForeignKey(MonitoredStation.id))
