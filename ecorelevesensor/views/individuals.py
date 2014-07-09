@@ -97,12 +97,14 @@ def core_individuals_history(request):
                      ).where(V_Individuals_History.c.id == id
                      ).order_by(V_Individuals_History.c.carac, desc(V_Individuals_History.c.begin_date))
       # Create list of characteristic history
-      null_date_filter = lambda date: str(date) if date is not None else date
+      null_date_filter = lambda date: None if date is None else str(date)
       history = [OrderedDict([('characteristic',label), ('value',value), ('from',str(begin_date)), ('to',null_date_filter(end_date))]) for label, value, begin_date, end_date in DBSession.execute(query).fetchall()]
       result = {'history':history}
       # Get current value from the list, preventing a new connection to the database
       result['Age'] = next((item['value'] for item in history if item['characteristic'] == 'Age'), None)
+      result['Sex'] = next((item['value'] for item in history if item['characteristic'] == 'Sex'), None)
       result['PTT'] = next((item['value'] for item in history if item['characteristic'] == 'PTT'), None)
+      result['Species'] = next((item['value'] for item in history if item['characteristic'] == 'Species'), None)
       result['Origin'] = next((item['value'] for item in history if item['characteristic'] == 'Origin'), None)
       return result
    except:
