@@ -65,6 +65,24 @@ class Individuals(Base):
    monitoring_status = Column('id60@TCaracThes_Monitoring_Status_Precision', String)
    survey_type = Column('id61@TCaracThes_Survey_type_Precision', String)
 
+class CaracTypes(Base):
+   __tablename__ = 'TObj_Carac_type'
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
+   id = Column('Carac_type_Pk', Integer, Sequence('TObj_Carac_type_pk_id'), primary_key = True)
+   label = Column('label', String)
+
+class ObjectsCaracValues(Base):
+   __tablename__ = 'TObj_Carac_value'
+   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
+   id = Column('Carac_value_Pk', Integer, Sequence('TObj_Carac_value_pk_id'), primary_key = True)
+   object = Column('fk_object', Integer)
+   carac_type = Column('Fk_carac', Integer, ForeignKey(CaracTypes.id))
+   object_type = Column('object_type', String)
+   value = Column('value', String)
+   value_precision = Column('value_precision', String)
+   begin_date = Column(DateTime)
+   end_date = Column(DateTime)
+
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'
    __table_args__ = {'schema': data_schema, 'implicit_returning': False}
@@ -123,6 +141,15 @@ V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
                       Column('lon', Numeric),
                       Column('date', DateTime),
                       schema=data_schema)
+
+V_Individuals_History = Table('V_Individuals_History', Base.metadata,
+                              Column('ind_id', Integer, key='id'),
+                              Column('Fk_carac', Integer, key='carac'),
+                              Column('value', String),
+                              Column('begin_date', DateTime),
+                              Column('end_date', DateTime),
+                              Column('label', String),
+                              schema=data_schema)
 
 class ViewRfid(Base):
    __tablename__ = 'TViewRFID'
