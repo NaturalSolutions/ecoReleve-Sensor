@@ -64,10 +64,7 @@ def core_individuals_search(request):
       if len(order_by_clause) > 0:
          query = query.order_by(*order_by_clause)
       # Run query
-      result = []
-      for row in DBSession.execute(query).fetchall():
-         result.append(OrderedDict(row))
-      return result
+      return [OrderedDict(row) for row in DBSession.execute(query).fetchall()]
    except:
       return []
 
