@@ -460,6 +460,7 @@ def views_filter_count(request):
       name_vue = request.matchdict['name']
       table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
       criteria = request.params
+
       query = select([func.count(table.c.values()[0])])
       query = query_criteria(query, table, criteria)
 
@@ -668,13 +669,13 @@ def query_criteria(query, table, criteria):
                   query = query.where(table.c[column] > sp[1])
                elif sp[0] == '<>':
                   query = query.where(table.c[column] != sp[1])
-               elif sp[0] == '=':
-                  query = query.where(table.c[column] == sp[1])
             else:
                if value == 'IS NULL':
                   query = query.where(table.c[column].is_(None))
                elif value == 'IS NOT NULL':
                   query = query.where(table.c[column].isnot(None))
+               else:
+                  query = query.where(table.c[column] == value)
          else:
             if column == 'bbox':
                sp = value.split(',')

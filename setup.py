@@ -20,6 +20,7 @@ requires = [
     'transaction',
     'waitress',
     'zope.sqlalchemy',
+    'reportlab'
     ]
 
 setup(name='ecorelevesensor',
