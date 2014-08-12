@@ -9,19 +9,19 @@ with open(os.path.join(here, 'CHANGES.txt')) as f:
     CHANGES = f.read()
 
 requires = [
-    'geoalchemy',
-    'geopy',
-	  'pyodbc',
-    'pyramid',
-    'pyramid_chameleon',
-    'pyramid_debugtoolbar',
-    'pyramid_tm',
-    'sqlalchemy',
-    'transaction',
-    'waitress',
-    'zope.sqlalchemy',
-    'reportlab'
-    ]
+   'geoalchemy',
+   'geopy',
+   'pyodbc',
+   'pyramid',
+   'pyramid_chameleon',
+   'pyramid_debugtoolbar',
+   'pyramid_tm',
+   'reportlab',
+   'sqlalchemy',
+   'transaction',
+   'waitress',
+   'zope.sqlalchemy',
+   ]
 
 setup(name='ecorelevesensor',
       version='0.0',
