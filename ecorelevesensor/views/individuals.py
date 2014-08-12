@@ -1,6 +1,11 @@
-from sqlalchemy import func, select, cast, Float
+from sqlalchemy import select, cast, Date, Float, desc, join
 from ecorelevesensor.models import DBSession
-from ecorelevesensor.models.data import V_Search_Indiv, TViewStations, Individuals
+from ecorelevesensor.models.data import (
+   CaracTypes,
+   V_Search_Indiv,
+   V_Individuals_LatLonDate,
+   V_Individuals_History
+)
 from pyramid.view import view_config
 from collections import OrderedDict
 from datetime import datetime
@@ -59,10 +64,7 @@ def core_individuals_search(request):
       if len(order_by_clause) > 0:
          query = query.order_by(*order_by_clause)
       # Run query
-      result = []
-      for row in DBSession.execute(query).fetchall():
-         result.append(OrderedDict(row))
-      return result
+      return [OrderedDict(row) for row in DBSession.execute(query).fetchall()]
    except:
       return []
 
@@ -71,11 +73,36 @@ def core_individuals_stations(request):
    ''' Get the stations of an identified individual. Parameter is : id (int)'''
    try:
       id = int(request.params['id'])
-      # Look over the criteria list
-      query = select([cast(TViewStations.c.lat, Float), cast(TViewStations.c.lon, Float), TViewStations.c.date]).where(TViewStations.c.FK_IND_ID == id).order_by(TViewStations.c.date)
-      result = {'type':'FeatureCollection', 'features':[]}
-      for lat, lon, date in DBSession.execute(query).fetchall():
-         result['features'].append({'type':'Feature', 'properties':{'date':int((date-datetime.utcfromtimestamp(0)).total_seconds())}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
+      # Query
+      query = select([cast(V_Individuals_LatLonDate.c.lat, Float), cast(V_Individuals_LatLonDate.c.lon, Float), V_Individuals_LatLonDate.c.date]
+                     ).where(V_Individuals_LatLonDate.c.indID == id).order_by(V_Individuals_LatLonDate.c.date)
+      # Create list of features from query result
+      features = [{'type':'Feature', 'properties':{'date':int((date-datetime.utcfromtimestamp(0)).total_seconds())}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}}
+                  for lat, lon, date in DBSession.execute(query).fetchall()]
+      result = {'type':'FeatureCollection', 'features':features}
+      return result
+   except:
+      return []
+
+@view_config(route_name=route_prefix + 'history', renderer='json')
+def core_individuals_history(request):
+   ''' Get the history of an identified individual. Parameter is : id (int)'''
+   try:
+      id = int(request.params['id'])
+      # Query for characteristic history list
+      query = select([V_Individuals_History.c.label, V_Individuals_History.c.value, cast(V_Individuals_History.c.begin_date, Date), cast(V_Individuals_History.c.end_date, Date)]
+                     ).where(V_Individuals_History.c.id == id
+                     ).order_by(V_Individuals_History.c.carac, desc(V_Individuals_History.c.begin_date))
+      # Create list of characteristic history
+      null_date_filter = lambda date: None if date is None else str(date)
+      history = [OrderedDict([('characteristic',label), ('value',value), ('from',str(begin_date)), ('to',null_date_filter(end_date))]) for label, value, begin_date, end_date in DBSession.execute(query).fetchall()]
+      result = {'history':history}
+      # Get current value from the list, preventing a new connection to the database
+      result['Age'] = next((item['value'] for item in history if item['characteristic'] == 'Age'), None)
+      result['Sex'] = next((item['value'] for item in history if item['characteristic'] == 'Sex'), None)
+      result['PTT'] = next((item['value'] for item in history if item['characteristic'] == 'PTT'), None)
+      result['Species'] = next((item['value'] for item in history if item['characteristic'] == 'Species'), None)
+      result['Origin'] = next((item['value'] for item in history if item['characteristic'] == 'Origin'), None)
       return result
    except:
       return []

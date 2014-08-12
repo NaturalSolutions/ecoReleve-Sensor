@@ -29,6 +29,7 @@ def add_routes(config):
 
    config.add_route('theme/list', 'ecoReleve-Core/theme/list')
    ##### Individuals routes #####
+   config.add_route('core/individuals/history', 'ecoReleve-Core/individuals/history')
    config.add_route('core/individuals/stations', 'ecoReleve-Core/individuals/stations')
    config.add_route('core/individuals/search/values', 'ecoReleve-Core/individuals/search/values')
    config.add_route('core/individuals/search', 'ecoReleve-Core/individuals/search')
