@@ -51,19 +51,22 @@ class SatTrx(Base):
    manufacturer = Column('id42@TCaracThes_Company_Precision', String)
    model = Column('id41@TCaracThes_Model_Precision', String)
 
+individual_table = Table('TViewIndividual', Base.metadata, 
+                         Column('Individual_Obj_PK', Integer, primary_key = True, key = 'id'),
+                         Column('id19@TCarac_PTT', Integer, key='ptt'),
+                         Column('id2@Thes_Age_Precision', String, key='age'),
+                         Column('id30@TCaracThes_Sex_Precision', String, key='sex'),
+                         Column('id9@TCarac_Release_Ring_Code', String, key = 'release_ring_code'),
+                         Column('id33@Thes_Origin_Precision', String, key='origin'),
+                         Column('id34@TCaracThes_Species_Precision', String, key='specie'),
+                         Column('id59@TCaracThes_Individual_Status', String, key='status'),
+                         Column('id60@TCaracThes_Monitoring_Status_Precision', String, key='monitoring_status'),
+                         Column('id61@TCaracThes_Survey_type_Precision', String, key='survey_type'),
+                         schema=data_schema
+                         )
+
 class Individuals(Base):
-   __tablename__ = 'TViewIndividual'
-   __table_args__ = {'schema': data_schema}
-   id = Column('Individual_Obj_PK', Integer, primary_key = True)
-   ptt = Column('id19@TCarac_PTT', Integer)
-   age = Column('id2@Thes_Age_Precision', String)
-   sex = Column('id30@TCaracThes_Sex_Precision', String)
-   release_ring_code = Column('id9@TCarac_Release_Ring_Code', String)
-   origin = Column('id33@Thes_Origin_Precision', String)
-   specie = Column('id34@TCaracThes_Species_Precision', String)
-   status = Column('id59@TCaracThes_Individual_Status', String)
-   monitoring_status = Column('id60@TCaracThes_Monitoring_Status_Precision', String)
-   survey_type = Column('id61@TCaracThes_Survey_type_Precision', String)
+   __table__ = individual_table
 
 class CaracTypes(Base):
    __tablename__ = 'TObj_Carac_type'
@@ -136,7 +139,7 @@ V_Search_Indiv = Table('V_Search_Indiv', Base.metadata,
                        schema=data_schema, autoload=True)
 
 V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
-                      Column('indID', Integer),
+                      Column('ind_id', Integer),
                       Column('lat', Numeric),
                       Column('lon', Numeric),
                       Column('date', DateTime),
@@ -150,6 +153,12 @@ V_Individuals_History = Table('V_Individuals_History', Base.metadata,
                               Column('end_date', DateTime),
                               Column('label', String),
                               schema=data_schema)
+
+V_Individuals_Stations = Table('V_Individuals_Stations', Base.metadata,
+                               Column('ind_id', Integer),
+                               Column('sta_id', Integer),
+                               Column('fk_sta_type', Integer),
+                               schema = data_schema)
 
 class ViewRfid(Base):
    __tablename__ = 'TViewRFID'

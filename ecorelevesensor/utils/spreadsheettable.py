@@ -7,7 +7,7 @@ from reportlab.platypus.tables import *
 from reportlab.platypus.tables import (_rowLen, _calc_pc, _hLine, _multiLine,
     _convert2int, _endswith, _isLineCommand, _setCellStyle)
 
-from formula import Formula
+from .formula import Formula
 
 def spanFixDim(V0,V,spanCons,FUZZ=rl_config._FUZZ):
     #assign required space to variable rows equally to existing calculated values
@@ -99,7 +99,7 @@ class SpreadsheetTable(Flowable):
             for i in xrange(nrows):
                 cellcols = []
                 for j in xrange(ncols):
-                    cellcols.append(CellStyle(`(i,j)`))
+                    cellcols.append(CellStyle('(i,j)'))
                 cellrows.append(cellcols)
             self._cellStyles = cellrows
         else:
@@ -453,8 +453,8 @@ class SpreadsheetTable(Flowable):
             else:
                 assert isinstance(w,(int,float))
                 totalDefined = totalDefined + w
-        if verbose: print 'prelim width calculation.  %d columns, %d undefined width, %0.2f units remain' % (
-            self._ncols, numberUndefined, availWidth - totalDefined)
+        if verbose: print('prelim width calculation.  %d columns, %d undefined width, %0.2f units remain' % (
+            self._ncols, numberUndefined, availWidth - totalDefined))
 
         #check columnwise in each None column to see if they are sizable.
         given = []
@@ -486,9 +486,9 @@ class SpreadsheetTable(Flowable):
                 given.append(colNo)
         if len(given) == self._ncols:
             return
-        if verbose: print 'predefined width:   ',given
-        if verbose: print 'uncomputable width: ',unsizeable
-        if verbose: print 'computable width:   ',sizeable
+        if verbose: print('predefined width:   ',given)
+        if verbose: print('uncomputable width: ',unsizeable)
+        if verbose: print('computable width:   ',sizeable)
 
         # how much width is left:
         remaining = availWidth - (totalMinimum + totalDefined)
@@ -572,7 +572,7 @@ class SpreadsheetTable(Flowable):
         else:
             for colNo, minimum in minimums.items():
                 W[colNo] = minimum
-        if verbose: print 'new widths are:', W
+        if verbose: print('new widths are:', W)
         self._argW = self._colWidths = W
         return W
 
@@ -854,7 +854,7 @@ class SpreadsheetTable(Flowable):
         self.canv.restoreState()
         self._curcolor = None
 
-    def _drawUnknown(self,  (sc, sr), (ec, er), weight, color, count, space):
+    def _drawUnknown(self, sc_sr, ec_er, weight, color, count, space):
         #we are only called from _drawLines which is one level up
         import sys
         op = sys._getframe(1).f_locals['op']
@@ -909,7 +909,9 @@ class SpreadsheetTable(Flowable):
             return line_num
         raise ValueError('`line_num` outside visible area!')
 
-    def _drawGrid(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawGrid(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole grid is outside visible area.
         if sr >= self.repeatRows and er < activeRows0:
@@ -921,7 +923,9 @@ class SpreadsheetTable(Flowable):
         self._drawBox( (sc, sr), (ec, er), weight, color, count, space)
         self._drawInnerGrid( (sc, sr), (ec, er), weight, color, count, space)
 
-    def _drawBox(self,  (sc, sr), (ec, er), weight, color, count, space):
+    def _drawBox(self,  sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole box is outside visible area.
         if sr >= self.repeatRows and er < activeRows0:
@@ -942,7 +946,9 @@ class SpreadsheetTable(Flowable):
         self._drawVLines((sc, sr), (sc, er + 1), weight, color, count, space)
         self._drawVLines((ec+1, sr), (ec+1, er + 1), weight, color, count, space)
 
-    def _drawInnerGrid(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawInnerGrid(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole inner grid is outside visible area.
         if sr >= self.repeatRows and er < activeRows0:
@@ -954,7 +960,9 @@ class SpreadsheetTable(Flowable):
         self._drawHLines((sc, sr+1), (ec, er), weight, color, count, space)
         self._drawVLines((sc+1, sr), (ec, er + 1), weight, color, count, space)
 
-    def _drawLineAbove(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawLineAbove(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole row range is outside visible area.
         if sr >= self.repeatRows and er < activeRows0:
@@ -973,7 +981,9 @@ class SpreadsheetTable(Flowable):
         for vis in visible:
             self._drawHLines((sc, vis), (ec, vis), weight, color, count, space)
 
-    def _drawLineBelow(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawLineBelow(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole row range is outside visible area.
         if sr >= self.repeatRows and er < activeRows0:
@@ -1000,7 +1010,9 @@ class SpreadsheetTable(Flowable):
             self.canv.setLineWidth(weight)
             self._curweight = weight
 
-    def _drawHLines(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawHLines(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         ecp = self._colpositions[sc:ec+2]
 
         visible = [i for i in xrange(sr, er + 1) if self._is_visible_line(i)]
@@ -1021,7 +1033,9 @@ class SpreadsheetTable(Flowable):
             for y in rp:
                 _hLine(lf, scp, ecp, y, hBlocks)
 
-    def _drawVLines(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawVLines(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         visible = [i for i in xrange(sr, er + 1) if self._is_visible_line(i)]
         rp_pos = [self._abs_to_vis(abs_num) for abs_num in visible]
         erp = [self._rowpositions[pos] for pos in rp_pos]
@@ -1041,7 +1055,9 @@ class SpreadsheetTable(Flowable):
             for x in cp:
                 _hLine(lf, erp, srp, x, vBlocks)
 
-    def _drawLineAfter(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawLineAfter(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole row range is outside visible area.
         if sr >= self.repeatRows and er + 1 < activeRows0:
@@ -1052,7 +1068,9 @@ class SpreadsheetTable(Flowable):
         # Some parts visible - rendering.
         self._drawVLines((sc + 1, sr), (ec + 1, er + 1), weight, color, count, space)
 
-    def _drawLineBefore(self, (sc, sr), (ec, er), weight, color, count, space):
+    def _drawLineBefore(self, sc_sr, ec_er, weight, color, count, space):
+        sc, sr = sc_sr
+        ec, er = ec_er
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
         # Checks if whole row range is outside visible area.
         if sr >= self.repeatRows and er + 1 < activeRows0:
@@ -1263,7 +1281,9 @@ class SpreadsheetTable(Flowable):
                     canv.setFillColor(color)
                     canv.rect(x0, y0, w, h, stroke=0,fill=1)
 
-    def _drawCell(self, cellval, cellstyle, (colpos, rowpos), (colwidth, rowheight)):
+    def _drawCell(self, cellval, cellstyle, colpos_rowpos, colwidth_rowheight):
+        colpos, rowpos = colpos_rowpos
+        colwidth, rowheight = colwidth_rowheight
         if self._curcellstyle is not cellstyle:
             cur = self._curcellstyle
             if cur is None or cellstyle.color != cur.color:

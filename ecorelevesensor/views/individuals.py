@@ -1,7 +1,8 @@
-from sqlalchemy import select, cast, Date, Float, desc, join
+from sqlalchemy import select, cast, Date, Float, desc, func
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.data import (
    CaracTypes,
+   Individuals,
    V_Search_Indiv,
    V_Individuals_LatLonDate,
    V_Individuals_History
@@ -32,41 +33,38 @@ def core_individuals_values(request):
 
 @view_config(route_name=route_prefix + 'search', renderer='json', request_method='POST')
 def core_individuals_search(request):
-   ''' Search individuals by posting a JSON object containing the fields :
-      - criteria : dict object with column_name:value fields
-      - order_by : dict object with column_name:'asc' or column_name:'desc' fields
-      - offset   : int
-      - limit    : int
-   '''
-   try:
-      query = select(V_Search_Indiv.c)
-      # Look over the criteria list
-      criteria = request.json_body.get('criteria', {})
-      for column, value in criteria.items():
-         if column in V_Search_Indiv.columns:
+    '''Search individuals by posting a JSON object containing the fields :
+        - criteria : dict object with column_name:value fields
+        - order_by : dict object with column_name:'asc' or column_name:'desc' fields
+        - offset   : int
+        - limit    : int
+    '''
+    query = select(V_Search_Indiv.c)
+    # Look over the criteria list
+    criteria = request.json_body.get('criteria', {})
+    for column, value in criteria.items():
+        if column in V_Search_Indiv.columns:
             query = query.where(V_Search_Indiv.columns[column] == value)
-      # Define the limit and offset if exist
-      limit = int(request.json_body.get('limit', 0))
-      offset = int(request.json_body.get('offset', 0))
-      if limit > 0:
-         query = query.limit(limit)
-      if offset > 0:
-         offset = query.offset(offset)
-      # Set sorting columns and order
-      order_by = request.json_body.get('order_by', {})
-      order_by_clause = []
-      for column, order in order_by.items():
-         if column in V_Search_Indiv.columns:
+    # Define the limit and offset if exist
+    limit = int(request.json_body.get('limit', 0))
+    offset = int(request.json_body.get('offset', 0))
+    if limit > 0:
+        query = query.limit(limit)
+    if offset > 0:
+        offset = query.offset(offset)
+    # Set sorting columns and order
+    order_by = request.json_body.get('order_by', {})
+    order_by_clause = []
+    for column, order in order_by.items():
+        if column in V_Search_Indiv.columns:
             if order == 'asc':
-               order_by_clause.append(V_Search_Indiv.columns[column].asc())
+                order_by_clause.append(V_Search_Indiv.columns[column].asc())
             elif order == 'desc':
-               order_by_clause.append(V_Search_Indiv.columns[column].desc())
-      if len(order_by_clause) > 0:
-         query = query.order_by(*order_by_clause)
-      # Run query
-      return [OrderedDict(row) for row in DBSession.execute(query).fetchall()]
-   except:
-      return []
+                order_by_clause.append(V_Search_Indiv.columns[column].desc())
+    if len(order_by_clause) > 0:
+        query = query.order_by(*order_by_clause)
+    # Run query
+    return [OrderedDict(row) for row in DBSession.execute(query).fetchall()]
 
 @view_config(route_name=route_prefix + 'stations', renderer='json')
 def core_individuals_stations(request):
@@ -75,10 +73,17 @@ def core_individuals_stations(request):
       id = int(request.params['id'])
       # Query
       query = select([cast(V_Individuals_LatLonDate.c.lat, Float), cast(V_Individuals_LatLonDate.c.lon, Float), V_Individuals_LatLonDate.c.date]
-                     ).where(V_Individuals_LatLonDate.c.indID == id).order_by(V_Individuals_LatLonDate.c.date)
+                     ).where(V_Individuals_LatLonDate.c.ind_id == id).order_by(desc(V_Individuals_LatLonDate.c.date))
       # Create list of features from query result
-      features = [{'type':'Feature', 'properties':{'date':int((date-datetime.utcfromtimestamp(0)).total_seconds())}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}}
-                  for lat, lon, date in DBSession.execute(query).fetchall()]
+      epoch = datetime.utcfromtimestamp(0)
+      features = [
+          {
+              'type':'Feature',
+              'properties':{'date':(date - epoch).total_seconds()},
+              'geometry':{'type':'Point', 'coordinates':[lon,lat]}
+          }
+          for lat, lon, date in reversed(DBSession.execute(query).fetchall())]
+                  
       result = {'type':'FeatureCollection', 'features':features}
       return result
    except:

@@ -20,6 +20,8 @@ def request_factory(env):
 # Add all the routes of the application.
 def add_routes(config):
    config.add_route('weekData', 'ecoReleve-Sensor/weekData')
+
+   ##### Argos / GSM routes #####
    config.add_route('argos/unchecked/list', 'ecoReleve-Sensor/argos/unchecked/list')
    config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
    config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')

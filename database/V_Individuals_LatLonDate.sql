@@ -1,7 +1,7 @@
 USE [ecoReleve_Data]
 GO
 
-/****** Object:  View [dbo].[VStations]    Script Date: 07/08/2014 16:42:57 ******/
+/****** Object:  View [dbo].[V_Individuals_LatLonDate]    Script Date: 08/12/2014 16:38:30 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -10,47 +10,20 @@ GO
 
 
 
---- Creation de la vue V_Individuals_LatLonDate
-Create view [dbo].[V_Individuals_LatLonDate] as
-select indID, lat, lon, date
-from
-(
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'Death' as staType
-	from dbo.TProtocol_Vertebrate_Individual_Death
+-- =============================================
+-- Author:		 Natural Solutions (Thomas PEEL)
+-- Create date:  12/08/2014
+-- Description:	 All stations of identified birds with station type
+-- Modified on:  -
+-- Modified by:  -
+-- =============================================
 
-	union
 
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'Nest' as staType
-	from dbo.TProtocol_Nest_Description
-	
-	union
-	
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'Release' as staType
-	from dbo.TProtocol_Release_Individual
-	
-	union
-	
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'Capture' as staType
-	from dbo.TProtocol_Capture_Individual
-	
-	union
-	
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'GPS' as staType
-	from dbo.TProtocol_ArgosDataGPS
-	
-	union
-	
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'Argos' as staType
-	from dbo.TProtocol_ArgosDataArgos
-	
-	union
-	
-	select FK_Tind_ID as indID, FK_TSta_ID as staID, 'Vertebrate Individual' as staType
-	from dbo.TProtocol_Vertebrate_Individual
-) t
-inner join TStations on staID = TSta_PK_ID
-where indID is not null and LAT is not null and LON is not null and DATE is not null
+CREATE view [dbo].[V_Individuals_LatLonDate] AS
+SELECT ind_id, lat, lon, date
+FROM V_Individuals_Stations
+INNER JOIN TStations
+	ON sta_id = TSta_PK_ID
+WHERE LAT is not null AND LON is not null AND DATE is not null
 
 GO
-
-
