@@ -4,13 +4,16 @@ from sqlalchemy import (
    DateTime,
    Float,
    ForeignKey,
+   Index,
    Integer,
    Numeric,
    Sequence,
    String,
-   Table
+   Table,
+   func
  )
 
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from ecorelevesensor.models import Base, dbConfig
 
@@ -30,7 +33,7 @@ class Station(Base):
    ele = Column('ele', Integer)
    precision = Column('Precision', Integer)
    creator = Column('Creator', Integer)
-   creationDate = Column('Creation_date', DateTime)
+   creationDate = Column('Creation_date', DateTime, server_default=func.now())
    protocol_argos = relationship('ProtocolArgos', uselist=False, backref='Station')
    protocol_gps = relationship('ProtocolGps', uselist=False, backref='Station')
 
@@ -51,19 +54,21 @@ class SatTrx(Base):
    manufacturer = Column('id42@TCaracThes_Company_Precision', String)
    model = Column('id41@TCaracThes_Model_Precision', String)
 
-individual_table = Table('TViewIndividual', Base.metadata, 
-                         Column('Individual_Obj_PK', Integer, primary_key = True, key = 'id'),
-                         Column('id19@TCarac_PTT', Integer, key='ptt'),
-                         Column('id2@Thes_Age_Precision', String, key='age'),
-                         Column('id30@TCaracThes_Sex_Precision', String, key='sex'),
-                         Column('id9@TCarac_Release_Ring_Code', String, key = 'release_ring_code'),
-                         Column('id33@Thes_Origin_Precision', String, key='origin'),
-                         Column('id34@TCaracThes_Species_Precision', String, key='specie'),
-                         Column('id59@TCaracThes_Individual_Status', String, key='status'),
-                         Column('id60@TCaracThes_Monitoring_Status_Precision', String, key='monitoring_status'),
-                         Column('id61@TCaracThes_Survey_type_Precision', String, key='survey_type'),
-                         schema=data_schema
-                         )
+individual_table = Table(
+    'TViewIndividual',
+    Base.metadata, 
+    Column('Individual_Obj_PK', Integer, primary_key = True, key = 'id'),
+    Column('id19@TCarac_PTT', Integer, key='ptt'),
+    Column('id2@Thes_Age_Precision', String, key='age'),
+    Column('id30@TCaracThes_Sex_Precision', String, key='sex'),
+    Column('id9@TCarac_Release_Ring_Code', String, key = 'release_ring_code'),
+    Column('id33@Thes_Origin_Precision', String, key='origin'),
+    Column('id34@TCaracThes_Species_Precision', String, key='specie'),
+    Column('id59@TCaracThes_Individual_Status', String, key='status'),
+    Column('id60@TCaracThes_Monitoring_Status_Precision', String, key='monitoring_status'),
+    Column('id61@TCaracThes_Survey_type_Precision', String, key='survey_type'),
+    schema=data_schema
+)
 
 class Individuals(Base):
    __table__ = individual_table
@@ -125,6 +130,29 @@ class ProtocolCaptureIndividual(Base):
    id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
+
+class User(Base):
+    __tablename__ = 'Tuser'
+    id = Column('PK_id', Integer, Sequence('TUser_pk_id'), primary_key = True)
+    lastname = Column(String(50), nullable=False)
+    firstname = Column(String(50), nullable=False)
+    creation_date = Column(DateTime, nullable=False,
+                           server_default=func.now())
+    login = Column('_login', String, nullable=False)
+    password = Column('_password', String, nullable=False)
+    language = Column('_language', String(2))
+    __table_args__ = (
+        Index('idx_Tuser_lastname_firstname', lastname, firstname),
+        {'schema':data_schema}
+    )
+
+    @hybrid_property
+    def fullname(self):
+        return self.lastname + ' ' + self.firstname
+        
+    #TUse_Departement = Column('TUse_Departement', String)
+    #TUse_Fonction = Column('TUse_Fonction', String)
+    #TUse_Actif = Column('TUse_Actif')
 
 ##### Views #####
 V_AllIndivs_Released_YearArea = Table('V_Qry_AllIndivs_Released_YearArea', Base.metadata,
@@ -213,20 +241,6 @@ class MapSelectionManager(Base):
    TSMan_Description = Column('TSMan_Description', String)
    TSMan_FK_Theme = Column(Integer, ForeignKey(ThemeEtude.id))
    TSMan_AdminQry = Column('TSMan_AdminQry')
-
-class User(Base):
-   __tablename__ = 'TUsers'
-   __table_args__ = {'schema': 'ECWP_TRACK_SECURITE.dbo'}
-   id = Column('TUse_Pk_ID', Integer, primary_key = True)
-   TUse_Nom = Column('TUse_Nom', String)
-   TUse_Prenom = Column('TUse_Prenom', String)
-   TUse_Actif = Column('TUse_Actif')
-   TUse_DateCreation = Column('TUse_DateCreation', DateTime)
-   TUse_Login = Column('TUse_Login', String)
-   TUse_Password = Column('TUse_Password', String)
-   TUse_Departement = Column('TUse_Departement', String)
-   TUse_Fonction = Column('TUse_Fonction', String)
-   TUse_Language = Column('TUse_Language', String)
 
 class Protocole(Base):
    __tablename__ = 'TProtocole'

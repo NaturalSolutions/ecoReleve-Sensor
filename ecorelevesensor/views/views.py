@@ -1,15 +1,21 @@
 from collections import OrderedDict
 from pyramid.view import view_config
 
-from sqlalchemy import Float, between, func, cast, Date, select, join, and_, insert, bindparam
-
+from sqlalchemy import (
+    Float,
+    between,
+    func,
+    cast,
+    Date,
+    select,
+    join, 
+    and_,
+    insert,
+    bindparam
+    )
 
 import datetime, operator
 import re, csv
-
-from ecorelevesensor.models import DBSession, _Base
-
-from ecorelevesensor.utils.spreadsheettable import SpreadsheetTable 
 
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import A4, landscape
@@ -19,7 +25,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus.flowables import PageBreak 
 from reportlab.lib import colors  
 
-from ecorelevesensor.models.sensor import Argos, Gps, Rfid
+from ..models import DBSession, _Base
 from ecorelevesensor.models.data import (
    Station,
    ViewRfid,
@@ -30,56 +36,75 @@ from ecorelevesensor.models.data import (
    User,
    Protocole,
    )
+from ..models.sensor import Argos, Gps, Rfid
+from ..utils.spreadsheettable import SpreadsheetTable 
 
 # Data imported from the CLS WS during the last week.
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
-   # Initialize Json object
-   data = {
-      'label':[str(datetime.date.today() - datetime.timedelta(days = i)) for i in range(1,8)],
-      'nbArgos': [0] * 7,
-      'nbGPS': [0] * 7
-   }
+    """Return an array of location number per day within the last seven days."""
+    today = datetime.date.today()
+    # Initialize Json object
+    data = {
+        'label':[str(today - datetime.timedelta(days = i)) for i in range(1,8)],
+        'nbArgos': [0] * 7,
+        'nbGPS': [0] * 7
+    }
 
-   # Argos data
-   argos_query = select([cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')]).where(Argos.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Argos.date, Date))
-   for date, nb in DBSession.execute(argos_query).fetchall():
-      try:
-         i = data['label'].index(str(date))
-         data['nbArgos'][i] = nb
-      except:
-         pass
+    # Argos data
+    argos_query = select(
+        [cast(Argos.date, Date).label('date'), func.count(Argos.id).label('nb')]
+        ).where(Argos.date >= today - datetime.timedelta(days = 7)
+        ).group_by(cast(Argos.date, Date)
+    )
+    for date, nb in DBSession.execute(argos_query).fetchall():
+        try:
+            i = data['label'].index(str(date))
+            data['nbArgos'][i] = nb
+        except: pass
 
-   # GPS data
-   gps_query = select([cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')]).where(Gps.date >= datetime.date.today() - datetime.timedelta(days = 7)).group_by(cast(Gps.date, Date))
-   for date, nb in DBSession.execute(gps_query).fetchall():
-      try:
-         i = data['label'].index(str(date))
-         data['nbGPS'][i] = nb
-      except:
-         pass
+    # GPS data
+    gps_query = select(
+        [cast(Gps.date, Date).label('date'), func.count(Gps.id).label('nb')]
+        ).where(Gps.date >= today - datetime.timedelta(days = 7)
+        ).group_by(cast(Gps.date, Date))
+    for date, nb in DBSession.execute(gps_query).fetchall():
+        try:
+            i = data['label'].index(str(date))
+            data['nbGPS'][i] = nb
+        except: pass
    
-   return data
+    return data
 
 @view_config(route_name = 'station_graph', renderer = 'json')
 def station_graph(request):
-   # Initialize Json object
-   data = OrderedDict()
+    # Initialize Json object
+    result = OrderedDict()
 
-   # Calculate the bounds
-   today = datetime.date.today()
-   begin_date = datetime.date(day = 1, month = today.month, year = today.year - 1)
-   end_date = datetime.date(day = 1, month = today.month, year = today.year)
+    # Calculate the bounds
+    today = datetime.date.today()
+    begin_date = datetime.date(day=1, month=today.month, year=today.year-1)
+    end_date = datetime.date(day=1, month=today.month, year=today.year)
 
-   # Query
-   query = select([func.count(Station.id).label('nb'), func.year(Station.date).label('year'), func.month(Station.date).label('month')]
-                  ).where(and_(Station.date >= begin_date, Station.date < end_date)).group_by(func.year(Station.date), func.month(Station.date))
+    # Query
+    query = select([
+        func.count(Station.id).label('nb'),
+        func.year(Station.date).label('year'),
+        func.month(Station.date).label('month')]
+        ).where(and_(Station.date >= begin_date, Station.date < end_date)
+        ).group_by(func.year(Station.date), func.month(Station.date)
+    )
 
-   # Execute query and sort result by year, month (faster than an order_by clause in this case)
-   for nb, y, m in sorted(DBSession.execute(query).fetchall(), key = operator.itemgetter(1,2)):
-      data[datetime.date(day = 1, month = m, year = y).strftime('%b') + ' ' + str(y)] = nb
+    """ 
+        Execute query and sort result by year, month
+        (faster than an order_by clause in this case)
+    """
+    data = DBSession.execute(query).fetchall()
+    for nb, y, m in sorted(data, key=operator.itemgetter(1,2)):
+        d = datetime.date(day=1, month=m, year=y).strftime('%b')
+        result[' '.join([d, str(y)])] = nb
 
-   return data
+    return result
 
 @view_config(route_name = 'rfid_import', renderer = 'string')
 def rfid_import(request):
@@ -225,13 +250,12 @@ def theme_list(request):
 
 @view_config(route_name = 'core/user/fieldworkers', renderer = 'json')
 def fieldWorkers(request):
-   data = []
-   try:
-      for id, name in DBSession.execute(select([User.id, (User.TUse_Nom+' '+User.TUse_Prenom)]).order_by(User.TUse_Nom+' '+User.TUse_Prenom)).fetchall():
-         data.append({'ID':id, "Nom":name})
-   except Exception as e:
-      print(e)
-   return data
+    query = select([
+        User.id, 
+        User.fullname
+    ]).order_by(User.lastname, User.firstname)
+    data = DBSession.execute(query).fetchall()
+    return [{'ID': user_id, 'Nom': fullname} for user_id, fullname in data]
 
 @view_config(route_name = 'core/protocoles/list', renderer = 'string')
 def protocoles_list(request):
@@ -482,8 +506,7 @@ def views_filter_export(request):
       doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
       return name_file
-   except Exception as e:
-      raise
+   except: raise
 
 def query_criteria(query, table, criteria):
    for column, value in criteria.items():

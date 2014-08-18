@@ -12,7 +12,7 @@ def haversine(X, Y):
 
    Returns
    -------
-   dist : ndarray[n_points,]
+   ndarray[n_points,]
        The distances.
 
    """
