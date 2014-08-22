@@ -112,6 +112,6 @@ def core_individuals_history(request):
    except:
       return []
 
-@view_config(route_name = route_prefix+'count', renderer = 'json')
+@view_config(route_name=(route_prefix + 'count'), renderer='json')
 def core_individuals_count(request):
    return DBSession.execute(select([func.count(Individuals.id).label('nb')])).scalar()

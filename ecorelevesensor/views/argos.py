@@ -22,6 +22,8 @@ from ..models.data import (
 )
 from ecorelevesensor.utils.distance import haversine
 
+route_prefix = 'argos/'
+
 # List all PTTs having unchecked locations, with individual id and number of locations.
 @view_config(route_name='argos/unchecked/list', renderer='json')
 def argos_unchecked_list(request):
@@ -62,11 +64,11 @@ def argos_unchecked_list(request):
     data = DBSession.execute(unchecked_with_ind).fetchall()
     return [{'ptt':ptt,'ind_id':ind_id, 'count':nb} for ind_id, ptt, nb in data]
 
-@view_config(route_name = 'argos/unchecked/count', renderer = 'json')
+@view_config(route_name=route_prefix + 'unchecked/count', renderer='json')
 def argos_unchecked_count(request):
     """Returns the unchecked argos data count."""
-    return {'count': DBSession.query(func.count(Argos.pk)
-        ).filter(Argos.checked == 0).scalar()}
+    return DBSession.query(func.count(Argos.pk)
+        ).filter(Argos.checked == False).scalar()
    
 @view_config(route_name = 'gps/unchecked/count', renderer = 'json')
 def gps_unchecked_count(request):
@@ -192,7 +194,14 @@ def argos_unchecked(request):
             )
         ).where(ProtocolIndividualEquipment.ind_id == ind_id)
     except KeyError or TypeError:
-        all_data = select([unchecked.c.id, unchecked.c.date, unchecked.c.lat, unchecked.c.lon, unchecked.c.lc, unchecked.c.type])
+        all_data = select([
+            unchecked.c.pk,
+            unchecked.c.date,
+            unchecked.c.lat,
+            unchecked.c.lon,
+            unchecked.c.lc,
+            unchecked.c.type
+        ])
         ind_id = None
 
     # Initialize json object
@@ -200,7 +209,7 @@ def argos_unchecked(request):
    
     # Load data from the DB then
     # compute the distance between 2 consecutive points.
-    data = DBSession.execute(all_data.order_by(desc('date'))).fetchall()
+    data = DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall()
     df = pd.DataFrame.from_records(data, columns=data[0].keys(), coerce_float=True)
     X1 = df.ix[:,['lat', 'lon']].values[:-1,:]
     X2 = df.ix[1:,['lat', 'lon']].values
