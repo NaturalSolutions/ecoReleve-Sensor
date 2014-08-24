@@ -56,7 +56,7 @@ class SatTrx(Base):
 
 individual_table = Table(
     'TViewIndividual',
-    Base.metadata, 
+    Base.metadata,
     Column('Individual_Obj_PK', Integer, primary_key = True, key = 'id'),
     Column('id19@TCarac_PTT', Integer, key='ptt'),
     Column('id2@Thes_Age_Precision', String, key='age'),
@@ -131,40 +131,19 @@ class ProtocolCaptureIndividual(Base):
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
 
-class User(Base):
-    __tablename__ = 'Tuser'
-    id = Column('PK_id', Integer, Sequence('TUser_pk_id'), primary_key = True)
-    lastname = Column(String(50), nullable=False)
-    firstname = Column(String(50), nullable=False)
-    creation_date = Column(DateTime, nullable=False,
-                           server_default=func.now())
-    login = Column('_login', String, nullable=False)
-    password = Column('_password', String, nullable=False)
-    language = Column('_language', String(2))
-    __table_args__ = (
-        Index('idx_Tuser_lastname_firstname', lastname, firstname),
-        {'schema':data_schema}
-    )
-
-    @hybrid_property
-    def fullname(self):
-        return self.lastname + ' ' + self.firstname
-        
-    #TUse_Departement = Column('TUse_Departement', String)
-    #TUse_Fonction = Column('TUse_Fonction', String)
-    #TUse_Actif = Column('TUse_Actif')
-
 ##### Views #####
+"""
 V_AllIndivs_Released_YearArea = Table('V_Qry_AllIndivs_Released_YearArea', Base.metadata,
                                       Column('FK_TInd_ID', ForeignKey(Individuals.id)),
                                       schema=data_schema, autoload=True)
+"""
 
 V_Search_Indiv = Table('V_Search_Indiv', Base.metadata,
                        Column('id', Integer, primary_key = True),
                        Column('ptt', Integer),
                        Column('releaseYear', Integer),
                        Column('captureYear', Integer),
-                       schema=data_schema, autoload=True)
+                       schema=data_schema)
 
 V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
                       Column('ind_id', Integer),

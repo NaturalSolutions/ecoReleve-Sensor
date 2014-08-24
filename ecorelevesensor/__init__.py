@@ -26,9 +26,9 @@ def add_routes(config):
    config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')
    config.add_route('argos/check', 'ecoReleve-Sensor/argos/check')
    config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
-   
+
    config.add_route('gps/unchecked/count', 'ecoReleve-Sensor/gps/unchecked/count')
-   
+
    config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
 
    config.add_route('theme/list', 'ecoReleve-Core/theme/list')
@@ -60,7 +60,7 @@ def add_routes(config):
    config.add_route('map/create', 'ecoReleve-Sensor/map/create/{name}')
    config.add_route('map/closest_to', 'ecoReleve-Sensor/map/{name}/closest_to')
    config.add_route('map/drop', 'ecoReleve-Sensor/map/drop/{name}')
-   
+
 def add_views(config):
    config.add_view('ecorelevesensor.views.map.create', route_name='map/create')
 
@@ -70,10 +70,10 @@ def main(global_config, **settings):
    engine = engine_from_config(settings, 'sqlalchemy.')
    dbConfig['data_schema'] = settings['data_schema']
    dbConfig['sensor_schema'] = settings['sensor_schema']
-   dbConfig['url'] = settings['sqlalchemy.url'] 
+   dbConfig['url'] = settings['sqlalchemy.url']
    DBSession.configure(bind=engine)
    Base.metadata.bind = engine
-   Base.metadata.create_all(engine)
+   #Base.metadata.create_all(engine)
    _Base.metadata.bind = engine
    #_Base.metadata.reflect(schema = 'ecoReleve_Data.dbo', views=True, extend_existing=True)
    config = Configurator(settings=settings)

@@ -8,7 +8,7 @@ from sqlalchemy import (
     cast,
     Date,
     select,
-    join, 
+    join,
     and_,
     insert,
     bindparam
@@ -19,25 +19,25 @@ import re, csv
 
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer   
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.platypus.flowables import PageBreak 
-from reportlab.lib import colors  
+from reportlab.platypus.flowables import PageBreak
+from reportlab.lib import colors
 
 from ..models import DBSession, _Base
 from ecorelevesensor.models.data import (
-   Station,
-   ViewRfid,
-   MonitoredStation,
-   ProtocolStationEquipment,
-   ThemeEtude,
-   MapSelectionManager,
-   User,
-   Protocole,
-   )
-from ..models.sensor import Argos, Gps, Rfid
-from ..utils.spreadsheettable import SpreadsheetTable 
+    Station,
+    ViewRfid,
+    MonitoredStation,
+    ProtocolStationEquipment,
+    ThemeEtude,
+    MapSelectionManager,
+    Protocole,
+)
+from ecorelevesensor.models.user import User
+from ecorelevesensor.models.sensor import Argos, Gps, Rfid
+from ecorelevesensor.utils.spreadsheettable import SpreadsheetTable
 
 # Data imported from the CLS WS during the last week.
 @view_config(route_name='weekData', renderer='json')
@@ -73,7 +73,7 @@ def weekData(request):
             i = data['label'].index(str(date))
             data['nbGPS'][i] = nb
         except: pass
-   
+
     return data
 
 @view_config(route_name = 'station_graph', renderer = 'json')
@@ -95,7 +95,7 @@ def station_graph(request):
         ).group_by(func.year(Station.date), func.month(Station.date)
     )
 
-    """ 
+    """
         Execute query and sort result by year, month
         (faster than an order_by clause in this case)
     """
@@ -124,8 +124,8 @@ def rfid_import(request):
       fieldtype1 = {'NB':'no','TYPE':'type','"PUCE "':'code','DATE':'no','TIME':'no'}
       fieldtype2 = {'#':'no','Transponder Type:':'type','Transponder Code:':'code','Date:':'no','Time:':'no','Event:':'Event','Unit #:':'Unit','Antenna #:':'Antenna','Memo:':'Memo','Custom:':'Custom','':''}
       fieldtype3 = {'Transponder Type:':'type','Transponder Code:':'code','Date:':'no','Time:':'no','Event:':'Event','Unit #:':'Unit','Antenna #:':'Antenna','Memo:':'Memo','Custom:':'Custom'}
-   
-      entete = data[0] 
+
+      entete = data[0]
       if re.compile('\t').search(entete):
          separateur = '\t'
       elif re.compile(';').search(entete):
@@ -139,7 +139,7 @@ def rfid_import(request):
          field_label = ["no","Type","Code","date","time","no","no","no","no","no"]
          isHead = True
       elif (sorted(entete) == sorted(fieldtype3.keys())):
-         field_label = ["Type","Code","date","time","no","no","no","no","no"]  
+         field_label = ["Type","Code","date","time","no","no","no","no","no"]
          isHead = True
       else:# without head
          isHead = False
@@ -150,7 +150,7 @@ def rfid_import(request):
                field_label = ["Type","Code","date","time","no","no","no","no","no"]
                if entete[0] == 'Transponder Type:':
                   isHead = True
-            else: 
+            else:
                field_label = ["no","Type","Code","date","time"]
 
       j=0
@@ -178,21 +178,21 @@ def rfid_import(request):
                   dt = date+' '+time
                   dt = datetime.datetime.strptime(dt, format_dt).strftime('%d-%m-%Y %H:%M:%S')
                i=i+1
-         
+
          id_rfid = DBSession.execute(select([Rfid.id]).where(and_(Rfid.code == code,  Rfid.date == dt))).scalar()
          if id_rfid is None:
             Rfids.append({'_code':code, '_date':dt})
-         j=j+1 
-      
+         j=j+1
+
       if len(Rfids) > 0:
          if DBSession.execute(insert(Rfid).values(code=bindparam('_code'), date=bindparam('_date')),Rfids):
             message = str(len(Rfids))+' rows inserted'
       else:
          message = 'The data already exists'
    except Exception as e:
-      message = e   
+      message = e
    return message
-   
+
 @view_config(route_name = 'rfid_list', renderer = 'json')
 def rfid_list(request):
    data = []
@@ -251,7 +251,7 @@ def theme_list(request):
 @view_config(route_name = 'core/user/fieldworkers', renderer = 'json')
 def fieldWorkers(request):
     query = select([
-        User.id, 
+        User.id,
         User.fullname
     ]).order_by(User.lastname, User.firstname)
     data = DBSession.execute(query).fetchall()
@@ -368,7 +368,7 @@ def views_filter_result(request):
          cols = criteria['columns'].split(',')
          for col in cols:
             columns.append(table.c[col])
-     
+
       #count
       query_count = select([func.count(table.c.values()[0])])
       query_count = query_criteria(query_count, table, criteria)
@@ -440,7 +440,7 @@ def views_filter_export(request):
                sitename = str(item)
          gpx = gpx + "\n<wpt lat='"+lat+"' lon='"+lon+"'>\n<ele></ele>\n<time>"+date+"</time>\n<desc></desc>\n<name>"+sitename+"</name>\n<sym>Flag, Blue</sym>\n</wpt>\n";
       gpx = gpx + "</gpx>"
-  
+
       file_gpx = open("Files/gpx/"+name_file+".gpx", "w")
       file_gpx.write(gpx)
       file_gpx.close()
@@ -461,7 +461,7 @@ def views_filter_export(request):
          cols.append('Date')
       else:
          cols.append('Date de saisie')
-      
+
       cols.append('Vu')
       cols.append('Entendu')
       cols.append('Perdu')
@@ -480,29 +480,29 @@ def views_filter_export(request):
       styleSheet = getSampleStyleSheet()
       doc = SimpleDocTemplate("Files/pdf/"+name_file+".pdf",pagesize=landscape(A4),rightMargin=72,leftMargin=72,topMargin=20,bottomMargin=18)
       Story=[]
-       
+
       styles=getSampleStyleSheet()
       styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
 
       Story.append(Paragraph("Export "+name_vue, styleSheet['Title']))
       Story.append(Spacer(0, 5 * mm))
       if name_vue == "V_Qry_VIndiv_MonitoredLostPostReleaseIndividuals_LastStations":
-         Story.append(Paragraph("Nom de l\'observateur:_____________________________",styleSheet['BodyText']))  
-         Story.append(Paragraph("Secteur de suivi: _____________________ Date de Saisie: _________________",styleSheet['BodyText']))  
+         Story.append(Paragraph("Nom de l\'observateur:_____________________________",styleSheet['BodyText']))
+         Story.append(Paragraph("Secteur de suivi: _____________________ Date de Saisie: _________________",styleSheet['BodyText']))
          Story.append(Spacer(0, 10 * mm))
 
-      table_style = [  
-        ('GRID', (0,0), (-1,-1), 1, colors.black),  
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),  
-        ('LEFTPADDING', (0,0), (-1,-1), 3),  
-        ('RIGHTPADDING', (0,0), (-1,-1), 3),  
-        ('FONTSIZE', (0,0), (-1,-1), table_font_size),  
-        ('FONTNAME', (0,0), (-1,0), 'Times-Bold'),  
-      ]  
-      spreadsheet_table = SpreadsheetTable(data, repeatRows = 1)  
-      spreadsheet_table.setStyle(table_style)  
-      Story.append(spreadsheet_table)  
-      Story.append(PageBreak()) 
+      table_style = [
+        ('GRID', (0,0), (-1,-1), 1, colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('LEFTPADDING', (0,0), (-1,-1), 3),
+        ('RIGHTPADDING', (0,0), (-1,-1), 3),
+        ('FONTSIZE', (0,0), (-1,-1), table_font_size),
+        ('FONTNAME', (0,0), (-1,0), 'Times-Bold'),
+      ]
+      spreadsheet_table = SpreadsheetTable(data, repeatRows = 1)
+      spreadsheet_table.setStyle(table_style)
+      Story.append(spreadsheet_table)
+      Story.append(PageBreak())
       doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
       return name_file
@@ -519,7 +519,7 @@ def query_criteria(query, table, criteria):
                   else:
                      data = sp[1]
                   query = query.where(table.c[column].in_(data))
-               elif sp[0] == 'LIKE':  
+               elif sp[0] == 'LIKE':
                   query = query.where(table.c[column].like('%'+sp[1]+'%'))
                elif sp[0] == '<':
                   query = query.where(table.c[column] < sp[1])
@@ -539,16 +539,3 @@ def query_criteria(query, table, criteria):
                sp = value.split(',')
                query = query.where(and_(between(table.c['LAT'], float(sp[1]), float(sp[3])), between(table.c['LON'], float(sp[0]), float(sp[2]))))
    return query
-
-
-
-
-
-
-
-
-
-
-
-
-
