@@ -4,3 +4,4 @@ ecoReleve_Sensor.egg-info/*
 ecorelevesensor.egg-info/*
 *.egg
 build/*
+dist/*
