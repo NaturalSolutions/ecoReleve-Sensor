@@ -35,7 +35,7 @@ from ecorelevesensor.models.data import (
     MapSelectionManager,
     Protocole,
 )
-from ecorelevesensor.models.user import User
+from ecorelevesensor.models.security import User
 from ecorelevesensor.models.sensor import Argos, Gps, Rfid
 from ecorelevesensor.utils.spreadsheettable import SpreadsheetTable
 
@@ -247,15 +247,6 @@ def theme_list(request):
    except Exception as e:
       print(e)
    return data
-
-@view_config(route_name = 'core/user/fieldworkers', renderer = 'json')
-def fieldWorkers(request):
-    query = select([
-        User.id,
-        User.fullname
-    ]).order_by(User.lastname, User.firstname)
-    data = DBSession.execute(query).fetchall()
-    return [{'ID': user_id, 'Nom': fullname} for user_id, fullname in data]
 
 @view_config(route_name = 'core/protocoles/list', renderer = 'string')
 def protocoles_list(request):

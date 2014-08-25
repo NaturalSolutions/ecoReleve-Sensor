@@ -9,9 +9,9 @@ from pyramid.httpexceptions import HTTPBadRequest
 import pandas as pd
 import numpy as np
 
-from ..models import DBSession
-from ..models.sensor import Argos, Gps
-from ..models.data import (
+from ecorelevesensor.models import DBSession
+from ecorelevesensor.models.sensor import Argos, Gps
+from ecorelevesensor.models.data import (
    Individuals,
    ProtocolArgos,
    ProtocolGps,
@@ -25,7 +25,10 @@ from ecorelevesensor.utils.distance import haversine
 route_prefix = 'argos/'
 
 # List all PTTs having unchecked locations, with individual id and number of locations.
-@view_config(route_name='argos/unchecked/list', renderer='json')
+@view_config(
+    route_name='argos/unchecked/list',
+    permission='edit',
+    renderer='json')
 def argos_unchecked_list(request):
     """Returns the unchecked Argos data summary."""
     # SQL query

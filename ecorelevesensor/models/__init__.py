@@ -6,4 +6,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 _Base = declarative_base()
-dbConfig = {}
+dbConfig = {
+    'data_schema': 'ecoReleve_Data.dbo'
+}

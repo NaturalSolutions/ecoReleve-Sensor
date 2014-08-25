@@ -13,7 +13,6 @@ from sqlalchemy import (
    func
  )
 
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 from ecorelevesensor.models import Base, dbConfig
 

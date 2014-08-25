@@ -21,5 +21,5 @@ if __name__ == '__main__':
     Base.metadata.bind = engine
     #from ecorelevesensor.models.data import *
     #from ecorelevesensor.models.sensor import *
-    from ecorelevesensor.models.user import User
+    from ecorelevesensor.models.security import User
     Base.metadata.create_all(engine)
