@@ -28,5 +28,5 @@ class SecurityRoot(object):
 
 # Useful fucntions #
 def role_loader(user_id, request):
-    return DBSession.query(User.role).filter(User.id==user_id).one()
+    return DBSession.query(User.role).filter(User.pk_id==user_id).one()
     

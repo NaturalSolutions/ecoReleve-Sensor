@@ -30,7 +30,9 @@ route_prefix = 'argos/'
     permission='edit',
     renderer='json')
 def argos_unchecked_list(request):
-    """Returns the unchecked Argos data summary."""
+    """Returns the unchecked Argos data summary.
+    """
+    print(request.authenticated_userid)
     # SQL query
     unchecked = union(
         select([

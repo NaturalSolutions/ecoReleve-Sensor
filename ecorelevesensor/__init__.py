@@ -6,12 +6,14 @@ from pyramid.authorization import ACLAuthorizationPolicy
 
 from ecorelevesensor.controllers.security import SecurityRoot, role_loader
 
-from .models import (
+from ecorelevesensor.models import (
    DBSession,
    Base,
    _Base,
    dbConfig
 )
+
+from ecorelevesensor.models.sensor import ArgosGps
 
 # Define a new request factory allowing cross-domain AJAX calls.
 def request_factory(env):
@@ -27,10 +29,12 @@ def add_routes(config):
     ##### Security routes #####
     config.add_route('security/login', 'ecoReleve-Core/security/login')
     config.add_route('security/logout', 'ecoReleve-Core/security/logout')
+    config.add_route('security/has_access', 'ecoReleve-Core/security/has_access')
     
     config.add_route('core/user', 'ecoReleve-Core/user')
     
     ##### Argos / GSM routes #####
+    config.add_route('sensor/unchecked', 'ecoReleve-Sensor/sensor/unchecked')
     config.add_route('argos/unchecked/list', 'ecoReleve-Sensor/argos/unchecked/list')
     config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
     config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')
@@ -83,13 +87,15 @@ def main(global_config, **settings):
     dbConfig['url'] = settings['sqlalchemy.url']
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
-    #Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     _Base.metadata.bind = engine
     #_Base.metadata.reflect(schema = 'ecoReleve_Data.dbo', views=True, extend_existing=True)
-    authn_policy = AuthTktAuthenticationPolicy(settings['auth.secret'], 
-                                               callback=role_loader,
-                                               hashalg='sha512',
-                                               max_age=86400)
+    authn_policy = AuthTktAuthenticationPolicy(
+        settings['auth.secret'],
+        cookie_name='ecoReleve-Core',
+        callback=role_loader,
+        hashalg='sha512',
+        max_age=86400)
     authz_policy = ACLAuthorizationPolicy()
     config = Configurator(settings=settings)
     config.set_authentication_policy(authn_policy)

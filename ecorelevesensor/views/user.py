@@ -19,7 +19,7 @@ def users(request):
     """Return the list of all the users with their ids.
     """
     query = select([
-        User.id,
+        User.pk_id,
         User.fullname.label('fullname')
     ]).order_by(User.lastname, User.firstname)
     return [dict(row) for row in DBSession.execute(query).fetchall()]

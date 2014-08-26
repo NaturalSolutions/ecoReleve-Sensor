@@ -11,9 +11,11 @@ from sqlalchemy import (
 from sqlalchemy.ext.hybrid import hybrid_property
 from ecorelevesensor.models import Base, dbConfig
 
+db_dialect = dbConfig['dialect']
+
 class User(Base):
     __tablename__ = 'T_User'
-    id = Column('PK_id', Integer, Sequence('seq_user_pk_id'), primary_key=True)
+    pk_id = Column('PK_id', Integer, Sequence('seq_user_pk_id'), primary_key=True)
     lastname = Column(String(50), nullable=False)
     firstname = Column(String(50), nullable=False)
     creation_date = Column(DateTime, nullable=False,
@@ -22,10 +24,16 @@ class User(Base):
     password = Column('password_', String, nullable=False)
     language = Column('language_', String(2))
     role = Column('role_', String(16), nullable=False)
-    __table_args__ = (
-        Index('idx_Tuser_lastname_firstname', lastname, firstname),
-        {'schema':dbConfig['data_schema']}
-    )
+    if db_dialect =='mssql':
+        __table_args__ = (
+            Index('idx_Tuser_lastname_firstname', lastname, firstname, mssql_include=[pk_id]),
+            {'schema':dbConfig['data_schema']}
+        )
+    else:
+        __table_args__ = (
+            Index('idx_Tuser_lastname_firstname', lastname, firstname),
+            {'schema':dbConfig['data_schema']}
+        )
 
     @hybrid_property
     def fullname(self):
@@ -44,7 +52,7 @@ class User(Base):
         boolean
             Either the password matches or not
         """
-        return self.password == given_pwd
+        return self.password == given_pwd.upper()
 """
 class Role(Base):
     __tablename__ = 'T_Role'
