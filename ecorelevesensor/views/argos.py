@@ -2,7 +2,7 @@ from array import array
 
 from pyramid.view import view_config
 
-from sqlalchemy import func, desc, select, union, and_, bindparam, update, or_, literal_column
+from sqlalchemy import func, desc, select, union, union_all, and_, bindparam, update, or_, literal_column
 
 from pyramid.httpexceptions import HTTPBadRequest
 
@@ -34,7 +34,7 @@ def argos_unchecked_list(request):
     """
     print(request.authenticated_userid)
     # SQL query
-    unchecked = union(
+    unchecked = union_all(
         select([
             Argos.pk,
             Argos.ptt.label('ptt'),

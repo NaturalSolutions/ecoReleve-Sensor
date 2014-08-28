@@ -6,7 +6,7 @@ Created on Tue Aug 26 17:36:11 2014
 
 from pyramid.view import view_config
 
-from sqlalchemy import func, desc, select, union, and_, bindparam, update, or_, literal
+from sqlalchemy import func, desc, select, union_all, and_, bindparam, update, or_, literal
 
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.sensor import Argos, Gps, Gsm
@@ -31,7 +31,7 @@ def argos_unchecked_list(request):
     """Returns the unchecked sensor data summary.
     """
     # SQL query
-    unchecked = union(
+    unchecked = union_all(
         select([
             Argos.pk,
             Argos.ptt.label('ptt'),

@@ -139,10 +139,3 @@ class Gsm(Base):
             Index('idx_Tgsm_checked_ptt', checked, fk_ptt),
             {'schema': sensor_schema}
         )
-
-class Rfid(Base):
-   __tablename__ = 'Trfid'
-   __table_args__ = {'schema': 'ecoReleve_Sensor.dbo'}
-   id = Column('PK_id', Integer, Sequence('Trfid_pk_id'), primary_key=True)
-   code = Column('code', String, nullable=False)
-   date = Column('date', DateTime, nullable=False)

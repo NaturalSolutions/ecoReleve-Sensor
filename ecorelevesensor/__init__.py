@@ -13,7 +13,7 @@ from ecorelevesensor.models import (
    dbConfig
 )
 
-from ecorelevesensor.models.sensor import ArgosGps
+from ecorelevesensor.models import Rfid
 
 # Define a new request factory allowing cross-domain AJAX calls.
 def request_factory(env):
@@ -42,6 +42,9 @@ def add_routes(config):
     config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
 
     config.add_route('gps/unchecked/count', 'ecoReleve-Sensor/gps/unchecked/count')
+
+    ##### RFID #####
+    config.add_route('rfid/import', 'ecoReleve-Sensor/rfid/import')
        
     config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
 
@@ -65,7 +68,6 @@ def add_routes(config):
 
     ##### Autocomplete routes #####
     config.add_route('core/autocomplete', 'ecoReleve-Core/autocomplete')
-    config.add_route('rfid_import', 'ecoReleve-Sensor/rfid/import')
     config.add_route('rfid_list', 'ecoReleve-Sensor/rfid/list')
     config.add_route('monitored_station_list', 'ecoReleve-Sensor/monitored_station/list')
     config.add_route('rifd_monitored_add', 'ecoReleve-Sensor/rifd_monitored/add')

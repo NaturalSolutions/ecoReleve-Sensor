@@ -11,3 +11,5 @@ dbConfig = {
     'dialect': 'mssql',
     'sensor_schema': 'ecoReleve_Sensor.dbo'
 }
+
+from .rfid import Rfid
