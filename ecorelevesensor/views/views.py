@@ -106,16 +106,6 @@ def station_graph(request):
 
     return result
 
-@view_config(route_name = 'rfid_list', renderer = 'json')
-def rfid_list(request):
-   data = []
-   try:
-      for id in DBSession.execute(select([ViewRfid.id])).fetchall():
-         data.append({'id':id[0]})
-      return data
-   except Exception as e:
-      print(e)
-
 @view_config(route_name = 'monitored_station_list', renderer = 'json')
 def monitored_station_list(request):
    data = []

@@ -45,8 +45,9 @@ def add_routes(config):
     config.add_route('gps/unchecked/count', 'ecoReleve-Sensor/gps/unchecked/count')
 
     ##### RFID #####
-    config.add_route('rfid/import', 'ecoReleve-Sensor/rfid/import')
-    config.add_route('rfid_list', 'ecoReleve-Sensor/rfid/list')
+    config.add_route('rfid', 'ecoReleve-Core/rfid')
+    config.add_route('rfid/import', 'ecoReleve-Core/rfid/import')
+    
        
     config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
 

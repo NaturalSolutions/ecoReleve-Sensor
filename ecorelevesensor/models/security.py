@@ -52,7 +52,7 @@ class User(Base):
         boolean
             Either the password matches or not
         """
-        return self.password == given_pwd.upper()
+        return self.password == given_pwd.lower()
 """
 class Role(Base):
     __tablename__ = 'T_Role'

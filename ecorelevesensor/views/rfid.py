@@ -12,8 +12,14 @@ from sqlalchemy import select, and_, insert
 from sqlalchemy.exc import IntegrityError
 
 from ecorelevesensor.models import DBSession, ProtocolRfid
+from ecorelevesensor.models.object import ObjectRfid
 
 prefix='rfid/'
+
+@view_config(route_name='rfid', renderer='json')
+def rfid(request):
+    stmt = select([ObjectRfid.id])
+    return [dict(row) for row in DBSession.execute(stmt).fetchall()]
 
 @view_config(route_name=prefix+'import', renderer='string')
 def rfid_import(request):
@@ -94,7 +100,7 @@ def rfid_import(request):
              
          j=j+1
       if len(Rfids) > 0:
-          if DBSession.execute(insert(Rfid), Rfids):
+          if DBSession.execute(insert(ProtocolRfid), Rfids):
               message = str(len(Rfids))+' rows inserted'
           else:
               message = 'The data already exists'

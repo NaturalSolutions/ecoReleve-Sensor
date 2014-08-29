@@ -23,10 +23,11 @@ dialect = dbConfig['dialect']
 
 class Object(Base):
     __tablename__ = 'T_Object'
-    pk_id = Column('PK_id', Integer, Sequence('seq_object_pk_id'),
+    id = Column(Integer, Sequence('seq_object_pk_id'),
                    primary_key=True)
     type_ = Column(String(16), nullable=False)
-    constructor = Column(String(32))
+    constructor = Column(String(32), nullable=False)
+    model = Column(String(32), nullable=False)
     creation_date = Column(DateTime, server_default=func.now(), nullable=False)
     creator = Column(Integer, nullable=False)
     __table_args__ = (
@@ -38,17 +39,17 @@ class Object(Base):
         'polymorphic_identity':'object'
     }
     
-class Object_Rfid(Object):
+class ObjectRfid(Object):
     __mapper_args__ = {
         'polymorphic_identity':'rfid'
     }
 
-class Object_Argos(Object):
+class ObjectArgos(Object):
     __mapper_args__ = {
         'polymorphic_identity':'argos'
     }
     
-class Object_Gsm(Object):
+class ObjectGsm(Object):
     __mapper_args__ = {
         'polymorphic_identity':'gsm'
     }
