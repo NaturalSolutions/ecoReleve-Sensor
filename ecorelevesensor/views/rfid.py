@@ -8,9 +8,10 @@ import re
 from datetime import datetime
 
 from pyramid.view import view_config
-from sqlalchemy import select, and_, insert, bindparam
+from sqlalchemy import select, and_, insert
+from sqlalchemy.exc import IntegrityError
 
-from ecorelevesensor.models import DBSession, Rfid
+from ecorelevesensor.models import DBSession, ProtocolRfid
 
 prefix='rfid/'
 
@@ -86,17 +87,19 @@ def rfid_import(request):
                   dt = date+' '+time
                   dt = datetime.strptime(dt, format_dt).strftime('%d-%m-%Y %H:%M:%S')
                i=i+1
-
-         id_rfid = DBSession.execute(select([Rfid.pk_id]).where(and_(Rfid.chip_code == code,  Rfid.date == dt))).scalar()
-         if id_rfid is None:
             Rfids.append({'chip_code':code, 'date_':dt})
-         j=j+1
 
+         #id_rfid = DBSession.execute(select([Rfid.pk_id]).where(and_(Rfid.chip_code == code,  Rfid.date == dt))).scalar()
+         #if id_rfid is None:
+             
+         j=j+1
       if len(Rfids) > 0:
-         if DBSession.execute(insert(Rfid), Rfids):
-            message = str(len(Rfids))+' rows inserted'
-      else:
-         message = 'The data already exists'
+          if DBSession.execute(insert(Rfid), Rfids):
+              message = str(len(Rfids))+' rows inserted'
+          else:
+              message = 'The data already exists'
+   except IntegrityError:
+       message = 'The data already exists'
    except Exception as e:
       message = e
    return message

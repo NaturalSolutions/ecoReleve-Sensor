@@ -13,13 +13,14 @@ from ecorelevesensor.models import (
    dbConfig
 )
 
-from ecorelevesensor.models import Rfid
+from ecorelevesensor.models import *
+from ecorelevesensor.models.object import *
 
 # Define a new request factory allowing cross-domain AJAX calls.
 def request_factory(env):
 	request = Request(env)
 	request.response = Response()
-	request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
+	#request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
 	return request
 
 # Add all the routes of the application.
@@ -45,6 +46,7 @@ def add_routes(config):
 
     ##### RFID #####
     config.add_route('rfid/import', 'ecoReleve-Sensor/rfid/import')
+    config.add_route('rfid_list', 'ecoReleve-Sensor/rfid/list')
        
     config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
 
@@ -68,7 +70,6 @@ def add_routes(config):
 
     ##### Autocomplete routes #####
     config.add_route('core/autocomplete', 'ecoReleve-Core/autocomplete')
-    config.add_route('rfid_list', 'ecoReleve-Sensor/rfid/list')
     config.add_route('monitored_station_list', 'ecoReleve-Sensor/monitored_station/list')
     config.add_route('rifd_monitored_add', 'ecoReleve-Sensor/rifd_monitored/add')
    

@@ -12,4 +12,4 @@ dbConfig = {
     'sensor_schema': 'ecoReleve_Sensor.dbo'
 }
 
-from .rfid import Rfid
+from .rfid import ProtocolRfid

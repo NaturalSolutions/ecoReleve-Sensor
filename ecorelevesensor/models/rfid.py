@@ -12,7 +12,8 @@ from sqlalchemy import (
     Integer,
     Numeric,
     Sequence,
-    String
+    String,
+    UniqueConstraint
 )
 
 from ecorelevesensor.models import Base, dbConfig
@@ -20,12 +21,13 @@ from ecorelevesensor.models import Base, dbConfig
 schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
-class Rfid(Base):
-    __tablename__ = 'T_rfid'
-    pk_id = Column('PK_id', Integer, Sequence('seq_rfid_pk_id'),
+class ProtocolRfid(Base):
+    __tablename__ = 'T_ProtocolRfid'
+    pk_id = Column('PK_id', Integer, Sequence('seq_protocolrfid_pk_id'),
                    primary_key=True)
-    fk_ind = Column('Fk_id', Integer)
-    chip_code = Column(String, nullable=False)
+    fk_ant = Column('FK_ant', Integer)
+    fk_ind = Column('Fk_ind', Integer)
+    chip_code = Column(String(10), nullable=False)
     date = Column('date_', DateTime, nullable=False)
     lat = Column(Numeric(9,5))
     lon = Column(Numeric(9,5))
@@ -35,17 +37,20 @@ class Rfid(Base):
     if dialect.startswith('mssql'):
         __table_args__ = (
             Index(
-                'idx_Trfid_fkind_with_date_lat_lon',
+                'idx_Tprotocolrfid_fkind_with_date_lat_lon',
                 fk_ind,
                 mssql_include=[date, lat, lon]
             ),
+            UniqueConstraint(fk_ant, chip_code, date),
             {'schema': schema}
         )
     else:
         __table_args__ = (
             Index(
-                'idx_Trfid_fkind',
+                'idx_Tprotocolrfid_fkind',
                 fk_ind
             ),
+            UniqueConstraint(fk_ant, chip_code, date),
             {'schema': schema}
         )
+            
