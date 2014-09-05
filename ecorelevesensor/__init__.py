@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 from pyramid.request import Request, Response
+from pyramid.renderers import JSON
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 
@@ -14,7 +17,6 @@ from ecorelevesensor.models import (
 )
 
 from ecorelevesensor.models import *
-from ecorelevesensor.models.object import *
 
 # Define a new request factory allowing cross-domain AJAX calls.
 def request_factory(env):
@@ -22,6 +24,11 @@ def request_factory(env):
 	request.response = Response()
 	#request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
 	return request
+
+def datetime_adapter(obj, request):
+    """Json adapter for datetime objects.
+    """
+    return str(obj)
 
 # Add all the routes of the application.
 def add_routes(config):
@@ -32,7 +39,9 @@ def add_routes(config):
     config.add_route('security/logout', 'ecoReleve-Core/security/logout')
     config.add_route('security/has_access', 'ecoReleve-Core/security/has_access')
     
+    ##### User #####
     config.add_route('core/user', 'ecoReleve-Core/user')
+    config.add_route('core/currentUser', 'ecoReleve-Core/currentUser')
     
     ##### Argos / GSM routes #####
     config.add_route('sensor/unchecked', 'ecoReleve-Sensor/sensor/unchecked')
@@ -46,9 +55,19 @@ def add_routes(config):
 
     ##### RFID #####
     config.add_route('rfid', 'ecoReleve-Core/rfid')
+    config.add_route('rfid/identifier', 'ecoReleve-Core/rfid/identifier')
     config.add_route('rfid/import', 'ecoReleve-Core/rfid/import')
+    config.add_route('rfid/validate', 'ecoReleve-Core/rfid/validate')
+    config.add_route('rfid/byName', 'ecoReleve-Core/rfid/byName/{name}')
     
-       
+    ##### Monitored sites #####
+    config.add_route('monitoredSite', 'ecoReleve-Core/monitoredSite')
+    config.add_route('monitoredSite/name', 'ecoReleve-Core/monitoredSite/name')
+    config.add_route('monitoredSite/type', 'ecoReleve-Core/monitoredSite/type')
+
+     ##### Monitored sites equipment #####
+    config.add_route('monitoredSiteEquipment/pose', 'ecoReleve-Core/monitoredSiteEquipment/pose')
+    
     config.add_route('station_graph', 'ecoReleve-Core/stations/graph')
 
     config.add_route('theme/list', 'ecoReleve-Core/theme/list')
@@ -71,7 +90,6 @@ def add_routes(config):
 
     ##### Autocomplete routes #####
     config.add_route('core/autocomplete', 'ecoReleve-Core/autocomplete')
-    config.add_route('monitored_station_list', 'ecoReleve-Sensor/monitored_station/list')
     config.add_route('rifd_monitored_add', 'ecoReleve-Sensor/rifd_monitored/add')
    
     ##### Map routes #####
@@ -102,12 +120,20 @@ def main(global_config, **settings):
         max_age=86400)
     authz_policy = ACLAuthorizationPolicy()
     config = Configurator(settings=settings)
+    
+    # Add renderer for datetime objects
+    json_renderer = JSON()
+    json_renderer.add_adapter(datetime, datetime_adapter)
+    config.add_renderer('json', json_renderer)
+    
+    # Set up authentication and authorization
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
     config.set_root_factory(SecurityRoot)
     # Set the default permission level to 'read'
     config.set_default_permission('read')
-    config.include('pyramid_chameleon')
+    
+    #config.include('pyramid_chameleon')
     config.include('pyramid_tm')
     config.set_request_factory(request_factory)
     add_routes(config)

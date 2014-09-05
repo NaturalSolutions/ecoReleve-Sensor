@@ -4,8 +4,7 @@ Created on Mon Aug 25 13:00:16 2014
 @author: Natural Solutions (Thomas)
 """
 
-from ecorelevesensor.models.security import User
-from ecorelevesensor.models import DBSession
+from ecorelevesensor.models import DBSession, User
 
 from pyramid.security import (
     ALL_PERMISSIONS,
@@ -28,5 +27,5 @@ class SecurityRoot(object):
 
 # Useful fucntions #
 def role_loader(user_id, request):
-    return DBSession.query(User.role).filter(User.pk_id==user_id).one()
+    return DBSession.query(User.role).filter(User.id==user_id).one()
     

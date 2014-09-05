@@ -29,13 +29,14 @@ from ..models import DBSession, _Base
 from ecorelevesensor.models.data import (
     Station,
     ViewRfid,
-    MonitoredStation,
-    ProtocolStationEquipment,
     ThemeEtude,
     MapSelectionManager,
     Protocole,
 )
-from ecorelevesensor.models.security import User
+from ecorelevesensor.models import (
+    MonitoredSite,
+    User
+)
 from ecorelevesensor.models.sensor import Argos, Gps
 from ecorelevesensor.utils.spreadsheettable import SpreadsheetTable
 
@@ -105,29 +106,6 @@ def station_graph(request):
         result[' '.join([d, str(y)])] = nb
 
     return result
-
-@view_config(route_name = 'monitored_station_list', renderer = 'json')
-def monitored_station_list(request):
-   data = []
-   try:
-      for id in DBSession.execute(select([MonitoredStation.id])).fetchall():
-         data.append({'id':id[0]})
-      return data
-   except Exception as e:
-      print(e)
-
-@view_config(route_name = 'rifd_monitored_add', renderer = 'string')
-def rifd_monitored_add(request):
-   message = ""
-   try:
-      begin_date = datetime.datetime.today().strftime('%d-%m-%Y %H:%M:%S')
-      fk_rfid = request.GET['rfid']
-      fk_geo = request.GET['site']
-      if DBSession.execute(insert(ProtocolStationEquipment).values({"FK_RFID_obj":int(fk_rfid), "FK_GeoID":int(fk_geo), "beginDATE":begin_date})):
-         message = 'Row inserted successfully '
-   except Exception as e:
-      message = e
-   return message
 
 @view_config(route_name = 'theme/list', renderer = 'json')
 def theme_list(request):

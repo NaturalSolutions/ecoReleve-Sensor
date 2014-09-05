@@ -7,6 +7,7 @@ Created on Fri Aug 29 16:06:47 2014
 from sqlalchemy import (
     Column,
     DateTime,
+    ForeignKey,
     func,
     Index,
     Integer,
@@ -17,27 +18,39 @@ from sqlalchemy import (
 )
 
 from ecorelevesensor.models import Base, dbConfig
+from ecorelevesensor.models.user import User
 
 schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 class Object(Base):
     __tablename__ = 'T_Object'
-    id = Column(Integer, Sequence('seq_object_pk_id'),
+    id = Column('PK_id', Integer, Sequence('seq_object_pk_id'),
                    primary_key=True)
+    creator = Column('FK_creator', Integer, ForeignKey(User.id))
+    identifier = Column(String(32), nullable=False)
     type_ = Column(String(16), nullable=False)
-    constructor = Column(String(32), nullable=False)
-    model = Column(String(32), nullable=False)
+    #manufacturer = Column(String(32))
+    #model = Column(String(32))
     creation_date = Column(DateTime, server_default=func.now(), nullable=False)
-    creator = Column(Integer, nullable=False)
     __table_args__ = (
-            Index('idx_Tobject_type', type_),
+            Index('idx_Tobject_type_identifier', type_, identifier),
+            UniqueConstraint('identifier'),
             {'schema': schema}
     )
     __mapper_args__ = {
         'polymorphic_on':type_,
         'polymorphic_identity':'object'
     }
+
+    def __json__(self, request):
+        return {
+            'id':self.id,
+            'creator':self.creator,
+            'identifier':self.identifier,
+            'type':self.type_,
+            'creation_date':str(self.creation_date),
+        }
     
 class ObjectRfid(Object):
     __mapper_args__ = {

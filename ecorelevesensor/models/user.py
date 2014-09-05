@@ -15,7 +15,7 @@ db_dialect = dbConfig['dialect']
 
 class User(Base):
     __tablename__ = 'T_User'
-    pk_id = Column('PK_id', Integer, Sequence('seq_user_pk_id'), primary_key=True)
+    id = Column('PK_id', Integer, Sequence('seq_user_pk_id'), primary_key=True)
     lastname = Column(String(50), nullable=False)
     firstname = Column(String(50), nullable=False)
     creation_date = Column(DateTime, nullable=False,
@@ -26,7 +26,7 @@ class User(Base):
     role = Column('role_', String(16), nullable=False)
     if db_dialect =='mssql':
         __table_args__ = (
-            Index('idx_Tuser_lastname_firstname', lastname, firstname, mssql_include=[pk_id]),
+            Index('idx_Tuser_lastname_firstname', lastname, firstname, mssql_include=[id]),
             {'schema':dbConfig['data_schema']}
         )
     else:
@@ -37,10 +37,12 @@ class User(Base):
 
     @hybrid_property
     def fullname(self):
+        """ Return the fullname of a user.
+        """
         return self.lastname + ' ' + self.firstname
     
     def check_password(self, given_pwd):
-        """Check the password of an user.
+        """Check the password of a user.
         
         Parameters
         ----------
@@ -53,13 +55,3 @@ class User(Base):
             Either the password matches or not
         """
         return self.password == given_pwd.lower()
-"""
-class Role(Base):
-    __tablename__ = 'T_Role'
-    id = Column('PK_id', Integer, Sequence('seq_role_pk_id'), primary_key=True)
-    name = Column(String(32), nullable=False)
-    __table_args__ = {'schema':dbConfig['data_schema']}
-"""    
-    #TUse_Departement = Column('TUse_Departement', String)
-    #TUse_Fonction = Column('TUse_Fonction', String)
-    #TUse_Actif = Column('TUse_Actif')

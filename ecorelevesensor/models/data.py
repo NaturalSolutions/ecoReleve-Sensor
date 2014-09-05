@@ -20,16 +20,16 @@ data_schema = dbConfig['data_schema']
 
 class Station(Base):
    __tablename__ = 'TStations'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema}
    id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
    area = Column('Area', String)
    fieldActivityId = Column('FieldActivity_ID', Integer)
    fieldActivityName = Column('FieldActivity_Name', String)
-   lat = Column('lat', Numeric(9,5), nullable = False)
-   lon = Column('lon', Numeric(9,5), nullable = False)
-   ele = Column('ele', Integer)
+   lat = Column(Numeric(9,5), nullable = False)
+   lon = Column(Numeric(9,5), nullable = False)
+   ele = Column(Integer)
    precision = Column('Precision', Integer)
    creator = Column('Creator', Integer)
    creationDate = Column('Creation_date', DateTime, server_default=func.now())
@@ -177,26 +177,6 @@ class ViewRfid(Base):
    company_precision = Column('id42@TCaracThes_Company_Precision',String(50))
    comment = Column('id37@Comments',String)
 
-class MonitoredStation(Base):
-   __tablename__ = 'TMonitoredStations'
-   __table_args__ = {'schema': data_schema}
-   id = Column('TGeo_pk_id', Integer, primary_key = True)
-   name = Column('Name', String(50))
-   creation_date = Column('Creation_date',DateTime)
-   creator = Column('Creator',Integer)
-   active = Column('Active', Integer)
-   id_type = Column('id_Type', Integer)
-   name_type = Column('name_Type',String(50))
-
-class ProtocolStationEquipment(Base):
-   __tablename__ = 'TProtocol_Station_equipment_new'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
-   id = Column('PK_id',Integer, Sequence('TProtocol_Station_equipment_new_pk_id'), primary_key = True)
-   fk_rfid = Column(Integer, ForeignKey(ViewRfid.id))
-   fk_geo = Column(Integer, ForeignKey(MonitoredStation.id))
-   begin_date = Column('beginDATE', DateTime, nullable = False)
-   end_date = Column('endDATE', DateTime, nullable = True)
-
 class ThemeEtude(Base):
    __tablename__ = 'TThemeEtude'
    __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
@@ -206,8 +186,8 @@ class ThemeEtude(Base):
    Bibliography = Column('Bibliography', String)
    Creation_date = Column('Creation_date', DateTime)
    Creator = Column('Creator', String)
-   Actif = Column('Actif')
-   NeedGeom = Column('NeedGeom')
+   Actif = Column('Actif', Boolean)
+   NeedGeom = Column('NeedGeom', Boolean)
    Definition_en = Column('Definition_en', String)
 
 class MapSelectionManager(Base):
@@ -218,7 +198,7 @@ class MapSelectionManager(Base):
    TSMan_Layer_Name = Column('TSMan_Layer_Name', String)
    TSMan_Description = Column('TSMan_Description', String)
    TSMan_FK_Theme = Column(Integer, ForeignKey(ThemeEtude.id))
-   TSMan_AdminQry = Column('TSMan_AdminQry')
+   TSMan_AdminQry = Column('TSMan_AdminQry', Boolean)
 
 class Protocole(Base):
    __tablename__ = 'TProtocole'
@@ -227,7 +207,7 @@ class Protocole(Base):
    Relation = Column('Relation', String)
    Caption = Column('Caption', String)
    Description = Column('Description', String)
-   Active = Column('Active')
+   Active = Column(Boolean)
    Creation_date = Column('Creation_date', DateTime)
    Creator = Column('Creator', String)
    Support = Column('Support', String)

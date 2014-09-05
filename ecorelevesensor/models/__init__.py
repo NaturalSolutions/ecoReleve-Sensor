@@ -12,4 +12,12 @@ dbConfig = {
     'sensor_schema': 'ecoReleve_Sensor.dbo'
 }
 
-from .rfid import ProtocolRfid
+from .animal import Animal
+from .animal_location import AnimalLocation
+from .monitored_site import MonitoredSite
+from .monitored_site_position import MonitoredSitePosition
+from .object import ObjectRfid
+#from .station import Station
+from .data_rfid import DataRfid
+from .monitored_site_equipment import MonitoredSiteEquipment
+from .user import User
