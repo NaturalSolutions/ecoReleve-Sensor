@@ -11,7 +11,6 @@ from sqlalchemy import func, desc, select, union_all, and_, bindparam, update, o
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.sensor import Argos, Gps, Gsm
 from ecorelevesensor.models.data import (
-   Individuals,
    ProtocolArgos,
    ProtocolGps,
    ProtocolIndividualEquipment,

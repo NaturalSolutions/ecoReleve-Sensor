@@ -8,11 +8,16 @@ import re
 from datetime import datetime
 
 from pyramid.view import view_config
-from sqlalchemy import select, insert, text, desc, bindparam, outparam
+from sqlalchemy import select, insert, text, desc, bindparam
 from sqlalchemy.exc import IntegrityError
 
-from ecorelevesensor.models import DBSession, DataRfid, AnimalLocation, MonitoredSite, Animal
-from ecorelevesensor.models import MonitoredSiteEquipment
+from ecorelevesensor.models import (
+    DBSession,
+    DataRfid,
+    Individual,
+    MonitoredSite, 
+    MonitoredSiteEquipment
+)
 from ecorelevesensor.models.object import ObjectRfid
 
 prefix='rfid/'
@@ -42,7 +47,7 @@ def rfid_detail(request):
         ).outerjoin(MonitoredSiteEquipment, ObjectRfid.id==MonitoredSiteEquipment.obj
         ).outerjoin(MonitoredSite, MonitoredSiteEquipment.site==MonitoredSite.id
         ).filter(ObjectRfid.identifier==name
-        ).order_by(desc(MonitoredSiteEquipment.end_date)).first()
+        ).order_by(desc(MonitoredSiteEquipment.begin_date)).first()
     module, site, equip = data
     result = {'module': module, 'site':site, 'equip':equip}
     return result
@@ -50,7 +55,7 @@ def rfid_detail(request):
 @view_config(route_name=prefix+'identifier', renderer='json')
 def rfid_get_identifier(request):
     query = select([ObjectRfid.identifier]).where(ObjectRfid.type_=='rfid')
-    return [dict(row) for row in DBSession.execute(query).fetchall()]
+    return [row[0] for row in DBSession.execute(query).fetchall()]
 
 @view_config(route_name=prefix+'import', renderer='string')
 def rfid_import(request):
@@ -114,14 +119,14 @@ def rfid_import(request):
         while j < len(data):
             i = 0
             if data[j] != "":
-                row = data[j].replace('"','').split(separateur)
+                line = data[j].replace('"','').split(separateur)
                 while i < len(field_label):
                     if field_label[i] == 'Code':
-                        code = row[i]
+                        code = line[i]
                     if field_label[i] == 'date':
-                        date = row[i]
+                        date = line[i]
                     if field_label[i] == 'time':
-                        time = re.sub('\s','',row[i])
+                        time = re.sub('\s','',line[i])
                         format_dt = '%d/%m/%Y %H:%M:%S'
                         if re.search('PM|AM',time):
                             format_dt = '%d/%m/%Y %I:%M:%S%p'
@@ -131,13 +136,13 @@ def rfid_import(request):
                 Rfids.add((creator, idModule, code, dt))
                 chip_codes.add(code)
             j=j+1
-        Rfids = [{DataRfid.creator.name: creator, DataRfid.obj.name: idModule, 
-                DataRfid.chip_code.name: code, DataRfid.date.name: dt} for creator, idModule, code, dt  in Rfids]
+        Rfids = [{DataRfid.creator.name: crea, DataRfid.obj.name: idMod, 
+                DataRfid.chip_code.name: c, DataRfid.date.name: d} for crea, idMod, c, d  in Rfids]
         # Insert data.
         DBSession.execute(insert(DataRfid), Rfids)
         message = str(len(Rfids)) +' rows inserted.'
         # Check if there are unknown chip codes.
-        query = select([Animal.chip_code]).where(Animal.chip_code.in_(chip_codes))
+        query = select([Individual.chip_code]).where(Individual.chip_code.in_(chip_codes))
         known_chips = set([row[0] for row in DBSession.execute(query).fetchall()])
         unknown_chips = chip_codes.difference(known_chips)
         if len(unknown_chips) > 0:

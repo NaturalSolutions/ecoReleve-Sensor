@@ -15,6 +15,7 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import relationship
 from ecorelevesensor.models import Base, dbConfig
+from ..models import Individual
 
 data_schema = dbConfig['data_schema']
 
@@ -24,7 +25,7 @@ class Station(Base):
    id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
-   area = Column('Area', String)
+   area = Column('Region', String)
    fieldActivityId = Column('FieldActivity_ID', Integer)
    fieldActivityName = Column('FieldActivity_Name', String)
    lat = Column(Numeric(9,5), nullable = False)
@@ -52,25 +53,6 @@ class SatTrx(Base):
    ptt = Column('id19@TCarac_PTT', Integer)
    manufacturer = Column('id42@TCaracThes_Company_Precision', String)
    model = Column('id41@TCaracThes_Model_Precision', String)
-
-individual_table = Table(
-    'TViewIndividual',
-    Base.metadata,
-    Column('Individual_Obj_PK', Integer, primary_key = True, key = 'id'),
-    Column('id19@TCarac_PTT', Integer, key='ptt'),
-    Column('id2@Thes_Age_Precision', String, key='age'),
-    Column('id30@TCaracThes_Sex_Precision', String, key='sex'),
-    Column('id9@TCarac_Release_Ring_Code', String, key = 'release_ring_code'),
-    Column('id33@Thes_Origin_Precision', String, key='origin'),
-    Column('id34@TCaracThes_Species_Precision', String, key='specie'),
-    Column('id59@TCaracThes_Individual_Status', String, key='status'),
-    Column('id60@TCaracThes_Monitoring_Status_Precision', String, key='monitoring_status'),
-    Column('id61@TCaracThes_Survey_type_Precision', String, key='survey_type'),
-    schema=data_schema
-)
-
-class Individuals(Base):
-   __table__ = individual_table
 
 class CaracTypes(Base):
    __tablename__ = 'TObj_Carac_type'
@@ -118,31 +100,24 @@ class ProtocolArgos(Base):
 
 class ProtocolReleaseIndividual(Base):
    __tablename__ = 'TProtocol_Release_Individual'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema}
    id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
-   ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
+   ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 class ProtocolCaptureIndividual(Base):
    __tablename__ = 'TProtocol_Capture_Individual'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
+   __table_args__ = {'schema': data_schema}
    id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
-   ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individuals.id), nullable = False)
+   ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 ##### Views #####
 """
 V_AllIndivs_Released_YearArea = Table('V_Qry_AllIndivs_Released_YearArea', Base.metadata,
-                                      Column('FK_TInd_ID', ForeignKey(Individuals.id)),
+                                      Column('FK_TInd_ID', ForeignKey(Individual.id)),
                                       schema=data_schema, autoload=True)
 """
-
-V_Search_Indiv = Table('V_Search_Indiv', Base.metadata,
-                       Column('id', Integer, primary_key = True),
-                       Column('ptt', Integer),
-                       Column('releaseYear', Integer),
-                       Column('captureYear', Integer),
-                       schema=data_schema)
 
 V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
                       Column('ind_id', Integer),

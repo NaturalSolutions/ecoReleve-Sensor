@@ -23,32 +23,32 @@ from
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 1 as fk_sta_type
 	from dbo.TProtocol_Vertebrate_Individual_Death
 
-	union
+	union all
 
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 2 as fk_sta_type
 	from dbo.TProtocol_Nest_Description
 	
-	union
+	union all
 	
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 3 as fk_sta_type
 	from dbo.TProtocol_Release_Individual
 	
-	union
+	union all
 	
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 4 as fk_sta_type
 	from dbo.TProtocol_Capture_Individual
 	
-	union
+	union all
 	
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 5 as fk_sta_type
 	from dbo.TProtocol_ArgosDataGPS
 	
-	union
+	union all
 	
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 6 as fk_sta_type
 	from dbo.TProtocol_ArgosDataArgos
 	
-	union
+	union all
 	
 	select FK_Tind_ID as ind_id, FK_TSta_ID as sta_id, 7 as fk_sta_type
 	from dbo.TProtocol_Vertebrate_Individual

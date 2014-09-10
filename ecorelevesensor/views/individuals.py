@@ -1,12 +1,13 @@
 from sqlalchemy import select, cast, Date, Float, desc, func
-from ecorelevesensor.models import DBSession
+from ecorelevesensor.models import DBSession, Individual
 from ecorelevesensor.models.data import (
    CaracTypes,
-   Individuals,
-   V_Search_Indiv,
    V_Individuals_LatLonDate,
    V_Individuals_History
 )
+
+from ecorelevesensor.models.views import V_SearchIndiv
+
 from pyramid.view import view_config
 from collections import OrderedDict
 from datetime import datetime
@@ -15,21 +16,21 @@ route_prefix = 'core/individuals/'
 
 @view_config(route_name=route_prefix + 'search/values', renderer='json')
 def core_individuals_values(request):
-   ''' Get the different values of the field_name given in parameter.
-       If a parameter limit is passed, then limit the number of values returned.
-   '''
-   try:
-      column = request.params['field_name']
-      limit  = int(request.params.get('limit', 0))
-      if column in V_Search_Indiv.columns:
-         query = select([V_Search_Indiv.columns[column]]).where(V_Search_Indiv.columns[column]!=None).order_by(V_Search_Indiv.columns[column]).distinct()
-         if limit > 0:
+    ''' Get the different values of the field_name given in parameter.
+        If a parameter limit is passed, then limit the number of values returned.
+    '''
+    column = request.params['field_name']
+    limit  = int(request.params.get('limit', 0))
+    if column in V_SearchIndiv.columns:
+        query = select([V_SearchIndiv.c[column]]
+            ).where(V_SearchIndiv.columns[column]!=None
+            ).order_by(V_SearchIndiv.columns[column]
+            ).distinct()
+        if limit > 0:
             query = query.limit(limit)
-         return [item[column] for item in DBSession.execute(query).fetchall()]
-      else:
-         return []
-   except:
-      return []
+        return [str(item[column]) for item in DBSession.execute(query).fetchall()]
+    else:
+        return []
 
 @view_config(route_name=route_prefix + 'search', renderer='json', request_method='POST')
 def core_individuals_search(request):
@@ -39,12 +40,12 @@ def core_individuals_search(request):
         - offset   : int
         - limit    : int
     '''
-    query = select(V_Search_Indiv.c)
+    query = select(V_SearchIndiv.c)
     # Look over the criteria list
     criteria = request.json_body.get('criteria', {})
     for column, value in criteria.items():
-        if column in V_Search_Indiv.columns:
-            query = query.where(V_Search_Indiv.columns[column] == value)
+        if column in V_SearchIndiv.c and value != '':
+            query = query.where(V_SearchIndiv.c[column] == value)
     # Define the limit and offset if exist
     limit = int(request.json_body.get('limit', 0))
     offset = int(request.json_body.get('offset', 0))
@@ -56,11 +57,11 @@ def core_individuals_search(request):
     order_by = request.json_body.get('order_by', {})
     order_by_clause = []
     for column, order in order_by.items():
-        if column in V_Search_Indiv.columns:
+        if column in V_SearchIndiv.columns:
             if order == 'asc':
-                order_by_clause.append(V_Search_Indiv.columns[column].asc())
+                order_by_clause.append(V_SearchIndiv.columns[column].asc())
             elif order == 'desc':
-                order_by_clause.append(V_Search_Indiv.columns[column].desc())
+                order_by_clause.append(V_SearchIndiv.columns[column].desc())
     if len(order_by_clause) > 0:
         query = query.order_by(*order_by_clause)
     # Run query
@@ -114,4 +115,18 @@ def core_individuals_history(request):
 
 @view_config(route_name=(route_prefix + 'count'), renderer='json')
 def core_individuals_count(request):
-   return DBSession.execute(select([func.count(Individuals.id).label('nb')])).scalar()
+   return DBSession.execute(select([func.count(Individual.id).label('nb')])).scalar()
+   
+@view_config(route_name='core/individual', renderer='json')
+def core_individual(request):
+    ''' Get the attributes of an identified individual.
+    '''
+    id = int(request.matchdict['id'])
+    indiv = DBSession.query(Individual).filter(Individual.id==id).one()
+    query = select([V_Individuals_History.c.label, V_Individuals_History.c.value, cast(V_Individuals_History.c.begin_date, Date), cast(V_Individuals_History.c.end_date, Date)]
+                     ).where(V_Individuals_History.c.id == id
+                     ).order_by(V_Individuals_History.c.carac, desc(V_Individuals_History.c.begin_date))
+    carac = DBSession.execute(query).fetchall()
+    null_date_filter = lambda date: None if date is None else str(date)
+    indiv.history = [OrderedDict([('name',label), ('value',value), ('from',str(begin_date)), ('to',null_date_filter(end_date))]) for label, value, begin_date, end_date in carac]
+    return indiv

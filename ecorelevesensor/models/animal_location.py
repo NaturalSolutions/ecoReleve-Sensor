@@ -20,7 +20,7 @@ from sqlalchemy import (
 from ecorelevesensor.models import Base, dbConfig
 from ecorelevesensor.models.object import Object
 from ecorelevesensor.models.user import User
-from ecorelevesensor.models.data import Individuals
+from .individual import Individual
 
 schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
@@ -31,7 +31,7 @@ class AnimalLocation(Base):
                    primary_key=True)
     creator = Column('FK_creator', Integer, ForeignKey(User.id), nullable=False)
     obj = Column('FK_obj', Integer, ForeignKey(Object.id), nullable=False)
-    ind = Column('FK_ind', Integer, ForeignKey(Individuals.id), nullable=False)
+    ind = Column('FK_ind', Integer, ForeignKey(Individual.id), nullable=False)
     type_ = Column(String(8))
     date = Column('date_', DateTime, nullable=False)
     lat = Column(Numeric(9,5), nullable=False)

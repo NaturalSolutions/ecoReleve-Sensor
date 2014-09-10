@@ -12,7 +12,6 @@ prefix = 'monitoredSite'
 
 @view_config(route_name=prefix, renderer='json', request_method='POST')
 def monitoredSite_post(request):
-    print(request.json_body)
     cols = request.json_body['cols']
     order = request.json_body['order']
     select_clause = []

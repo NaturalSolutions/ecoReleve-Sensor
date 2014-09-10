@@ -11,8 +11,8 @@ import numpy as np
 
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.sensor import Argos, Gps
+from ecorelevesensor.models import Individual
 from ecorelevesensor.models.data import (
-   Individuals,
    ProtocolArgos,
    ProtocolGps,
    ProtocolIndividualEquipment,
@@ -32,7 +32,6 @@ route_prefix = 'argos/'
 def argos_unchecked_list(request):
     """Returns the unchecked Argos data summary.
     """
-    print(request.authenticated_userid)
     # SQL query
     unchecked = union_all(
         select([
@@ -88,7 +87,9 @@ def argos_insert(request):
    gps_id = array('i')
 
    # Query that check for duplicate stations
-   check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.name == bindparam('name'), Station.lat == bindparam('lat'), Station.lon == bindparam('lon'), Station.ele == bindparam('ele')))
+   check_duplicate_station = select([func.count(Station.id)]).where(
+       and_(Station.name == bindparam('name'), Station.lat == bindparam('lat'),
+            Station.lon == bindparam('lon'), Station.ele == bindparam('ele')))
    
    # For each objet in the request body
    for ptt_obj in request.json_body:
@@ -229,14 +230,14 @@ def argos_unchecked(request):
     # Get informations for the individual
     if ind_id is not None:
         query = select([
-            Individuals.id.label('id'),
-            Individuals.age.label('age'),
-            Individuals.sex.label('sex'),
-            Individuals.specie.label('specie'),
-            Individuals.monitoring_status.label('monitoring_status'), 
-            Individuals.origin.label('origin'),
-            Individuals.survey_type.label('survey_type')
-        ]).where(Individuals.id == ind_id)
+            Individual.id.label('id'),
+            Individual.age.label('age'),
+            Individual.sex.label('sex'),
+            Individual.specie.label('specie'),
+            Individual.monitoring_status.label('monitoring_status'), 
+            Individual.origin.label('origin'),
+            Individual.survey_type.label('survey_type')
+        ]).where(Individual.id == ind_id)
         result['indiv'] = dict(DBSession.execute(query).fetchone())
         # Last known location
         c = V_Individuals_LatLonDate.c
