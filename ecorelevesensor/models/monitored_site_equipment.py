@@ -14,12 +14,9 @@ from sqlalchemy import (
    func
  )
 
-from ..models import Base, dbConfig
+from ..models import Base
 from .object import Object
 from .monitored_site import MonitoredSite
-from .user import User
-
-schema = dbConfig['data_schema']
 
 class MonitoredSiteEquipment(Base):
     __tablename__ = 'T_MonitoredSiteEquipment'
@@ -27,7 +24,7 @@ class MonitoredSiteEquipment(Base):
                 primary_key=True)
     obj = Column('FK_obj', Integer, ForeignKey(Object.id), nullable=False)
     site = Column('FK_site', Integer, ForeignKey(MonitoredSite.id), nullable=False)
-    creator = Column('FK_creator', Integer, ForeignKey(User.id), nullable=False)
+    creator = Column('FK_creator', Integer, nullable=False)
     creation_date = Column('creation_date', DateTime, server_default=func.now())
     lat = Column(Numeric(9,5), nullable=False)
     lon = Column(Numeric(9,5), nullable=False)
@@ -36,7 +33,6 @@ class MonitoredSiteEquipment(Base):
 
     __table_args__ = (
         CheckConstraint('end_date >= begin_date', 'end_date >= begin_date'),
-        {'schema': schema}
     )
 
     def __json__(self, request):

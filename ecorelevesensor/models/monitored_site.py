@@ -19,10 +19,8 @@ from sqlalchemy import (
 )
 
 from ..models import Base, dbConfig
-from .user import User
 from .thesaurus import Thesaurus
 
-schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 class MonitoredSite(Base):
@@ -38,7 +36,6 @@ class MonitoredSite(Base):
     __table_args__ = (
         Index('idx_Tmonitoredsite_name', name),
         UniqueConstraint(type_, name),
-        {'schema': schema}
     )
 
     def __json__(self, request):

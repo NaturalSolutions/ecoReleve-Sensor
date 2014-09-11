@@ -19,17 +19,15 @@ from sqlalchemy import (
 
 from ecorelevesensor.models import Base, dbConfig
 from ecorelevesensor.models.object import Object
-from ecorelevesensor.models.user import User
 from .individual import Individual
 
-schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 class AnimalLocation(Base):
     __tablename__ = 'T_AnimalLocation'
     pk_id = Column('PK_id', Integer, Sequence('seq_animallocation_pk_id'),
                    primary_key=True)
-    creator = Column('FK_creator', Integer, ForeignKey(User.id), nullable=False)
+    creator = Column('FK_creator', Integer, nullable=False)
     obj = Column('FK_obj', Integer, ForeignKey(Object.id), nullable=False)
     ind = Column('FK_ind', Integer, ForeignKey(Individual.id), nullable=False)
     type_ = Column(String(8))
@@ -44,7 +42,6 @@ class AnimalLocation(Base):
                 ind, desc(date),
                 mssql_include=[lat, lon]
             ),
-            {'schema': schema}
         )
     else:
         __table_args__ = (
@@ -52,5 +49,4 @@ class AnimalLocation(Base):
                 'idx_Tanimallocation_fkind',
                 ind, desc(date)
             ),
-            {'schema': schema}
         )

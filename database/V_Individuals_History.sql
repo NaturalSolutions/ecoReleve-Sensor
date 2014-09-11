@@ -30,7 +30,7 @@ GO
 Create VIEW [dbo].[V_Individuals_History] 
 AS 
 select fk_object as ind_id, Fk_carac, COALESCE(value_precision, value) as value, label, begin_date, end_date
-from [ecoReleve_Data].[dbo].[TObj_Carac_value]
-inner join [ecoReleve_Data].[dbo].[TObj_Carac_type]
+from [dbo].[TObj_Carac_value]
+inner join [dbo].[TObj_Carac_type]
   on Fk_carac = Carac_type_Pk
 GO

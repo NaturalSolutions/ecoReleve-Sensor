@@ -13,8 +13,4 @@ from sqlalchemy import (
    func
  )
 
-from sqlalchemy.orm import relationship
-from ecorelevesensor.models import Base, dbConfig
-
-schema = dbConfig['data_schema']
-
+from ecorelevesensor.models import Base

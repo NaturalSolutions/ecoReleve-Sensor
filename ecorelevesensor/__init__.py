@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from urllib.parse import quote_plus
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 from pyramid.request import Request, Response
@@ -15,8 +15,6 @@ from ecorelevesensor.models import (
    _Base,
    dbConfig
 )
-
-from ecorelevesensor.models import *
 
 # Define a new request factory allowing cross-domain AJAX calls.
 def request_factory(env):
@@ -106,6 +104,7 @@ def add_views(config):
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
+    settings['sqlalchemy.url'] = settings['cn.dialect'] + quote_plus(settings['sqlalchemy.url'])
     engine = engine_from_config(settings, 'sqlalchemy.')
     dbConfig['sensor_schema'] = settings['sensor_schema']
     dbConfig['url'] = settings['sqlalchemy.url']

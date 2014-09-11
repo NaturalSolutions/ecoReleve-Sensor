@@ -11,16 +11,16 @@ def periodic_behaviour(connection, id):
    return True
 
 def load_data(id):
-   engine = create_engine('mssql+pyodbc://eReleveApplication:123456@serveur2008\\SQLSERVER2008/ecoReleve_Data')
+   engine = create_engine('mssql+pyodbc://eReleveApplication:123456@.\\SQLSERVER2008/ecoReleve_Data')
    metadata = MetaData()
    V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', metadata,
-      Column('indID', Integer),
+      Column('ind_id', Integer),
       Column('lat', Numeric),
       Column('lon', Numeric),
       Column('date', DateTime)
    )
    metadata.create_all(engine)
-   data = engine.execute(V_Individuals_LatLonDate.select().where(V_Individuals_LatLonDate.c.indID == id)).fetchall()
+   data = engine.execute(V_Individuals_LatLonDate.select().where(V_Individuals_LatLonDate.c['ind_id'] == id)).fetchall()
    return np.array([(row['lon'], row['lat']) for row in data], dtype=float)
 
 
@@ -41,12 +41,8 @@ def compute_density(X, grid, extent):
 if  __name__ == '__main__':
    id = 5263
    X = load_data(id)
-   #X = normalize(X)
    x_min, x_max = X[:,0].min(), X[:,0].max()
    y_min, y_max = X[:,1].min(), X[:,1].max()
-   """
-   density = compute_density(X, (250, 250), (x_min, x_max, y_min, y_max))
-   """
    db = DBSCAN(eps=0.01, min_samples=100)
    density = db.fit(X)
    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
@@ -67,7 +63,11 @@ if  __name__ == '__main__':
          xy = X[class_member_mask & ~core_samples_mask]
          plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
              markeredgecolor='k', markersize=6)
-   #plt.figure()
-   #plt.imshow(density, cmap='hot', origin='lower', extent=(x_min, x_max, y_min, y_max))
-   #plt.colorbar()
+   """
+   X = normalize(X)
+   density = compute_density(X, (250, 250), (x_min, x_max, y_min, y_max))
+   plt.figure()
+   plt.imshow(density, cmap='hot', origin='lower', extent=(x_min, x_max, y_min, y_max))
+   plt.colorbar()
+   """
    plt.show()

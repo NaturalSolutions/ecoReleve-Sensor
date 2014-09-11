@@ -21,10 +21,7 @@ from sqlalchemy import (
 
 from ..models import Base, dbConfig
 from .monitored_site import MonitoredSite
-from .user import User
-from .thesaurus import Thesaurus
 
-schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 # TODO: homogénéiser les notations à la fin d'eRelevé
@@ -32,7 +29,7 @@ class MonitoredSitePosition(Base):
     __tablename__ = 'TMonitoredStations_Positions'
     id = Column('TGeoPos_PK_ID', Integer, Sequence('seq_monitoredsiteposition_pk_id'),
                 primary_key=True)
-    creator = Column('FK_creator', Integer, ForeignKey(User.id))
+    creator = Column('FK_creator', Integer)
     site = Column('TGeoPos_FK_TGeo_ID', Integer, ForeignKey(MonitoredSite.id), nullable=False)
     lat = Column('TGeoPos_LAT', Numeric(9,5), nullable=False)
     lon = Column('TGeoPos_LON', Numeric(9,5), nullable=False)

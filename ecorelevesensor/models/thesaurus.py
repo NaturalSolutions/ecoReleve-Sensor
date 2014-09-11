@@ -18,17 +18,15 @@ from sqlalchemy import (
 )
 
 from ..models import Base, dbConfig
-from .user import User
 
-schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 class Thesaurus(Base):
     __tablename__ = 'T_Thesaurus'
     pk_id = Column('PK_id', Integer, Sequence('seq_thesaurus_pk_id'),
                    primary_key=True)
-    creator = Column('FK_creator', Integer, ForeignKey(User.id))
-    modifier = Column('FK_modifier', Integer, ForeignKey(User.id))
+    creator = Column('FK_creator', Integer)
+    modifier = Column('FK_modifier', Integer)
     type_ = Column(Integer, nullable=False)
     parent = Column(Integer, nullable=False)
     hierarchy = Column(String(64), nullable=False)
@@ -39,4 +37,3 @@ class Thesaurus(Base):
     reference = Column(String)
     creation_date = Column(DateTime, server_default=func.now())
     modification_date = Column(DateTime)
-    __table_args__ = {'schema':schema}

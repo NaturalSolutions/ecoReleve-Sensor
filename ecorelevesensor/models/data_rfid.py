@@ -20,16 +20,14 @@ from sqlalchemy import (
 
 from ecorelevesensor.models import Base, dbConfig
 from ecorelevesensor.models.object import ObjectRfid
-from ecorelevesensor.models.user import User
 
-schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 class DataRfid(Base):
     __tablename__ = 'T_DataRfid'
     id = Column('PK_id', Integer, Sequence('seq_datarfid_pk_id'),
                    primary_key=True)
-    creator = Column('FK_creator', Integer, ForeignKey(User.id))
+    creator = Column('FK_creator', Integer)
     obj = Column('FK_obj', Integer, ForeignKey(ObjectRfid.id), nullable=False)
     chip_code = Column(String(10), nullable=False)
     date = Column('date_', DateTime, nullable=False)
@@ -38,6 +36,5 @@ class DataRfid(Base):
     __table_args__ = (
         Index('idx_Tdatarfid_chipcode_date', chip_code, date),
         UniqueConstraint(obj, chip_code, date),
-        {'schema': schema}
     )
             

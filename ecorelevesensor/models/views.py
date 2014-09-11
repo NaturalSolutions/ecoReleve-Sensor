@@ -36,11 +36,16 @@ V_SearchIndiv = select([
     Individual.breeding_ring.label('breeding_ring'),
     Individual.release_ring.label('release_ring'),
     Individual.age.label('age'),
+    Individual.mark1.label('mark1'),
+    Individual.mark2.label('mark2'),
+    Individual.monitoring_status.label('monitoring_status'),
     Individual.origin.label('origin'),
     Individual.ptt.label('ptt'),
     Individual.frequency.label('frequency'),
     Individual.sex.label('sex'),
-    Individual.specie.label('specie'),
+    Individual.species.label('species'),
+    Individual.status.label('status'),
+    Individual.survey_type.label('survey_type'),
     ReleaseSta.c['release_area'],
     ReleaseSta.c['release_year']
 ]).select_from(

@@ -7,7 +7,6 @@ DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 _Base = declarative_base()
 dbConfig = {
-    'data_schema': 'ecoReleve_Data.dbo',
     'dialect': 'mssql',
     'sensor_schema': 'ecoReleve_Sensor.dbo'
 }

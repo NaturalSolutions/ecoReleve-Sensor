@@ -18,16 +18,14 @@ from sqlalchemy import (
 )
 
 from ecorelevesensor.models import Base, dbConfig
-from ecorelevesensor.models.user import User
 
-schema = dbConfig['data_schema']
 dialect = dbConfig['dialect']
 
 class Object(Base):
     __tablename__ = 'T_Object'
     id = Column('PK_id', Integer, Sequence('seq_object_pk_id'),
                    primary_key=True)
-    creator = Column('FK_creator', Integer, ForeignKey(User.id))
+    creator = Column('FK_creator', Integer, nullable=False)
     identifier = Column(String(32), nullable=False)
     type_ = Column(String(16), nullable=False)
     #manufacturer = Column(String(32))
@@ -36,7 +34,6 @@ class Object(Base):
     __table_args__ = (
             Index('idx_Tobject_type_identifier', type_, identifier),
             UniqueConstraint('identifier'),
-            {'schema': schema}
     )
     __mapper_args__ = {
         'polymorphic_on':type_,

@@ -6,18 +6,13 @@ from sqlalchemy import (
    String,
  )
 
-from sqlalchemy.orm import relationship
-from ecorelevesensor.models import Base, dbConfig
-
-schema = dbConfig['data_schema']
-
+from ecorelevesensor.models import Base
 
 class Animal(Base):
-    #TODO: Ajouter un autoincrément à la fin d'eRelevé
+    #TODO: Ajouter un autoincrÃ©ment Ã  la fin d'eRelevÃ©
     __tablename__ = 'T_Animal'
     id = Column('PK_id', Integer, primary_key=True)
     chip_code = Column(String(10))
     __table_args__ = (
         Index('idx_Tanimal_chipcode_pk', chip_code, id),
-        {'schema':schema}
     )

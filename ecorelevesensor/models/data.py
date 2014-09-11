@@ -14,14 +14,11 @@ from sqlalchemy import (
  )
 
 from sqlalchemy.orm import relationship
-from ecorelevesensor.models import Base, dbConfig
+from ecorelevesensor.models import Base
 from ..models import Individual
-
-data_schema = dbConfig['data_schema']
 
 class Station(Base):
    __tablename__ = 'TStations'
-   __table_args__ = {'schema': data_schema}
    id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
    date = Column('DATE', DateTime, nullable = False)
    name = Column('Name', String)
@@ -39,7 +36,6 @@ class Station(Base):
 
 class ProtocolIndividualEquipment(Base):
    __tablename__ =  'TProtocol_Individual_Equipment'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK_ID', Integer, Sequence('TProtocol_Individual_Equipment_pk_id'), primary_key = True)
    sat_id = Column('FK_SAT_ID', Integer)
    ind_id = Column('FK_IND_ID', Integer)
@@ -48,7 +44,6 @@ class ProtocolIndividualEquipment(Base):
 
 class SatTrx(Base):
    __tablename__ = 'TViewTrx_Sat'
-   __table_args__ = {'schema': data_schema}
    id = Column('Trx_Sat_Obj_PK', Integer, primary_key = True)
    ptt = Column('id19@TCarac_PTT', Integer)
    manufacturer = Column('id42@TCaracThes_Company_Precision', String)
@@ -56,13 +51,11 @@ class SatTrx(Base):
 
 class CaracTypes(Base):
    __tablename__ = 'TObj_Carac_type'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('Carac_type_Pk', Integer, Sequence('TObj_Carac_type_pk_id'), primary_key = True)
    label = Column('label', String)
 
 class ObjectsCaracValues(Base):
    __tablename__ = 'TObj_Carac_value'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('Carac_value_Pk', Integer, Sequence('TObj_Carac_value_pk_id'), primary_key = True)
    object = Column('fk_object', Integer)
    carac_type = Column('Fk_carac', Integer, ForeignKey(CaracTypes.id))
@@ -74,7 +67,6 @@ class ObjectsCaracValues(Base):
 
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable = False)
@@ -84,7 +76,6 @@ class ProtocolGps(Base):
 
 class ProtocolArgos(Base):
    __tablename__ = 'TProtocol_ArgosDataArgos'
-   __table_args__ = {'schema': data_schema, 'implicit_returning': False}
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataArgos_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable = False)
@@ -100,14 +91,12 @@ class ProtocolArgos(Base):
 
 class ProtocolReleaseIndividual(Base):
    __tablename__ = 'TProtocol_Release_Individual'
-   __table_args__ = {'schema': data_schema}
    id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 class ProtocolCaptureIndividual(Base):
    __tablename__ = 'TProtocol_Capture_Individual'
-   __table_args__ = {'schema': data_schema}
    id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
    station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
@@ -123,8 +112,7 @@ V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
                       Column('ind_id', Integer),
                       Column('lat', Numeric),
                       Column('lon', Numeric),
-                      Column('date', DateTime),
-                      schema=data_schema)
+                      Column('date', DateTime))
 
 V_Individuals_History = Table('V_Individuals_History', Base.metadata,
                               Column('ind_id', Integer, key='id'),
@@ -132,18 +120,15 @@ V_Individuals_History = Table('V_Individuals_History', Base.metadata,
                               Column('value', String),
                               Column('begin_date', DateTime),
                               Column('end_date', DateTime),
-                              Column('label', String),
-                              schema=data_schema)
+                              Column('label', String))
 
 V_Individuals_Stations = Table('V_Individuals_Stations', Base.metadata,
                                Column('ind_id', Integer),
                                Column('sta_id', Integer),
-                               Column('fk_sta_type', Integer),
-                               schema = data_schema)
+                               Column('fk_sta_type', Integer))
 
 class ViewRfid(Base):
    __tablename__ = 'TViewRFID'
-   __table_args__ = {'schema': data_schema}
    id = Column('RFID_Obj_pk', Integer, primary_key = True)
    serial_number = Column('id65@TCarac_rfid_Serial_number',Integer)
    model = Column('id41@TCaracThes_Model',Integer)
@@ -154,7 +139,6 @@ class ViewRfid(Base):
 
 class ThemeEtude(Base):
    __tablename__ = 'TThemeEtude'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
    id = Column('TProt_PK_ID', Integer, primary_key = True)
    Caption = Column('Caption', String)
    Definition_fr = Column('Definition_fr', String)
@@ -167,7 +151,6 @@ class ThemeEtude(Base):
 
 class MapSelectionManager(Base):
    __tablename__ = 'TMapSelectionManager'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
    id = Column('TSMan_ID', Integer, primary_key = True)
    TSMan_sp_name = Column('TSMan_sp_name', String)
    TSMan_Layer_Name = Column('TSMan_Layer_Name', String)
@@ -177,7 +160,6 @@ class MapSelectionManager(Base):
 
 class Protocole(Base):
    __tablename__ = 'TProtocole'
-   __table_args__ = {'schema': 'ecoReleve_Data.dbo'}
    id = Column('TTheEt_PK_ID', Integer, primary_key = True)
    Relation = Column('Relation', String)
    Caption = Column('Caption', String)

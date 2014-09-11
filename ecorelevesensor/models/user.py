@@ -27,12 +27,10 @@ class User(Base):
     if db_dialect =='mssql':
         __table_args__ = (
             Index('idx_Tuser_lastname_firstname', lastname, firstname, mssql_include=[id]),
-            {'schema':dbConfig['data_schema']}
         )
     else:
         __table_args__ = (
             Index('idx_Tuser_lastname_firstname', lastname, firstname),
-            {'schema':dbConfig['data_schema']}
         )
 
     @hybrid_property
