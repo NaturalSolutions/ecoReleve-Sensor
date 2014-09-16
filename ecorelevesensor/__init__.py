@@ -110,6 +110,7 @@ def main(global_config, **settings):
     """
     settings['sqlalchemy.url'] = settings['cn.dialect'] + quote_plus(settings['sqlalchemy.url'])
     engine = engine_from_config(settings, 'sqlalchemy.')
+    dbConfig['data_schema'] = settings['data_schema']
     dbConfig['sensor_schema'] = settings['sensor_schema']
     dbConfig['url'] = settings['sqlalchemy.url']
     DBSession.configure(bind=engine)

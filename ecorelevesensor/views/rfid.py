@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from ecorelevesensor.models import (
     DBSession,
     DataRfid,
+    dbConfig,
     Individual,
     MonitoredSite, 
     MonitoredSiteEquipment
@@ -160,7 +161,7 @@ def rfid_validate(request):
     #TODO: SQL SERVER specific code removal
     stmt = text("""
         DECLARE @error int, @nb int;
-        EXEC ecoReleve_Data.dbo.sp_validate_rfid :user, @nb OUTPUT, @error OUTPUT;
+        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :user, @nb OUTPUT, @error OUTPUT;
         SELECT @error, @nb;"""
     ).bindparams(bindparam('user', request.authenticated_userid))
     error_code, nb = DBSession.execute(stmt).fetchone()
