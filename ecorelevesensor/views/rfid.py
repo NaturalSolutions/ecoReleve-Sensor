@@ -130,7 +130,7 @@ def rfid_import(request):
                         time = re.sub('\s','',line[i])
                         format_dt = '%d/%m/%Y %H:%M:%S'
                         if re.search('PM|AM',time):
-                            format_dt = '%d/%m/%Y %I:%M:%S%p'
+                            format_dt = '%m/%d/%Y %I:%M:%S%p'
                         dt = date+' '+time
                         dt = datetime.strptime(dt, format_dt)
                     i=i+1
@@ -147,13 +147,13 @@ def rfid_import(request):
         known_chips = set([row[0] for row in DBSession.execute(query).fetchall()])
         unknown_chips = chip_codes.difference(known_chips)
         if len(unknown_chips) > 0:
-            message += '\n\nWarning : chip codes ' + str(unknown_chips) + ' are invalid.'
+            message += '\n\nWarning : chip codes ' + str(unknown_chips) + ' are unknown.'
     except IntegrityError as e:
         request.response.status_code = 500
         message = 'Error : data already exist.\n\nDetail :\n' + str(e.orig)
     except Exception as e:
-        request.response.status_code = 500
-        message = e
+        request.response.status_code = 520
+        message = 'Error'
     return message
 
 @view_config(route_name=prefix+'validate', renderer='string')
