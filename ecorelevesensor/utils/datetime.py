@@ -1,7 +1,10 @@
 from datetime import datetime
 
 def parse(s):
-    formats = ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d']
+    """ Date parsing tool.
+        Change the formats here cause a changement in the whole application.
+    """
+    formats = ['%d/%m/%Y %H:%M:%S', '%d/%m/%Y']
     d = None
     for format in formats:
         try:

@@ -15,24 +15,7 @@ from sqlalchemy import (
 
 from sqlalchemy.orm import relationship
 from ecorelevesensor.models import Base
-from ..models import Individual
-
-class Station(Base):
-   __tablename__ = 'TStations'
-   id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
-   date = Column('DATE', DateTime, nullable = False)
-   name = Column('Name', String)
-   area = Column('Region', String)
-   fieldActivityId = Column('FieldActivity_ID', Integer)
-   fieldActivityName = Column('FieldActivity_Name', String)
-   lat = Column(Numeric(9,5), nullable = False)
-   lon = Column(Numeric(9,5), nullable = False)
-   ele = Column(Integer)
-   precision = Column('Precision', Integer)
-   creator = Column('Creator', Integer)
-   creationDate = Column('Creation_date', DateTime, server_default=func.now())
-   protocol_argos = relationship('ProtocolArgos', uselist=False, backref='Station')
-   protocol_gps = relationship('ProtocolGps', uselist=False, backref='Station')
+from ..models import Individual, Station
 
 class ProtocolIndividualEquipment(Base):
    __tablename__ =  'TProtocol_Individual_Equipment'

@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from urllib.parse import quote_plus
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
@@ -27,6 +28,11 @@ def datetime_adapter(obj, request):
     """Json adapter for datetime objects.
     """
     return str(obj)
+    
+def decimal_adapter(obj, request):
+    """Json adapter for Decimal objects.
+    """
+    return float(obj)
 
 # Add all the routes of the application.
 def add_routes(config):
@@ -63,9 +69,15 @@ def add_routes(config):
     config.add_route('transmitter/search', 'ecoReleve-Core/transmitter/search')
     
     ##### Monitored sites #####
-    config.add_route('monitoredSite', 'ecoReleve-Core/monitoredSite')
     config.add_route('monitoredSite/name', 'ecoReleve-Core/monitoredSite/name')
     config.add_route('monitoredSite/type', 'ecoReleve-Core/monitoredSite/type')
+    config.add_route('monitoredSite', 'ecoReleve-Core/monitoredSite')
+    config.add_route('monitoredSite/id', 'ecoReleve-Core/monitoredSite/{id}')
+    config.add_route('monitoredSite/list', 'ecoReleve-Core/monitoredSite/list')
+    
+    ##### Stations #####
+    config.add_route('station/id', 'ecoReleve-Core/station/{id}')
+    config.add_route('station', 'ecoReleve-Core/station')
 
      ##### Monitored sites equipment #####
     config.add_route('monitoredSiteEquipment/pose', 'ecoReleve-Core/monitoredSiteEquipment/pose')
@@ -130,6 +142,7 @@ def main(global_config, **settings):
     # Add renderer for datetime objects
     json_renderer = JSON()
     json_renderer.add_adapter(datetime, datetime_adapter)
+    json_renderer.add_adapter(Decimal, decimal_adapter)
     config.add_renderer('json', json_renderer)
     
     # Set up authentication and authorization

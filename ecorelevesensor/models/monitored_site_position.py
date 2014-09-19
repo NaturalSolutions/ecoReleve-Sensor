@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    desc,
     Float,
     ForeignKey,
     func,
@@ -24,7 +25,7 @@ from .monitored_site import MonitoredSite
 
 dialect = dbConfig['dialect']
 
-# TODO: homogénéiser les notations à la fin d'eRelevé
+# TODO: homogÃ©nÃ©iser les notations Ã  la fin d'eRelevÃ©
 class MonitoredSitePosition(Base):
     __tablename__ = 'TMonitoredStations_Positions'
     id = Column('TGeoPos_PK_ID', Integer, Sequence('seq_monitoredsiteposition_pk_id'),
@@ -39,3 +40,15 @@ class MonitoredSitePosition(Base):
     begin_date = Column('TGeoPos_Begin_Date', DateTime)
     end_date = Column('TGeoPos_End_Date', DateTime)
     comments = Column('TGeoPos_Comments', String)
+    
+    __table_args__ = (
+        Index('idx_Tmonitoredsiteposition_site_begin', site, desc(begin_date)), 
+    )
+    
+    def __json__(self, request):
+        return{
+            'lat':self.lat,
+            'lon':self.lon,
+            'begin':self.begin_date,
+            'end':self.end_date
+        }

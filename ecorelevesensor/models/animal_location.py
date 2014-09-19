@@ -15,6 +15,7 @@ from sqlalchemy import (
     Numeric,
     Sequence,
     String,
+    UniqueConstraint
 )
 
 from ecorelevesensor.models import Base, dbConfig
@@ -42,6 +43,7 @@ class AnimalLocation(Base):
                 ind, desc(date),
                 mssql_include=[lat, lon]
             ),
+            UniqueConstraint(ind, obj, date),
         )
     else:
         __table_args__ = (
@@ -49,4 +51,5 @@ class AnimalLocation(Base):
                 'idx_Tanimallocation_fkind',
                 ind, desc(date)
             ),
+            UniqueConstraint(ind, obj, date),
         )

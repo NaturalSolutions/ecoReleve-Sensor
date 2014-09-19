@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint
 )
+from sqlalchemy.orm import relationship
 
 from ..models import Base, dbConfig
 from .thesaurus import Thesaurus
@@ -33,6 +34,8 @@ class MonitoredSite(Base):
     id_type = Column('id_Type', Integer)
     creation_date = Column(DateTime, server_default=func.now(), nullable=False)
     active = Column(Boolean)
+    positions = relationship('MonitoredSitePosition', lazy='joined',
+                             order_by="desc(MonitoredSitePosition.begin_date)")
     __table_args__ = (
         Index('idx_Tmonitoredsite_name', name),
         UniqueConstraint(type_, name),
@@ -42,7 +45,8 @@ class MonitoredSite(Base):
         return {
             'id':self.id,
             'name':self.name,
-            'type':self.type_
+            'type':self.type_,
+            'positions':self.positions
         }
     """
     A utiliser une fois qu'eReleve aura disparu ...
