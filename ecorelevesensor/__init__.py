@@ -9,6 +9,7 @@ from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 
 from ecorelevesensor.controllers.security import SecurityRoot, role_loader
+from ecorelevesensor.renderers.csvrenderer import CSVRenderer
 
 from ecorelevesensor.models import (
    DBSession,
@@ -92,6 +93,7 @@ def add_routes(config):
     config.add_route('core/individuals/stations', 'ecoReleve-Core/individuals/stations')
     config.add_route('core/individuals/search/values', 'ecoReleve-Core/individuals/search/values')
     config.add_route('core/individuals/search', 'ecoReleve-Core/individuals/search')
+    config.add_route('core/individuals/search/export', 'ecoReleve-Core/individuals/search/export')
     config.add_route('core/individuals/count', 'ecoReleve-Core/individuals/count')
 
     config.add_route('core/user/fieldworkers','ecoReleve-Core/user/fieldworkers')
@@ -144,6 +146,9 @@ def main(global_config, **settings):
     json_renderer.add_adapter(datetime, datetime_adapter)
     json_renderer.add_adapter(Decimal, decimal_adapter)
     config.add_renderer('json', json_renderer)
+    
+    # Add renderer for CSV files.
+    config.add_renderer('csv', CSVRenderer)
     
     # Set up authentication and authorization
     config.set_authentication_policy(authn_policy)
