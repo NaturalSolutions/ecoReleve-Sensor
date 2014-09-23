@@ -13,6 +13,7 @@ dbConfig = {
 
 #from .animal import Animal
 from .animal_location import AnimalLocation
+from .data_gsm import DataGsm
 from .individual import Individual
 from .monitored_site import MonitoredSite
 from .monitored_site_position import MonitoredSitePosition

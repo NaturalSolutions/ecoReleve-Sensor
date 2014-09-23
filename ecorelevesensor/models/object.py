@@ -62,14 +62,14 @@ class ObjectArgos(Object):
 class ObjectGsm(Object):
     company = Column(String(64))
     model = Column(String(64))
-    ptt = Column(Integer)
+    program_id = Column(Integer)
     serial_number = Column(String(32))
     
     def __json__(self, request):
         obj = super(Object, self).__json__(request)
         obj['company'] = self.company
         obj['model'] = self.model
-        obj['ptt'] = self.ptt
+        obj['program_id'] = self.program_id
         obj['serial_number'] = self.serial_number
     
     __mapper_args__ = {

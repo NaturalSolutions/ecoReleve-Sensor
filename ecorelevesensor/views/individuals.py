@@ -110,13 +110,7 @@ def core_individuals_search_export(request):
     # Run query
     data = DBSession.execute(query).fetchall()
     header = [col.name for col in V_SearchIndiv.c]
-    rows = []
-    for row in data:
-        d = OrderedDict(row)
-        l = []
-        for value in d.values():
-            l.append(value)
-        rows.append(l)
+    rows = [[value for value in row] for row in data]
     
     # override attributes of response
     filename = 'individual_search_export.csv'
