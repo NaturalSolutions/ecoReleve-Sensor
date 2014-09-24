@@ -54,7 +54,8 @@ def data_gsm_unchecked(request):
         df = pd.DataFrame.from_records(data, columns=data[0].keys(), coerce_float=True)
         X1 = df.ix[:,['lat', 'lon']].values[:-1,:]
         X2 = df.ix[1:,['lat', 'lon']].values
-        dist = pd.Series(np.append(haversine(X1, X2).round(3), 0), name='dist')
-        impo = pd.Series([False]*len(data), name='import')
-        df = pd.concat([df['id'], df['date_'].apply(lambda x: str(x)), df['lat'], df['lon'], dist, impo], axis=1)
+        df['dist'] = np.append(haversine(X1, X2).round(3), 0)
+        df['import'] = [False]*len(df.index)
+        ids = df.set_index('date_').resample('1H', how='first').dropna().id
+        df['import'].ix[df.id[ids]] = True
         return df.to_dict('records')
