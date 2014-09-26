@@ -5,8 +5,8 @@ Created on Tue Sep 23 17:15:47 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import desc, select
-from ecorelevesensor.models import DBSession, DataGsm
+from sqlalchemy import desc, select, func
+from ecorelevesensor.models import AnimalLocation, DBSession, DataGsm
 from ecorelevesensor.utils.distance import haversine
 
 import pandas as pd
@@ -14,11 +14,21 @@ import numpy as np
 
 prefix = 'dataGsm/'
 
+@view_config(route_name=prefix + 'unchecked/list', renderer='json')
+def data_gsm_unchecked_list(request):
+    '''List unchecked GSM data.
+    '''
+    query = select([
+        DataGsm.platform_,
+        func.count(DataGsm.id).label('nb')
+    ]).group_by(DataGsm.platform_)
+    return [dict(row) for row in DBSession.execute(query).fetchall()]
+
 @view_config(route_name=prefix + 'unchecked', renderer='json')
 def data_gsm_unchecked(request):
     '''Get the unchecked GSM data.
     '''
-    gsm = int(request.matchdict['id'])
+    platform = int(request.matchdict['id'])
     
     if request.GET['format'] == 'geojson':
         # Query
@@ -27,7 +37,7 @@ def data_gsm_unchecked(request):
             DataGsm.lat,
             DataGsm.lon,
             DataGsm.date_
-        ]).where(DataGsm.gsm == gsm).where(DataGsm.checked == False).order_by(desc(DataGsm.date_))
+        ]).where(DataGsm.platform_ == platform).where(DataGsm.checked == False).order_by(desc(DataGsm.date_))
         # Create list of features from query result
         features = [
             {
@@ -46,8 +56,11 @@ def data_gsm_unchecked(request):
             DataGsm.id.label('id'),
             DataGsm.lat,
             DataGsm.lon,
-            DataGsm.date_
-        ]).where(DataGsm.gsm == gsm).where(DataGsm.checked == False).order_by(desc(DataGsm.date_))
+            DataGsm.ele,
+            DataGsm.date_]
+        ).where(DataGsm.platform_ == platform
+        ).where(DataGsm.checked == False
+        ).order_by(desc(DataGsm.date_))
         data = DBSession.execute(query).fetchall()
         # Load data from the DB then
         # compute the distance between 2 consecutive points.
@@ -56,6 +69,23 @@ def data_gsm_unchecked(request):
         X2 = df.ix[1:,['lat', 'lon']].values
         df['dist'] = np.append(haversine(X1, X2).round(3), 0)
         df['import'] = [False]*len(df.index)
-        ids = df.set_index('date_').resample('1H', how='first').dropna().id
-        df['import'].ix[df.id[ids]] = True
+        ids = df.set_index('date_').resample('1H', how='first').dropna().id.values
+        df['import'][df.id.isin(ids)] = True
+        df['date_'] = df['date_'].apply(lambda date: str(date))
         return df.to_dict('records')
+        
+@view_config(route_name=prefix + 'unchecked/import', renderer='json')
+def data_gsm_unchecked_import(request):
+    '''Import unchecked GSM data.
+    '''
+    
+    data = request.json_body.get('data')
+    select_stmt = select(DataGsm)
+    query = insert(AnimalLocation, select([DataGsm.__table__.c]))
+    
+    query = select([
+        DataGsm.platform_,
+        func.count(DataGsm.id).label('nb')
+    ]).group_by(DataGsm.platform_)
+    
+    return [dict(row) for row in DBSession.execute(query).fetchall()]

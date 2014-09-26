@@ -22,7 +22,7 @@ from ecorelevesensor.models import (
 def request_factory(env):
 	request = Request(env)
 	request.response = Response()
-	#request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
+	request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
 	return request
 
 def datetime_adapter(obj, request):
@@ -48,7 +48,7 @@ def add_routes(config):
     config.add_route('core/user', 'ecoReleve-Core/user')
     config.add_route('core/currentUser', 'ecoReleve-Core/currentUser')
     
-    ##### Argos / GSM routes #####
+    ##### Argos #####
     config.add_route('sensor/unchecked', 'ecoReleve-Sensor/sensor/unchecked')
     config.add_route('argos/unchecked/list', 'ecoReleve-Sensor/argos/unchecked/list')
     config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
@@ -65,7 +65,9 @@ def add_routes(config):
     config.add_route('rfid/validate', 'ecoReleve-Core/rfid/validate')
     config.add_route('rfid/byName', 'ecoReleve-Core/rfid/byName/{name}')
     
-    ##### DataGsm #####
+    ##### GSM #####
+    config.add_route('dataGsm/unchecked/list', 'ecoReleve-Core/dataGsm/unchecked/list')
+    config.add_route('dataGsm/unchecked/import', 'ecoReleve-Core/dataGsm/{id}/unchecked/import')
     config.add_route('dataGsm/unchecked', 'ecoReleve-Core/dataGsm/{id}/unchecked')
     
      ##### Transmitter #####
@@ -162,7 +164,7 @@ def main(global_config, **settings):
     
     #config.include('pyramid_chameleon')
     config.include('pyramid_tm')
-    config.set_request_factory(request_factory)
+    #config.set_request_factory(request_factory)
     add_routes(config)
     #add_views(config)
     config.scan()
