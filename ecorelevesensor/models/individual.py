@@ -7,7 +7,7 @@ Created on Sat Sep  6 15:33:49 2014
 from sqlalchemy import (
    Boolean,
    Column,
-   DateTime,
+   Date,
    Float,
    ForeignKey,
    Index,
@@ -26,7 +26,7 @@ class Individual(Base):
                 primary_key=True)
     ptt = Column('id19@TCarac_PTT', Integer)
     age = Column('id2@Thes_Age_Precision', String)
-    birth_date = Column('id35@Birth_date', DateTime)
+    birth_date = Column('id35@Birth_date', Date)
     mark1 = Column('id55@TCarac_Mark_code_1', String)
     mark2 = Column('id56@TCarac_Mark_code_2', String)
     sex = Column('id30@TCaracThes_Sex_Precision', String)

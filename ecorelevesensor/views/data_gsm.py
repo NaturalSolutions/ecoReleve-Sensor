@@ -68,10 +68,11 @@ def data_gsm_unchecked(request):
         X1 = df.ix[:,['lat', 'lon']].values[:-1,:]
         X2 = df.ix[1:,['lat', 'lon']].values
         df['dist'] = np.append(haversine(X1, X2).round(3), 0)
+        df['speed'] = (df['dist']/((df['date_']-df['date_'].shift(-1)).fillna(1)/np.timedelta64(1, 'h'))).round(3)
         df['import'] = [False]*len(df.index)
         ids = df.set_index('date_').resample('1H', how='first').dropna().id.values
         df['import'][df.id.isin(ids)] = True
-        df['date_'] = df['date_'].apply(lambda date: str(date))
+        df['date_'] = df['date_'].apply(lambda d: str(d))
         return df.to_dict('records')
         
 @view_config(route_name=prefix + 'unchecked/import', renderer='json')
