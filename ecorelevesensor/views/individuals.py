@@ -1,7 +1,6 @@
 from sqlalchemy import select, cast, Date, Float, desc, func
 from ecorelevesensor.models import DBSession, Individual
 from ecorelevesensor.models.data import (
-   CaracTypes,
    V_Individuals_LatLonDate,
    V_Individuals_History
 )
@@ -44,9 +43,21 @@ def core_individuals_search(request):
     query = select(V_SearchIndiv.c)
     # Look over the criteria list
     criteria = request.json_body.get('criteria', {})
-    for column, value in criteria.items():
-        if column in V_SearchIndiv.c and value != '':
-            query = query.where(V_SearchIndiv.c[column] == value)
+    for column_name, obj in criteria.items():
+        if column_name in V_SearchIndiv.c:
+            column = V_SearchIndiv.c[column_name]
+            value = obj['value']
+            op = obj.get('op', 'is')
+            if op in ['is', 'null']:
+                query = query.where(column == value)
+            elif op == 'is not':
+                query = query.where(column != value or column == None)
+            elif op == 'not null':
+                query = query.where(column != value)
+            elif op == 'begin with':
+                query = query.where(column.like(value + '%'))
+            elif op == 'not begin with':
+                query = query.where(column.notlike(value + '%'))
     # Define the limit and offset if exist
     limit = int(request.json_body.get('limit', 0))
     offset = int(request.json_body.get('offset', 0))

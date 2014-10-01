@@ -3,7 +3,7 @@ package:
     version: "0.0.1"
 source:
     git_url: https://github.com/NaturalSolutions/ecoReleve-Sensor.git
-    git_tag: 0.0.1
+    git_tag: v0.0.1
 # patches:
 # List any patch files here
 # - fix.patch
@@ -21,16 +21,26 @@ source:
 # number: 1
 requirements:
     build:
+        - pandas
         - python
+        - pyodbc
+        - pyramid_tm
+        - reportlab
+        - setuptools
+        - scikit-learn
+        - waitress
+        - zope.sqlalchemy
     run:
         - python
         - numpy
         - pandas
         - pyodbc
+        - pyramid_tm
         - reporlab
         - sqlalchemy
         - scikit-learn
-        - zope.interface
+        - waitress
+        - zope.sqlalchemy
 test:
     # Python imports
     imports:

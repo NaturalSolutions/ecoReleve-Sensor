@@ -13,7 +13,6 @@ requires = [
    'pandas',
    'pyodbc',
    'pyramid',
-   'pyramid_chameleon',
    'pyramid_debugtoolbar',
    'pyramid_tm',
    'reportlab',

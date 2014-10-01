@@ -162,7 +162,6 @@ def main(global_config, **settings):
     # Set the default permission level to 'read'
     config.set_default_permission('read')
     
-    #config.include('pyramid_chameleon')
     config.include('pyramid_tm')
     #config.set_request_factory(request_factory)
     add_routes(config)
