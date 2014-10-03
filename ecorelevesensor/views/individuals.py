@@ -12,6 +12,8 @@ from pyramid.view import view_config
 from collections import OrderedDict
 from datetime import datetime
 
+import json
+
 route_prefix = 'core/individuals/'
 
 @view_config(route_name=route_prefix + 'search/values', renderer='json')
@@ -42,7 +44,7 @@ def core_individuals_search(request):
     '''
     query = select(V_SearchIndiv.c)
     # Look over the criteria list
-    criteria = request.json_body.get('criteria', {})
+    criteria = json.loads(request.POST.get('criteria', '{}'))
     for column_name, obj in criteria.items():
         if column_name in V_SearchIndiv.c:
             column = V_SearchIndiv.c[column_name]
@@ -58,15 +60,9 @@ def core_individuals_search(request):
                 query = query.where(column.like(value + '%'))
             elif op == 'not begin with':
                 query = query.where(column.notlike(value + '%'))
-    # Define the limit and offset if exist
-    limit = int(request.json_body.get('limit', 0))
-    offset = int(request.json_body.get('offset', 0))
-    if limit > 0:
-        query = query.limit(limit)
-    if offset > 0:
-        offset = query.offset(offset)
+    
     # Set sorting columns and order
-    order_by = request.json_body.get('order_by', {})
+    order_by = json.loads(request.POST.get('order_by', '{}'))
     order_by_clause = []
     for column, order in order_by.items():
         if column in V_SearchIndiv.columns:
@@ -76,8 +72,21 @@ def core_individuals_search(request):
                 order_by_clause.append(V_SearchIndiv.columns[column].desc())
     if len(order_by_clause) > 0:
         query = query.order_by(*order_by_clause)
+    
     # Run query
-    return [OrderedDict(row) for row in DBSession.execute(query).fetchall()]
+    total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
+    
+    # Define the limit and offset if exist
+    offset = int(request.POST.get('offset', 0))
+    limit = int(request.POST.get('limit', 0))
+    if limit > 0:
+        query = query.limit(limit)
+    if offset > 0:
+        query = query.offset(offset)
+    result = [{'total_entries':total}]
+    data = DBSession.execute(query).fetchall()
+    result.append([OrderedDict(row) for row in data])
+    return result
 
 @view_config(
     permission=NO_PERMISSION_REQUIRED,
