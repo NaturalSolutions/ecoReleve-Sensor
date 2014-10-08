@@ -62,9 +62,10 @@ def core_individuals_search(request):
                 query = query.where(column.notlike(value + '%'))
     
     # Set sorting columns and order
-    order_by = json.loads(request.POST.get('order_by', '{}'))
+    order_by = json.loads(request.POST.get('order_by', '[]'))
     order_by_clause = []
-    for column, order in order_by.items():
+    for obj in order_by:
+        column, order = obj.split(':')
         if column in V_SearchIndiv.columns:
             if order == 'asc':
                 order_by_clause.append(V_SearchIndiv.columns[column].asc())
@@ -78,7 +79,7 @@ def core_individuals_search(request):
     
     # Define the limit and offset if exist
     offset = int(request.POST.get('offset', 0))
-    limit = int(request.POST.get('limit', 0))
+    limit = int(request.POST.get('per_page', 0))
     if limit > 0:
         query = query.limit(limit)
     if offset > 0:
@@ -103,34 +104,29 @@ def core_individuals_search_export(request):
         Return search results as CSV.
     '''
     query = select(V_SearchIndiv.c)
+    
     # Look over the criteria list
     criteria = request.json_body.get('criteria', {})
-    for column, value in criteria.items():
-        if column in V_SearchIndiv.c and value != '':
-            query = query.where(V_SearchIndiv.c[column] == value)
-    # Define the limit and offset if exist
-    limit = int(request.json_body.get('limit', 0))
-    offset = int(request.json_body.get('offset', 0))
-    if limit > 0:
-        query = query.limit(limit)
-    if offset > 0:
-        offset = query.offset(offset)
-    # Set sorting columns and order
-    order_by = request.json_body.get('order_by', {})
-    order_by_clause = []
-    for column, order in order_by.items():
-        if column in V_SearchIndiv.columns:
-            if order == 'asc':
-                order_by_clause.append(V_SearchIndiv.columns[column].asc())
-            elif order == 'desc':
-                order_by_clause.append(V_SearchIndiv.columns[column].desc())
-    if len(order_by_clause) > 0:
-        query = query.order_by(*order_by_clause)
+    for column_name, obj in criteria.items():
+        if column_name in V_SearchIndiv.c:
+            column = V_SearchIndiv.c[column_name]
+            value = obj['value']
+            op = obj.get('op', 'is')
+            if op in ['is', 'null']:
+                query = query.where(column == value)
+            elif op == 'is not':
+                query = query.where(column != value or column == None)
+            elif op == 'not null':
+                query = query.where(column != value)
+            elif op == 'begin with':
+                query = query.where(column.like(value + '%'))
+            elif op == 'not begin with':
+                query = query.where(column.notlike(value + '%'))
     
     # Run query
     data = DBSession.execute(query).fetchall()
     header = [col.name for col in V_SearchIndiv.c]
-    rows = [[value for value in row] for row in data]
+    rows = [[val for val in row] for row in data]
     
     # override attributes of response
     filename = 'individual_search_export.csv'
