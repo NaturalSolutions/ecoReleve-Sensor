@@ -9,6 +9,7 @@ from reportlab.platypus.tables import (_rowLen, _calc_pc, _hLine, _multiLine,
 
 from .formula import Formula
 
+
 def spanFixDim(V0,V,spanCons,FUZZ=rl_config._FUZZ):
     #assign required space to variable rows equally to existing calculated values
     M = {}
@@ -133,7 +134,7 @@ class SpreadsheetTable(Flowable):
         def normCell(stuff):
             if stuff is None:
                 return ''
-            elif isinstance(stuff,unicode):
+            elif isinstance(stuff,str):
                 return stuff.encode('utf8')
             else:
                 return stuff
@@ -836,7 +837,7 @@ class SpreadsheetTable(Flowable):
         ccap, cdash, cjoin = None, None, None
         self.canv.saveState()
         for op, (sc,sr), (ec,er), weight, color, cap, dash, join, count, space in self._linecmds:
-            if isinstance(sr,basestring) and sr.startswith('split'): continue
+            if isinstance(sr,(str,bytes)) and sr.startswith('split'): continue
             if cap!=None and ccap!=cap:
                 self.canv.setLineCap(cap)
                 ccap = cap
@@ -1152,7 +1153,7 @@ class SpreadsheetTable(Flowable):
         for n, rh in enumerate(self._rowHeights[activeRows0:self._activeRows[1]]):
             if h+rh>availHeight:
                 break
-            if not impossible.has_key(self._vis_to_abs(n+self.repeatRows)):
+            if  self._vis_to_abs(n+self.repeatRows) not in (impossible):
                 split_at=n + 1
             h=h+rh
         return split_at
@@ -1169,9 +1170,9 @@ class SpreadsheetTable(Flowable):
         self._curweight = self._curcolor = self._curcellstyle = None
         self._drawBkgrnd()
         activeRows0 = self._activeRows[0] if self._activeRows[0] is not None else self.repeatRows # ugly hack to make it backward compatible
-        row_nums = (range(0, self.repeatRows) +
-            range(activeRows0, self._activeRows[1]) +
-            range(self._nrows-self._repeatRowsB, self._nrows))
+        row_nums = (list(range(0, self.repeatRows)) +
+            list(range(activeRows0, self._activeRows[1]) )+
+            list(range(self._nrows-self._repeatRowsB, self._nrows)))
         if not self._spanCmds:
             # old fashioned case, no spanning, steam on and do each cell
             cellvalues = (self._cellvalues[:self.repeatRows] +

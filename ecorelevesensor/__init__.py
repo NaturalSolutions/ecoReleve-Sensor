@@ -10,11 +10,11 @@ from pyramid.authorization import ACLAuthorizationPolicy
 
 from ecorelevesensor.controllers.security import SecurityRoot, role_loader
 from ecorelevesensor.renderers.csvrenderer import CSVRenderer
-
+from ecorelevesensor.renderers.pdfrenderer import PDFrenderer
+from ecorelevesensor.renderers.gpxrenderer import GPXRenderer
 from ecorelevesensor.models import (
    DBSession,
    Base,
-   _Base,
    dbConfig
 )
 
@@ -135,8 +135,7 @@ def main(global_config, **settings):
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
     Base.metadata.create_all(engine)
-    _Base.metadata.bind = engine
-    #_Base.metadata.reflect(schema = 'ecoReleve_Data.dbo', views=True, extend_existing=True)
+    Base.metadata.reflect(schema = 'ecoReleve_Data.dbo', views=True, extend_existing=True)
     authn_policy = AuthTktAuthenticationPolicy(
         settings['auth.secret'],
         cookie_name='ecoReleve-Core',
@@ -154,6 +153,8 @@ def main(global_config, **settings):
     
     # Add renderer for CSV files.
     config.add_renderer('csv', CSVRenderer)
+    config.add_renderer('pdf', PDFrenderer)
+    config.add_renderer('gpx', GPXRenderer)
     
     # Set up authentication and authorization
     config.set_authentication_policy(authn_policy)

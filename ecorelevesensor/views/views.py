@@ -24,8 +24,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus.flowables import PageBreak
 from reportlab.lib import colors
-
-from ..models import DBSession, _Base
+import numpy
+from ..models import DBSession, Base
 from ecorelevesensor.models.data import (
     Station,
     ViewRfid,
@@ -164,7 +164,7 @@ def views_details(request):
    data = []
    try:
       name_vue = request.matchdict['name']
-      table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+      table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
       print(table)
       for column in table.c:
          name_c = str(column.name)
@@ -180,7 +180,7 @@ def views_details(request):
 def views_count(request):
    try:
       name_vue = request.matchdict['name']
-      table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+      table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
       count = DBSession.execute(table.count()).scalar()
       return count
    except Exception as e:
@@ -190,7 +190,7 @@ def views_count(request):
 def views_filter_count(request):
    try:
       name_vue = request.matchdict['name']
-      table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+      table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
       criteria = request.params
       query = select([func.count(table.c.values()[0])])
       query = query_criteria(query, table, criteria)
@@ -204,7 +204,7 @@ def views_filter_count(request):
 def views_filter(request):
    try:
       name_vue = request.matchdict['name']
-      table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+      table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
       criteria = request.params
       result = {'type':'FeatureCollection', 'features':[]}
       query = select([cast(table.c['LAT'].label('lat'), Float), cast(table.c['LON'].label('lon'), Float), func.count(table.c.values()[0])]).group_by(table.c['LAT'].label('lat'), table.c['LON'])
@@ -219,7 +219,7 @@ def views_filter(request):
 def views_filter_result(request):
    try:
       name_vue = request.matchdict['name']
-      table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+      table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
       criteria = request.params
       skip = 0
       limit = 10
@@ -260,125 +260,6 @@ def views_filter_result(request):
    except Exception as e:
       print(e)
 
-@view_config(route_name = 'core/views/export/filter/export', renderer = 'json')
-def views_filter_export(request):
-   try:
-      name_vue = request.matchdict['name']
-      table = _Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
-      criteria = request.params
-      today = datetime.datetime.today().strftime('%d_%m_%Y %H_%M_%S')
-      name_file = name_vue+"_"+today
-      columns = []
-      cols = []
-      if criteria['columns']:
-            cols = criteria['columns'].split(',')
-            for col in cols:
-               columns.append(table.c[col])
-      query = select(columns)
-      query = query_criteria(query, table, criteria)
-      rows = DBSession.execute(query).fetchall()
-
-      # generated CSV file
-      csv_file = csv.writer(open("Files/csv/"+name_file+".csv", "wb"))
-      csv_file.writerow(cols)
-
-      data = []
-      for obj in rows:
-         row = []
-         row_csv = []
-         for item in obj:
-            row.append(item)
-            try:
-               row_csv.append(item.encode("utf-8"))
-            except:
-               row_csv.append(item)
-
-         csv_file.writerow(row_csv)
-         data.append(row)
-
-      #generated GPX file
-      gpx='<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="byHand" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">\n'
-      gpx_data = [dict(row) for row in rows]
-      for obj in gpx_data:
-         lat, lon, date, sitename = "", "", "", ""
-         for key, item in obj.items():
-            if key == "LAT":
-               lat = str(item)
-            elif key == "LON":
-               lon = str(item)
-            elif key == "DATE":
-               date = str(item)
-            elif key == "Site_name":
-               sitename = str(item)
-         gpx = gpx + "\n<wpt lat='"+lat+"' lon='"+lon+"'>\n<ele></ele>\n<time>"+date+"</time>\n<desc></desc>\n<name>"+sitename+"</name>\n<sym>Flag, Blue</sym>\n</wpt>\n";
-      gpx = gpx + "</gpx>"
-
-      file_gpx = open("Files/gpx/"+name_file+".gpx", "w")
-      file_gpx.write(gpx)
-      file_gpx.close()
-
-      # generated PDF file
-      table_font_size = 9
-      if name_vue == "V_Qry_VIndiv_MonitoredLostPostReleaseIndividuals_LastStations":
-         table_font_size = 8
-         for key in range(len(cols)):
-            if cols[key] == 'DATE':
-               cols[key] = 'Date lastpos'
-            elif cols[key] == 'Name_signal_type':
-               cols[key] = 'Signal'
-            elif cols[key] == 'MonitoringStatus@Station':
-               cols[key] = 'Monitoring st.'
-            elif cols[key] == 'SurveyType@Station':
-               cols[key] = 'Servey type'
-         cols.append('Date')
-      else:
-         cols.append('Date de saisie')
-
-      cols.append('Vu')
-      cols.append('Entendu')
-      cols.append('Perdu')
-      cols.append('Mort')
-      cols.append('Repro')
-      cols.append('No check')
-
-      data.insert(0,cols)
-
-      def addPageNumber(canvas, doc):
-         page_num = canvas.getPageNumber()
-         text = "Page %s" % page_num
-         canvas.setFont('Times-BoldItalic', 9)
-         canvas.drawRightString(145*mm, 5*mm, text)
-
-      styleSheet = getSampleStyleSheet()
-      doc = SimpleDocTemplate("Files/pdf/"+name_file+".pdf",pagesize=landscape(A4),rightMargin=72,leftMargin=72,topMargin=20,bottomMargin=18)
-      Story=[]
-
-      styles=getSampleStyleSheet()
-      styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
-
-      Story.append(Paragraph("Export "+name_vue, styleSheet['Title']))
-      Story.append(Spacer(0, 5 * mm))
-      if name_vue == "V_Qry_VIndiv_MonitoredLostPostReleaseIndividuals_LastStations":
-         Story.append(Paragraph("Nom de l\'observateur:_____________________________",styleSheet['BodyText']))
-         Story.append(Paragraph("Secteur de suivi: _____________________ Date de Saisie: _________________",styleSheet['BodyText']))
-         Story.append(Spacer(0, 10 * mm))
-
-      table_style = [
-        ('GRID', (0,0), (-1,-1), 1, colors.black),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('LEFTPADDING', (0,0), (-1,-1), 3),
-        ('RIGHTPADDING', (0,0), (-1,-1), 3),
-        ('FONTSIZE', (0,0), (-1,-1), table_font_size),
-        ('FONTNAME', (0,0), (-1,0), 'Times-Bold'),
-      ]
-      spreadsheet_table = SpreadsheetTable(data, repeatRows = 1)
-      spreadsheet_table.setStyle(table_style)
-      Story.append(spreadsheet_table)
-      Story.append(PageBreak())
-      doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
-
-      return name_file
-   except: raise
 
 def query_criteria(query, table, criteria):
    for column, value in criteria.items():
