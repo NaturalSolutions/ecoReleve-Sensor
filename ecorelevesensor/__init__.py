@@ -135,7 +135,7 @@ def main(global_config, **settings):
     DBSession.configure(bind=engine)
     Base.metadata.bind = engine
     Base.metadata.create_all(engine)
-    Base.metadata.reflect(schema = 'ecoReleve_Data.dbo', views=True, extend_existing=True)
+    Base.metadata.reflect(views=True, extend_existing=True)
     authn_policy = AuthTktAuthenticationPolicy(
         settings['auth.secret'],
         cookie_name='ecoReleve-Core',

@@ -2,20 +2,17 @@ from sqlalchemy import (
    Boolean,
    Column,
    DateTime,
-   Float,
    ForeignKey,
-   Index,
    Integer,
    Numeric,
    Sequence,
    String,
-   Table,
-   func
+   Table
  )
 
-from sqlalchemy.orm import relationship
 from ecorelevesensor.models import Base
-from ..models import Individual, Station
+from .individual import Individual
+from .station import Station
 
 class ProtocolIndividualEquipment(Base):
    __tablename__ =  'TProtocol_Individual_Equipment'
@@ -34,12 +31,12 @@ class SatTrx(Base):
 
 class CaracTypes(Base):
    __tablename__ = 'TObj_Carac_type'
-   id = Column('Carac_type_Pk', Integer, Sequence('TObj_Carac_type_pk_id'), primary_key = True)
+   id = Column('Carac_type_Pk', Integer, Sequence('TObj_Carac_type_pk_id'), primary_key=True)
    label = Column('label', String)
 
 class ObjectsCaracValues(Base):
    __tablename__ = 'TObj_Carac_value'
-   id = Column('Carac_value_Pk', Integer, Sequence('TObj_Carac_value_pk_id'), primary_key = True)
+   id = Column('Carac_value_Pk', Integer, Sequence('TObj_Carac_value_pk_id'), primary_key=True)
    object = Column('fk_object', Integer)
    carac_type = Column('Fk_carac', Integer, ForeignKey(CaracTypes.id))
    object_type = Column('object_type', String)
@@ -50,18 +47,18 @@ class ObjectsCaracValues(Base):
 
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'
-   id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key = True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
-   ind_id = Column('FK_TInd_ID', Integer, nullable = False)
+   id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key=True)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])))
+   ind_id = Column('FK_TInd_ID', Integer, nullable=False)
    course = Column('TADG_Course', Integer)
    speed = Column('TADG_Speed', Integer)
    comment = Column('TADG_Comments', String(250))
 
 class ProtocolArgos(Base):
    __tablename__ = 'TProtocol_ArgosDataArgos'
-   id = Column('PK', Integer, Sequence('TProtocol_ArgosDataArgos_pk_id'), primary_key = True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
-   ind_id = Column('FK_TInd_ID', Integer, nullable = False)
+   id = Column('PK', Integer, Sequence('TProtocol_ArgosDataArgos_pk_id'), primary_key=True)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])))
+   ind_id = Column('FK_TInd_ID', Integer, nullable=False)
    lc = Column('TADA_LC', String(1))
    iq = Column('TADA_IQ', Integer)
    nbMsg = Column('TADA_NbMsg', Integer)
@@ -75,13 +72,13 @@ class ProtocolArgos(Base):
 class ProtocolReleaseIndividual(Base):
    __tablename__ = 'TProtocol_Release_Individual'
    id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 class ProtocolCaptureIndividual(Base):
    __tablename__ = 'TProtocol_Capture_Individual'
    id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 ##### Views #####
