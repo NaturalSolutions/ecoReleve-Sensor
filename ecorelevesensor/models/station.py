@@ -19,7 +19,7 @@ from ecorelevesensor.models import Base
 class Station(Base):
     __tablename__ = 'TStations'
     id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key = True)
-    date = Column('DATE', DateTime, nullable = False)
+    date = Column(DateTime, index=True, nullable=False)
     name = Column('Name', String)
     area = Column('Region', String)
     fieldActivityId = Column('FieldActivity_ID', Integer)
