@@ -71,8 +71,10 @@ class SpreadsheetTable(Flowable):
         # we need a cleanup pass to ensure data is strings - non-unicode and non-null
         if normalizedData:
             self._cellvalues = data
+
         else:
             self._cellvalues = data = self.normalizeData(data)
+
         if not _seqCW: colWidths = ncols*[colWidths]
         elif len(colWidths)!=ncols:
             if rl_config.allowShortTableRows and isinstance(colWidths,list):
@@ -134,8 +136,8 @@ class SpreadsheetTable(Flowable):
         def normCell(stuff):
             if stuff is None:
                 return ''
-            elif isinstance(stuff,str):
-                return stuff.encode('utf8')
+            # elif isinstance(stuff,str):
+            #     return stuff.encode('utf8')
             else:
                 return stuff
         outData = []
@@ -721,9 +723,11 @@ class SpreadsheetTable(Flowable):
                 # are permitted across spanned areas.
                 if not self._is_visible_row(row):
                     continue
+    
                 col0, row0, col1, row1 = value
                 row0 = self._abs_to_vis(row0)
                 row1 = self._abs_to_vis(row1)
+                
                 if col1-col0>0:
                     for _ in xrange(col0+1,col1+1):
                         vBlocks.setdefault(colpositions[_],[]).append((rowpositions[row1+1],rowpositions[row0]))
@@ -1175,6 +1179,7 @@ class SpreadsheetTable(Flowable):
             list(range(self._nrows-self._repeatRowsB, self._nrows)))
         if not self._spanCmds:
             # old fashioned case, no spanning, steam on and do each cell
+
             cellvalues = (self._cellvalues[:self.repeatRows] +
                 self._cellvalues[activeRows0:self._activeRows[1]] +
                 self._cellvalues[self._nrows-self._repeatRowsB:])
@@ -1190,7 +1195,7 @@ class SpreadsheetTable(Flowable):
                 for colNo, cellval, cellstyle, colpos, colwidth in zip(
                     xrange(self._ncols), row, rowstyle,
                     self._colpositions[:-1], self._colWidths):
-
+                   
                     if isinstance(cellval, Formula):
                         cellval = cellval(self._cellvalues, self.repeatRows,
                             self._repeatRowsB,
@@ -1295,9 +1300,11 @@ class SpreadsheetTable(Flowable):
 
         just = cellstyle.alignment
         valign = cellstyle.valign
+        
         if isinstance(cellval,(tuple,list,Flowable)):
             if not isinstance(cellval,(tuple,list)): cellval = (cellval,)
             # we assume it's a list of Flowables
+
             W = []
             H = []
             w, h = self._listCellGeom(cellval,colwidth,cellstyle,W=W, H=H,aH=rowheight)
@@ -1335,6 +1342,7 @@ class SpreadsheetTable(Flowable):
             else:
                 raise ValueError('Invalid justification %s' % just)
             vals = str(cellval).split("\n")
+
             n = len(vals)
             leading = cellstyle.leading
             fontsize = cellstyle.fontsize

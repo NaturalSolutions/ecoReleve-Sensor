@@ -82,6 +82,9 @@ def add_routes(config):
     config.add_route('monitoredSite/list', 'ecoReleve-Core/monitoredSite/list')
     
     ##### Stations #####
+    config.add_route('station/area', 'ecoReleve-Core/station/area')
+    config.add_route('station/locality', 'ecoReleve-Core/station/locality')
+    config.add_route('station/get', 'ecoReleve-Core/station/get')
     config.add_route('station/id', 'ecoReleve-Core/station/{id}')
     config.add_route('station', 'ecoReleve-Core/station')
 
