@@ -8,11 +8,9 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    ForeignKey,
     func,
     Index,
     Integer,
-    Numeric,
     Sequence,
     String,
     UniqueConstraint
@@ -20,7 +18,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from ..models import Base, dbConfig
-from .thesaurus import Thesaurus
 
 dialect = dbConfig['dialect']
 
@@ -35,7 +32,7 @@ class MonitoredSite(Base):
     creation_date = Column(DateTime, server_default=func.now(), nullable=False)
     active = Column(Boolean)
     positions = relationship('MonitoredSitePosition', lazy='joined',
-                             order_by="desc(MonitoredSitePosition.begin_date)")
+                             order_by='desc(MonitoredSitePosition.begin_date)')
     __table_args__ = (
         Index('idx_Tmonitoredsite_name', name),
         UniqueConstraint(type_, name),

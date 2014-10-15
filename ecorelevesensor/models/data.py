@@ -48,7 +48,7 @@ class ObjectsCaracValues(Base):
 class ProtocolGps(Base):
    __tablename__ = 'TProtocol_ArgosDataGps'
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataGps_pk_id'), primary_key=True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])))
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable=False)
    course = Column('TADG_Course', Integer)
    speed = Column('TADG_Speed', Integer)
@@ -57,7 +57,7 @@ class ProtocolGps(Base):
 class ProtocolArgos(Base):
    __tablename__ = 'TProtocol_ArgosDataArgos'
    id = Column('PK', Integer, Sequence('TProtocol_ArgosDataArgos_pk_id'), primary_key=True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])))
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id))
    ind_id = Column('FK_TInd_ID', Integer, nullable=False)
    lc = Column('TADA_LC', String(1))
    iq = Column('TADA_IQ', Integer)
@@ -72,13 +72,13 @@ class ProtocolArgos(Base):
 class ProtocolReleaseIndividual(Base):
    __tablename__ = 'TProtocol_Release_Individual'
    id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])), nullable = False)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 class ProtocolCaptureIndividual(Base):
    __tablename__ = 'TProtocol_Capture_Individual'
    id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
-   station_id = Column('FK_TSta_ID', Integer, ForeignKey('.'.join([Station.__tablename__, Station.__mapper__.c.id.name])), nullable = False)
+   station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
    ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 ##### Views #####
