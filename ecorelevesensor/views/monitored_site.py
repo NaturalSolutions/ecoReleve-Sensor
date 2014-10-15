@@ -5,7 +5,7 @@ Created on Mon Sep  1 17:28:02 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text
+from sqlalchemy import select, distinct
 from ecorelevesensor.models import DBSession, MonitoredSite
 prefix = 'monitoredSite'
 

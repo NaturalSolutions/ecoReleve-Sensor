@@ -5,19 +5,16 @@ Created on Mon Sep  1 14:38:09 2014
 """
 
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
     desc,
     Float,
     ForeignKey,
-    func,
     Index,
     Integer,
     Numeric,
     Sequence,
-    String,
-    UniqueConstraint
+    String
 )
 
 from ..models import Base, dbConfig
@@ -30,14 +27,14 @@ class MonitoredSitePosition(Base):
     __tablename__ = 'TMonitoredStations_Positions'
     id = Column('TGeoPos_PK_ID', Integer, Sequence('seq_monitoredsiteposition_pk_id'),
                 primary_key=True)
-    creator = Column('FK_creator', Integer)
+    #creator = Column('FK_creator', Integer)
     site = Column('TGeoPos_FK_TGeo_ID', Integer, ForeignKey(MonitoredSite.id), nullable=False)
-    lat = Column('TGeoPos_LAT', Numeric(9,5), nullable=False)
-    lon = Column('TGeoPos_LON', Numeric(9,5), nullable=False)
+    lat = Column('TGeoPos_LAT', Numeric(9,5,asdecimal=False), nullable=False)
+    lon = Column('TGeoPos_LON', Numeric(9,5,asdecimal=False), nullable=False)
     ele = Column('TGeoPos_ELE', Float)
     precision = Column('TGeoPos_Precision', Integer)
     date = Column('TGeoPos_Date', DateTime)
-    begin_date = Column('TGeoPos_Begin_Date', DateTime)
+    begin_date = Column('TGeoPos_Begin_Date', DateTime, nullable=False)
     end_date = Column('TGeoPos_End_Date', DateTime)
     comments = Column('TGeoPos_Comments', String)
     
@@ -49,6 +46,6 @@ class MonitoredSitePosition(Base):
         return{
             'lat':self.lat,
             'lon':self.lon,
-            'begin':self.begin_date,
-            'end':self.end_date
+            'begin':str(self.begin_date),
+            'end':None if self.end_date is None else str(self.end_date)
         }
