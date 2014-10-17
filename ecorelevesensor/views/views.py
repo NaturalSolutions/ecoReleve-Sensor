@@ -133,14 +133,10 @@ def theme_list(request):
 def protocoles_list(request):
 	xml = "<protocoles>"
 	try:
-		protocol=DBSession.execute(select([Protocole.id, Protocole.Relation, Protocole.Caption, Protocole.Description])).fetchall()
-		print ("________________ ")
-		print (len(protocol))
-		for id, relation, caption,description in protocol:
-			print ("________________ ")
-			print (id)
+		protocol=DBSession.execute(select([Protocole.id, Protocole.Relation, Protocole.Caption, Protocole.Description]).order_by(Protocole.Caption)).fetchall()
+		for id, relation, caption, description in protocol:
 			xml = xml + "<protocole id='"+str(id)+"'>"+caption+"</protocole>"
-			xml = xml + "</protocoles>"
+		xml = xml + "</protocoles>"
 	except Exception as e:
 		print ("________________ prtocole_list error :")
 		print(e)

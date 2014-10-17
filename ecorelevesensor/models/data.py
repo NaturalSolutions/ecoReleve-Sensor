@@ -144,7 +144,7 @@ class Protocole(Base):
    Relation = Column('Relation', String)
    Caption = Column('Caption', String)
    Description = Column('Description', String)
-   # Active = Column(Boolean)
+   Active = Column(Boolean)
    Creation_date = Column('Creation_date', DateTime)
    Creator = Column('Creator', String)
    Support = Column('Support', String)
