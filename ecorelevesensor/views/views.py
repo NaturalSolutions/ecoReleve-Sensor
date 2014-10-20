@@ -168,7 +168,7 @@ def views_details(request):
 	 data = []
 	 try:
 			name_vue = request.matchdict['name']
-			table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+			table = Base.metadata.tables[name_vue]
 			print(table)
 			for column in table.c:
 				 name_c = str(column.name)
@@ -178,13 +178,13 @@ def views_details(request):
 				 data.append({'name':name_c, 'type':type_c})
 			return data
 	 except Exception as e:
-			print(e)
+	 	print(e)
 
 @view_config(route_name = 'core/views/export/count', renderer = 'json')
 def views_count(request):
 	 try:
 			name_vue = request.matchdict['name']
-			table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+			table = Base.metadata.tables[name_vue]
 			count = DBSession.execute(table.count()).scalar()
 			return count
 	 except Exception as e:
@@ -194,7 +194,7 @@ def views_count(request):
 def views_filter_count(request):
 	 try:
 			name_vue = request.matchdict['name']
-			table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+			table = Base.metadata.tables[name_vue]
 			criteria = request.params
 			query = select([func.count(table.c.values()[0])])
 			query = query_criteria(query, table, criteria)
@@ -208,7 +208,7 @@ def views_filter_count(request):
 def views_filter(request):
 	 try:
 			name_vue = request.matchdict['name']
-			table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+			table = Base.metadata.tables[name_vue]
 			criteria = request.params
 			result = {'type':'FeatureCollection', 'features':[]}
 			query = select([cast(table.c['LAT'].label('lat'), Float), cast(table.c['LON'].label('lon'), Float), func.count(table.c.values()[0])]).group_by(table.c['LAT'].label('lat'), table.c['LON'])
@@ -223,7 +223,7 @@ def views_filter(request):
 def views_filter_result(request):
 	 try:
 			name_vue = request.matchdict['name']
-			table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+			table = Base.metadata.tables[name_vue]
 			criteria = request.params
 			skip = 0
 			limit = 10

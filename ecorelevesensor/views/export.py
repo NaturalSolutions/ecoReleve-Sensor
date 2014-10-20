@@ -40,7 +40,7 @@ def views_filter_export(request):
 
 		print ('in export with value : '+type_export)
 		name_vue = request.matchdict['name']
-		table = Base.metadata.tables['ecoReleve_Data.dbo.'+name_vue]
+		table = Base.metadata.tables[name_vue]
 		criteria = request.params
 		today = datetime.datetime.today().strftime('%d_%m_%Y %H_%M_%S')
 		name_file = name_vue+"_"+today

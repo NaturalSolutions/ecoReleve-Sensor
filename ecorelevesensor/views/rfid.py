@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 
 from pyramid.view import view_config
-from sqlalchemy import select, insert, text, desc, bindparam
+from sqlalchemy import select, insert, text, desc, bindparam, or_
 from sqlalchemy.exc import IntegrityError
 
 from ecorelevesensor.models import (
@@ -17,7 +17,8 @@ from ecorelevesensor.models import (
     dbConfig,
     Individual,
     MonitoredSite, 
-    MonitoredSiteEquipment
+    MonitoredSiteEquipment,
+    MonitoredSitePosition
 )
 from ecorelevesensor.models.object import ObjectRfid
 
@@ -52,6 +53,18 @@ def rfid_detail(request):
     module, site, equip = data
     result = {'module': module, 'site':site, 'equip':equip}
     return result
+
+@view_config(route_name=prefix+'byDate', renderer='json')
+def rfid_active_byDate(request):
+    date = request.params['date']
+    data = DBSession.query(MonitoredSite.name, MonitoredSite.type_,  MonitoredSitePosition.lat,  MonitoredSitePosition.lon
+        ).outerjoin(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
+        ).filter(MonitoredSitePosition.begin_date <= date
+        ).filter(or_(MonitoredSitePosition.end_date >= date, MonitoredSitePosition.end_date == None )).all()
+    siteName_type=[{'type':row[1] , 'name':row[0], 'positions': {'lat': row[2], 'lon': row[3] }} for row in data]
+    result = {'siteType': list(set([row[1] for row in data])), 'siteName_type': siteName_type}
+    return result
+
 
 @view_config(route_name=prefix+'identifier', renderer='json')
 def rfid_get_identifier(request):
