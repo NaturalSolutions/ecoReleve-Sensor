@@ -22,6 +22,7 @@ class Station(Base):
     date = Column(DateTime, index=True, nullable=False)
     name = Column('Name', String)
     area = Column('Region', String)
+    locality = Column('Place', String)
     fieldActivityId = Column('FieldActivity_ID', Integer)
     fieldActivityName = Column('FieldActivity_Name', String)
     lat = Column(Numeric(9,5), nullable=False)

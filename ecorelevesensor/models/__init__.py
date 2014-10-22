@@ -21,5 +21,7 @@ from .object import ObjectRfid
 from .station import Station
 from .data_rfid import DataRfid
 from .monitored_site_equipment import MonitoredSiteEquipment
+from .user import User
 from .thesaurus import Thesaurus
 from .user import User
+
