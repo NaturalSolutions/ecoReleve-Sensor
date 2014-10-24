@@ -8,7 +8,7 @@ import io
 import csv
 
 class CSVRenderer(object):
-    def __init__(self):
+    def __init__(self,info=None):
         pass
 
     def __call__(self, value, system):
