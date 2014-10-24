@@ -10,13 +10,10 @@ from sqlalchemy import (
    desc,
    DateTime,
    Float,
-   ForeignKey,
    Index,
    Integer,
    Numeric,
    Sequence,
-   String,
-   text,
    UniqueConstraint
  )
 
@@ -24,13 +21,15 @@ from ecorelevesensor.models import Base, dbConfig
 
 dialect = dbConfig['dialect']
 
+
+#TODO: Foreign Key on platform_ referencing T_ObjectGsm.platform_
 class DataGsm(Base):
     __tablename__ = 'T_DataGsm'
     id = Column('PK_id', Integer, Sequence('seq_Tdatagsm_id'), primary_key=True)
     platform_ = Column(Integer, nullable=False)
     date_ = Column(DateTime, nullable=False)
-    lat = Column(Numeric(9, 5), nullable=False)
-    lon = Column(Numeric(9, 5), nullable=False)
+    lat = Column(Numeric(9, 5, asdecimal=False), nullable=False)
+    lon = Column(Numeric(9, 5, asdecimal=False), nullable=False)
     ele = Column(Integer)
     speed = Column(Integer)
     course = Column(Integer)

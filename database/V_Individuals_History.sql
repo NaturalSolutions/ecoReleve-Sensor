@@ -1,12 +1,19 @@
 USE [ecoReleve_Data]
 GO
 
-/****** Object:  View [dbo].[V_Qry_AllIndivs_Equip@Station]    Script Date: 07/09/2014 10:29:18 ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
+-- =============================================
+-- Author        : Natural Solutions (Thomas PEEL)
+-- Creation date : 12/08/2014
+-- Description   : History of individuals' characteristics.
+-- Modified on   : -
+-- Modified by   : -
+-- =============================================
 
 /***** Indexes *****/
 CREATE NONCLUSTERED INDEX [idx_TObjCaracValue_FKobjectFKcaracBeginDate_With_ValueValuePrecisionEndDate] ON [dbo].[TObj_Carac_value] 
