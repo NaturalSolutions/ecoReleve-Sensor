@@ -56,7 +56,7 @@ def rfid_detail(request):
 
 @view_config(route_name=prefix+'byDate', renderer='json')
 def rfid_active_byDate(request):
-    date = request.params['date']
+    date = datetime.strptime(request.params['date'], '%d/%m/%Y  %H:%M:%S')
     data = DBSession.query(MonitoredSite.name, MonitoredSite.type_,  MonitoredSitePosition.lat,  MonitoredSitePosition.lon
         ).outerjoin(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
         ).filter(MonitoredSitePosition.begin_date <= date

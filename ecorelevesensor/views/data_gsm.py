@@ -74,7 +74,9 @@ def data_gsm_unchecked(request):
         # Values to import : the first per hour
         ids = df.set_index('date').resample('1H', how='first').dropna().id.values
         df['import'] = df.id.isin(ids)
-        df['date'] = df['date'].apply(str)  
+        df['date'] = df['date'].apply(str) 
+        # Fill NaN
+        df.fillna(value={'ele':-999}, inplace=True)
         return df.to_dict('records')
         
 @view_config(route_name=prefix + 'unchecked/import', renderer='json')
