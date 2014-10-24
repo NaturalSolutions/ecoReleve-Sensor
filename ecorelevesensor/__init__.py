@@ -67,6 +67,7 @@ def add_routes(config):
     config.add_route('rfid/byDate', 'ecoReleve-Core/rfid/byDate')
     
     ##### GSM #####
+    config.add_route('dataGsm/upload', 'ecoReleve-Core/dataGsm/upload')
     config.add_route('dataGsm/unchecked/list', 'ecoReleve-Core/dataGsm/unchecked/list')
     config.add_route('dataGsm/unchecked/import', 'ecoReleve-Core/dataGsm/{id}/unchecked/import')
     config.add_route('dataGsm/unchecked', 'ecoReleve-Core/dataGsm/{id}/unchecked')
