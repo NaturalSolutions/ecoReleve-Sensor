@@ -30,6 +30,7 @@ class Station(Base):
     ele = Column(Integer)
     precision = Column('Precision', Integer)
     creator = Column('Creator', Integer)
+    updateRegion=Column('regionUpdate',Boolean)
     creationDate = Column('Creation_date', DateTime, server_default=func.now())
     protocol_argos = relationship('ProtocolArgos', uselist=False, backref='station')
     protocol_gps = relationship('ProtocolGps', uselist=False, backref='station')
