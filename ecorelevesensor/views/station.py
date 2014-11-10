@@ -118,15 +118,13 @@ def insert_protocol (request):
 	'station description':TProtocolStationDescription,
 	'Vertebrate individual death':TProtocolVertebrateIndividualDeath
 	}
-	data=request.params
-	protocol=data.get('protocolName')
-
+	data=dict(request.params)
+	protocolName=data['name']
 	# insert new row in the protocol
 	try :
-		new_proto=dict_proto[protocol]()
-		setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
-		field=json.loads(data.get('protocolForm'))
-		new_proto.InitFromFields(field)
+		new_proto=dict_proto[protocolName]()
+		# setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
+		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
 
 		return 'protocol added with success'
