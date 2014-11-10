@@ -48,7 +48,7 @@ class TProtocolBirdBiometry(Base,GenProtocole):
     Toe_middle_width_max = Column(Float(53))
     Toe_middle_width_min = Column(Float(53))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 
 class TProtocolBuildingAndActivity(Base,GenProtocole):
@@ -64,7 +64,7 @@ class TProtocolBuildingAndActivity(Base,GenProtocole):
     Name_Impact = Column(Unicode(250))
     Comments = Column(Unicode(255))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 
 class TProtocolChiropteraCapture(Base,GenProtocole):
@@ -114,7 +114,7 @@ class TProtocolChiropteraCapture(Base,GenProtocole):
     CommentsPhysiology = Column(Unicode(255))
     Sampled = Column(BIT, nullable=False, server_default=text("((0))"))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 
 class TProtocolChiropteraDetection(Base,GenProtocole):
@@ -139,7 +139,7 @@ class TProtocolChiropteraDetection(Base,GenProtocole):
     Id_Record_type = Column(Integer)
     Name_Record_type = Column(Unicode(50))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 
 class TProtocolSimplifiedHabitat(Base,GenProtocole):
@@ -166,7 +166,7 @@ class TProtocolSimplifiedHabitat(Base,GenProtocole):
     Cultivated_2 = Column(BIT, nullable=False, server_default=text("((0))"))
     Cultivated_3 = Column(BIT, nullable=False, server_default=text("((0))"))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 
 class TProtocolStationDescription(Base,GenProtocole):
@@ -218,7 +218,7 @@ class TProtocolStationDescription(Base,GenProtocole):
     Houbara_Suitable = Column(BIT, nullable=False, server_default=text("((0))"))
     Comments = Column(Text(collation='French_CI_AS'))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 
 class TProtocolVertebrateIndividualDeath(Base,GenProtocole):
@@ -244,6 +244,6 @@ class TProtocolVertebrateIndividualDeath(Base,GenProtocole):
     Id_Taxon = Column(Integer, index=True)
     Sampled = Column(BIT, nullable=False, server_default=text("((0))"))
 
-    TStation = relationship(Station)
+    TStation = relationship('Station')
 
 

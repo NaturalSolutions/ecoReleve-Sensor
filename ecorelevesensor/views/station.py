@@ -12,7 +12,8 @@ from ecorelevesensor.models import (TProtocolBirdBiometry,
 	TProtocolVertebrateIndividualDeath, TProtocolStationDescription,
 	Station, Individual,
 	Base,
-	DBSession)
+	DBSession,
+	User)
 import numpy as np
 import datetime
 from sqlalchemy.sql import func
@@ -64,47 +65,48 @@ def monitoredSitesLocality(request):
 def insertNewStation(request):
 
 	data=request.params
-	date=data.get('Date_')
-	print (date)
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
 
-	if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0:
-		lastId=DBSession.query(func.max(Station.id)).one()
-		lastId=lastId[0]+1
-		print ('_____________________')
-		print(lastId)
-		# date=datetime.datetime.strptime(date, '%d/%m/%Y %H:%M:%S ')
-		station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], date=date, fieldActivityName = data['FieldActivity_Name'],
-			creator=request.authenticated_userid, updateRegion=0)
+	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0:
+
+		# get userID with fieldWorker_Name
+		users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
+		users_ID = DBSession.execute(users_ID_query).fetchall()
+		users_ID=[row[0] for row in users_ID]
+		if len(users_ID) <3 :
+			users_ID.extend([None,None])
+
+		station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
+			date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
+			creator=request.authenticated_userid, updateRegion=0,
+			fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
 
 		DBSession.add(station)
 		DBSession.flush()
-		lastId=station.id
-		print ('_____________________')
-		print(lastId)
-		return lastId
+		id_sta=station.id
+	
+		print(id_sta)
+		return id_sta
 	else :
 		return None
 
-@view_config(route_name=prefix+'/checkStation', renderer='json', request_method='GET')
+@view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
 	print ('_____________________')
 
 	data=request.params
-	date=data.get('Date_')
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
 
-	if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0:
-		insertNewStation(request)
+	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0:
 		return 0
 	else :
+
 		return 1
 
 
 @view_config(route_name=prefix+'/addProtocol', renderer='json', request_method='POST')
-
 def insert_protocol (request):
 	print('----_____----')
 
@@ -119,22 +121,46 @@ def insert_protocol (request):
 	}
 	data=request.params
 	protocol=data.get('protocolName')
-	print (data.get('protocolName'))
 
-	new_proto=dict_proto[protocol]()
-	setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
-	print(new_proto)
-	field=json.loads(data.get('protocolForm'))
-	new_proto.InitFromFields(field)
+	# insert new row in the protocol
+	try :
+		new_proto=dict_proto[protocol]()
+		setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
+		field=json.loads(data.get('protocolForm'))
+		new_proto.InitFromFields(field)
+		DBSession.add(new_proto)
+	except :
+		raise
 
-	# print (data.get('protocolName'))
-	# print (field.items())
-	print(new_proto)
-	DBSession.add(new_proto)
-	# print(Station.__mapper__)
-	
+@view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='POST')
+def uptdate_protocol (request):
 
-	# proto_Name='TProtocol_'+data['protocolName'].replace(' ','_')
-	# proto_field=json.loads(data.get('protocolForm'))
-	# table=Base.metadata.tables[proto_Name]
-	# print(table.c)
+	date=request.params
+	up_proto=dict_proto[data.get('protocolName')]
+
+@view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='GET')
+def get_protocol (request):
+
+	data=request.params
+	id_sta=data.get('id_sta')
+	proto_onSta={}
+	for protoName, Tproto in dict_proto :
+		print(protoName+' : '+ Tproto)
+		query=select(Tproto,Tproto.FK_TSta_ID==id_sta)
+		res=DBSession.execute(query).scalar()
+		print(res)
+		if res!=None :
+			proto_onSta[protoName]=res
+
+	return proto_onSta
+
+
+@view_config(route_name=prefix+'/station_byDate', renderer='json', request_method='GET')
+def station_byDate (request) :
+
+	data=reques.params
+
+	query= select(Station).filter(Station.date>=data.get('begin_date')).filter(Station.date<=data.get('end_date'))
+	result= DBSession.execute(query).fetchall()
+    
+    return result
