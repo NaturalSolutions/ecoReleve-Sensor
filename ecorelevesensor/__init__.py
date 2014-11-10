@@ -20,10 +20,10 @@ from ecorelevesensor.models import (
 
 # Define a new request factory allowing cross-domain AJAX calls.
 def request_factory(env):
-	request = Request(env)
-	request.response = Response()
-	request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
-	return request
+    request = Request(env)
+    request.response = Response()
+    request.response.headerlist.extend([('Access-Control-Allow-Origin', '*')])
+    return request
 
 def datetime_adapter(obj, request):
     """Json adapter for datetime objects.

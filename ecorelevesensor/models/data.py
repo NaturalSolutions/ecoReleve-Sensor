@@ -152,6 +152,3 @@ class Protocole(Base):
 	Support = Column('Support', String)
 
 
-
-
-

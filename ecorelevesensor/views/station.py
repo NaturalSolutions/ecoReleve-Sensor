@@ -1,6 +1,5 @@
 """
 Created on Fri Sep 19 17:24:09 2014
-
 @author: Natural Solutions (Thomas)
 """
 
@@ -129,8 +128,11 @@ def insert_protocol (request):
 		field=json.loads(data.get('protocolForm'))
 		new_proto.InitFromFields(field)
 		DBSession.add(new_proto)
+
+		return 'protocol added with success'
 	except :
 		raise
+		return 'error'
 
 @view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='POST')
 def uptdate_protocol (request):
@@ -164,3 +166,4 @@ def station_byDate (request) :
 	result= DBSession.execute(query).fetchall()
     
 	return result
+

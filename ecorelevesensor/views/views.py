@@ -16,6 +16,7 @@ from sqlalchemy import (
 
 import datetime, operator
 import re, csv
+import json
 
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import A4, landscape
@@ -26,6 +27,7 @@ from reportlab.platypus.flowables import PageBreak
 from reportlab.lib import colors
 import numpy
 from ..models import DBSession, Base
+
 from ecorelevesensor.models.data import (
 		Station,
 		ViewRfid,
@@ -183,36 +185,75 @@ def views_details(request):
 @view_config(route_name = 'core/views/export/count', renderer = 'json')
 def views_count(request):
 	 try:
+	 		
 			name_vue = request.matchdict['name']
 			table = Base.metadata.tables[name_vue]
+			print(name_vue)
 			count = DBSession.execute(table.count()).scalar()
+			print('___________plouf')
+			print(count)
 			return count
 	 except Exception as e:
 			print(e)
+
 
 @view_config(route_name = 'core/views/export/filter/count', renderer = 'json')
 def views_filter_count(request):
-	 try:
-			name_vue = request.matchdict['name']
-			table = Base.metadata.tables[name_vue]
-			criteria = request.params
-			query = select([func.count(table.c.values()[0])])
-			query = query_criteria(query, table, criteria)
+   print('_________'+'core/views/export/filter/count'+'_________')
+   try:
+      criteria = request.json_body.get('criteria', {})
 
-			count = DBSession.execute(query).scalar()
-			return count
-	 except Exception as e:
-			print(e)
+
+      viewName = criteria['viewName']
+      table = Base.metadata.tables[viewName]
+      #No Model?
+      query = select([func.count(table.c.values()[0])])
+
+      filterList=criteria['filters']
+      for fltr in filterList:
+      	column=fltr['Column']
+      	query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+
+
+      count = DBSession.execute(query).scalar()
+
+      return count
+
+   except Exception as e:
+      print(e)
 
 @view_config(route_name = 'core/views/export/filter/geo', renderer = 'json')
 def views_filter(request):
+	 print('_________'+'core/views/export/filter/geo'+'_________')
 	 try:
-			name_vue = request.matchdict['name']
-			table = Base.metadata.tables[name_vue]
-			criteria = request.params
+			#name_vue = request.matchdict['name']
+			#table = Base.metadata.tables[name_vue]
+			criteria = request.json_body.get('criteria', {})
+
+			viewName = criteria['viewName']
+
+			table = Base.metadata.tables[viewName]
+
+	
+
 			result = {'type':'FeatureCollection', 'features':[]}
+
 			query = select([cast(table.c['LAT'].label('lat'), Float), cast(table.c['LON'].label('lon'), Float), func.count(table.c.values()[0])]).group_by(table.c['LAT'].label('lat'), table.c['LON'])
-			query = query_criteria(query, table, criteria)
+			
+
+			filterList=criteria['filters']
+			for fltr in filterList:
+				column=fltr['Column']
+				query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+
+
+			'''
+			count = DBSession.execute(query).scalar()
+
+			print(count)
+
+			'''
+
 			for lat, lon, nb in  DBSession.execute(query).fetchall():
 				 result['features'].append({'type':'Feature', 'properties':{'count': nb}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
 			return result
@@ -221,6 +262,9 @@ def views_filter(request):
 
 @view_config(route_name = 'core/views/export/filter/result', renderer = 'json')
 def views_filter_result(request):
+
+
+	 '''
 	 try:
 			name_vue = request.matchdict['name']
 			table = Base.metadata.tables[name_vue]
@@ -263,6 +307,88 @@ def views_filter_result(request):
 			return result
 	 except Exception as e:
 			print(e)
+	 '''
+	 try:
+
+	 	criteria = request.json_body.get('criteria', {})
+
+	 	print(criteria)
+	 	
+	 	viewName = criteria['viewName']
+	 	table = Base.metadata.tables[viewName]
+
+
+
+
+	 	#query = select([func.count(table.c.values()[0])])
+
+
+
+
+	 	#columns selection
+	 	columns=criteria['columns']
+	 	print(columns)
+
+	 	coll=[]
+
+	 	for col in columns:
+	 		coll.append(table.c[col])
+	 	
+	 	query = select(coll)
+
+
+	 	#filters selection
+	 	
+	 	filterList=criteria['filters']['filters']
+	 	for fltr in filterList:
+	 		column=fltr['Column']
+	 		query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+
+	 	
+	 	#bbox selection
+	 	bbox=criteria['bbox']
+	 	query = query.where(and_(between(table.c['LAT'], float(bbox[1]), float(bbox[3])), between(table.c['LON'], float(bbox[0]), float(bbox[2]))))
+	 	
+	 	rows = DBSession.execute(query).fetchall()[0:15]
+
+	 	tmp={}
+	 	result = {'columns':[], 'rows':[]}
+
+	 	#I guess there is a better way to do it
+	 	for i in range(len(rows)):
+	 		rows[i]=list(rows[i])
+	 		tmp={}
+	 		for j in range(len(rows[i])):
+	 			tmp[columns[j]] = rows[i][j]
+ 			result['rows'].append(tmp)
+	 		print(tmp)
+
+	 	result['columns']=columns
+	 	print(result)
+
+
+
+
+	 	return result
+	 except: raise
+
+
+
+
+def get_operator_fn(op):
+    return {
+        '<' : operator.lt,
+        '>' : operator.gt,
+        '=' : operator.eq,
+        '<>': operator.ne,
+        '<=': operator.le,
+        '>=': operator.ge,
+        }[op]
+def eval_binary_expr(op1, operator, op2):
+    op1,op2 = op1, op2
+    return get_operator_fn(operator)(op1, op2)
+
+
 
 
 def query_criteria(query, table, criteria):
