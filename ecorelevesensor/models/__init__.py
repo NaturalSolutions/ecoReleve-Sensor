@@ -25,7 +25,4 @@ from .user import User
 from .thesaurus import Thesaurus
 from .user import User
 from .GenProtocole import GenProtocole
-from .LesProtocolesGeneresNew import ( TProtocolBirdBiometry,
-	TProtocolChiropteraCapture,TProtocolSimplifiedHabitat,
-	TProtocolChiropteraDetection,TProtocolBuildingAndActivity,
-	TProtocolVertebrateIndividualDeath,TProtocolStationDescription )
+from .LesProtocolesGeneresNew import *

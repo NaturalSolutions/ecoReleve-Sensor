@@ -71,17 +71,17 @@ class ProtocolArgos(Base):
 	frequency = Column('TADA_Frequency', Numeric(10,1))
 	comment = Column('TADA_Comments', String(250))
 
-class ProtocolReleaseIndividual(Base):
-	__tablename__ = 'TProtocol_Release_Individual'
-	id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
-	station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
-	ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
+# class ProtocolReleaseIndividual(Base):
+# 	__tablename__ = 'TProtocol_Release_Individual'
+# 	id = Column('PK', Integer, Sequence('TProtocol_Release_Individual_pk_id'), primary_key = True)
+# 	station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
+# 	ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
-class ProtocolCaptureIndividual(Base):
-	__tablename__ = 'TProtocol_Capture_Individual'
-	id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
-	station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
-	ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
+# class ProtocolCaptureIndividual(Base):
+# 	__tablename__ = 'TProtocol_Capture_Individual'
+# 	id = Column('PK', Integer, Sequence('TProtocol_Capture_Individual_pk_id'), primary_key = True)
+# 	station_id = Column('FK_TSta_ID', Integer, ForeignKey(Station.id), nullable = False)
+# 	ind_id = Column('FK_TInd_ID', Integer, ForeignKey(Individual.id), nullable = False)
 
 ##### Views #####
 """

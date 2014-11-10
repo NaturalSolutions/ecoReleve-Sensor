@@ -5,14 +5,14 @@ Created on Fri Sep 19 17:24:09 2014
 
 from pyramid.view import view_config
 from sqlalchemy import select, distinct, join, text,Table, and_, bindparam
-from ecorelevesensor.models import (TProtocolBirdBiometry,
-	TProtocolChiropteraCapture,TProtocolSimplifiedHabitat,
-	TProtocolChiropteraDetection,TProtocolBuildingAndActivity,
-	TProtocolVertebrateIndividualDeath, TProtocolStationDescription,
-	Station, Individual,
-	Base,
-	DBSession,
-	User)
+from ecorelevesensor.models import * #(TProtocolBirdBiometry,
+# 	TProtocolChiropteraCapture,TProtocolSimplifiedHabitat,
+# 	TProtocolChiropteraDetection,TProtocolBuildingAndActivity,
+# 	TProtocolVertebrateIndividualDeath, TProtocolStationDescription,
+# 	Station, Individual,
+# 	Base,
+# 	DBSession,
+# 	User)
 import numpy as np
 import datetime
 from sqlalchemy.sql import func
@@ -37,7 +37,7 @@ def monitoredSite(request):
 	
 @view_config(route_name=prefix+'/area', renderer='json', request_method='GET')
 def monitoredSitesArea(request):	
-
+	print('passed')
 	proto_view_Name=request.matchdict['name_vue']
 	proto_view_Table=Base.metadata.tables[proto_view_Name]
 	join_table=proto_view_Table.join(Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
@@ -50,7 +50,8 @@ def monitoredSitesArea(request):
 
 @view_config(route_name=prefix+'/locality', renderer='json', request_method='GET')
 def monitoredSitesLocality(request):
-	
+	print('passed')
+
 	proto_view_Name=request.matchdict['name_vue']
 	proto_view_Table=Base.metadata.tables[proto_view_Name]
 	join_table=proto_view_Table.join(Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
@@ -116,7 +117,25 @@ def insert_protocol (request):
 	'Chiroptera detection':TProtocolChiropteraDetection,
 	'Building and Activities':TProtocolBuildingAndActivity,
 	'station description':TProtocolStationDescription,
-	'Vertebrate individual death':TProtocolVertebrateIndividualDeath
+	'Vertebrate individual death':TProtocolVertebrateIndividualDeath,
+	'Phytosociology habitat': TProtocolPhytosociologyHabitat,
+	'Phytosociology releve': TProtocolPhytosociologyReleve,
+	'Sighting conditions': TProtocolSightingCondition,
+	'Simplified Habitat': TProtocolSimplifiedHabitat,
+	'Station equipment': TProtocolStationEquipment,
+	'Track clue': TProtocolTrackClue,
+	'Capture Group': TProtocolCaptureGroup,
+	'Capture Individual': TProtocolCaptureIndividual,
+	'Nest Description': TProtocolNestDescription,
+	'Clutch Description': TProtocolClutchDescription,
+	'Entomo population': TProtocolEntomoPopulation,
+	# 'Entomo Pop Census': TSubProtocolEntomoPopCensus,
+	'Release Group': TProtocolReleaseGroup,
+	'Release Individual': TProtocolReleaseIndividual,
+	'Transects': TProtocolTransect,
+	# 'SubProtocol Transect': TSubProtocolTransect,
+	'Vertebrate group': TProtocolVertebrateGroup,
+	'Vertebrate Individual': TProtocolVertebrateIndividual
 	}
 	data=dict(request.params)
 	protocolName=data['name']
