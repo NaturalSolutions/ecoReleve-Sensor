@@ -118,8 +118,14 @@ def insert_protocol (request):
 	'station description':TProtocolStationDescription,
 	'Vertebrate individual death':TProtocolVertebrateIndividualDeath
 	}
+<<<<<<< HEAD
 	data=dict(request.params)
 	protocolName=data['name']
+=======
+	data=request.params
+	protocol=data.get('protocolName')
+	print (data)
+>>>>>>> f3a6ad82e9ea794e91c8a204cbd84e31cf1013e6
 	# insert new row in the protocol
 	try :
 		new_proto=dict_proto[protocolName]()
