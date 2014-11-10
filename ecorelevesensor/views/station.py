@@ -1,6 +1,5 @@
 """
 Created on Fri Sep 19 17:24:09 2014
-
 @author: Natural Solutions (Thomas)
 """
 
@@ -121,7 +120,7 @@ def insert_protocol (request):
 	}
 	data=request.params
 	protocol=data.get('protocolName')
-
+	print (data)
 	# insert new row in the protocol
 	try :
 		new_proto=dict_proto[protocol]()
@@ -161,6 +160,6 @@ def station_byDate (request) :
 	data=reques.params
 
 	query= select(Station).filter(Station.date>=data.get('begin_date')).filter(Station.date<=data.get('end_date'))
-	result= DBSession.execute(query).fetchall()
+	# result= DBSession.execute(query).fetchall()
     
-    return result
+    # return result
