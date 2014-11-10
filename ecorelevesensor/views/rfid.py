@@ -1,6 +1,5 @@
 """
 Created on Thu Aug 28 16:45:25 2014
-
 @author: Natural Solutions (Thomas)
 """
 
@@ -185,4 +184,3 @@ def rfid_validate(request):
             return 'Warning : no new row inserted.'
     else:
         return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
-

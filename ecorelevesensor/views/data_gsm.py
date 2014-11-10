@@ -1,6 +1,5 @@
 """
 Created on Tue Sep 23 17:15:47 2014
-
 @author: Natural Solutions (Thomas)
 """
 
