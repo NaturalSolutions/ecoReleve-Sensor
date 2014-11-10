@@ -89,6 +89,13 @@ def add_routes(config):
     config.add_route('station/get', 'ecoReleve-Core/station/get')
     config.add_route('station/id', 'ecoReleve-Core/station/{id}')
     config.add_route('station', 'ecoReleve-Core/station')
+    config.add_route('station/addStation', 'ecoReleve-Core/station/addStation/insert')
+    config.add_route('station/searchStation', 'ecoReleve-Core/station/search')
+    config.add_route('station/station_byDate', 'ecoReleve-Core/station/search_byDate')
+    config.add_route('station/addProtocol', 'ecoReleve-Core/station/addStation/addProtocol')
+    config.add_route('station/updateProtocol', 'ecoReleve-Core/station/addStation/updateProtocol')
+
+
 
      ##### Monitored sites equipment #####
     config.add_route('monitoredSiteEquipment/pose', 'ecoReleve-Core/monitoredSiteEquipment/pose')
