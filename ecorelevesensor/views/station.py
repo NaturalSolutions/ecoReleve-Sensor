@@ -128,8 +128,11 @@ def insert_protocol (request):
 		field=json.loads(data.get('protocolForm'))
 		new_proto.InitFromFields(field)
 		DBSession.add(new_proto)
+
+		return 'protocol added with success'
 	except :
 		raise
+		return 'error'
 
 @view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='POST')
 def uptdate_protocol (request):
@@ -162,4 +165,9 @@ def station_byDate (request) :
 	query= select(Station).filter(Station.date>=data.get('begin_date')).filter(Station.date<=data.get('end_date'))
 	# result= DBSession.execute(query).fetchall()
     
+<<<<<<< HEAD
     # return result
+=======
+	return result
+
+>>>>>>> 9b43b7fb8456ac5c270f5da18c6514d651629f3c
