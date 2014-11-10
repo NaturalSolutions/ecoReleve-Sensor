@@ -163,11 +163,7 @@ def station_byDate (request) :
 	data=reques.params
 
 	query= select(Station).filter(Station.date>=data.get('begin_date')).filter(Station.date<=data.get('end_date'))
-	# result= DBSession.execute(query).fetchall()
+	result= DBSession.execute(query).fetchall()
     
-<<<<<<< HEAD
-    # return result
-=======
 	return result
 
->>>>>>> 9b43b7fb8456ac5c270f5da18c6514d651629f3c
