@@ -138,7 +138,9 @@ def insert_protocol (request):
 	'Vertebrate group': TProtocolVertebrateGroup,
 	'Vertebrate individual': TProtocolVertebrateIndividual
 	}
+	print(request.params)
 	data=dict(request.params)
+	print(data)
 	protocolName=data['name']
 
 	# insert new row in the protocol
