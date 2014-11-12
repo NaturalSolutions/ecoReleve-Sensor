@@ -133,7 +133,6 @@ def data_gsm_all(request):
         # Write into the database
         data_to_insert.to_sql(DataGsm.__table__.name, DBSession.get_bind(), if_exists='append')
     except:
-        raise
         response = 'An error occured.'
         request.response.status_code = 500
     return response
