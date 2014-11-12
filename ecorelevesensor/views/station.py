@@ -71,6 +71,7 @@ def insertNewStation(request):
 	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0:
 
 		# get userID with fieldWorker_Name
+
 		users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
 		users_ID = DBSession.execute(users_ID_query).fetchall()
 		users_ID=[row[0] for row in users_ID]
@@ -89,7 +90,7 @@ def insertNewStation(request):
 		print(id_sta)
 		return id_sta
 	else :
-		return None
+		return 'a station exists at a same date and coordinates'
 
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
@@ -135,7 +136,7 @@ def insert_protocol (request):
 	'Transects': TProtocolTransect,
 	# 'SubProtocol Transect': TSubProtocolTransect,
 	'Vertebrate group': TProtocolVertebrateGroup,
-	'Vertebrate Individual': TProtocolVertebrateIndividual
+	'Vertebrate individual': TProtocolVertebrateIndividual
 	}
 	data=dict(request.params)
 	protocolName=data['name']
@@ -149,7 +150,6 @@ def insert_protocol (request):
 
 		return 'protocol added with success'
 	except :
-		raise
 		return 'error'
 
 @view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='POST')

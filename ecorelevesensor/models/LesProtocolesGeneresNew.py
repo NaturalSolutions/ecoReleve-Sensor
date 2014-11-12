@@ -562,8 +562,8 @@ class TProtocolVertebrateGroup(Base,GenProtocole):
 
     TStation = relationship('Station')
 
-    def __init__(self):
-        self.Id_Taxon=10
+    # def __init__(self):
+    #     self.Id_Taxon=10
 
 
 class TProtocolVertebrateIndividual(Base,GenProtocole):
@@ -589,6 +589,6 @@ class TProtocolVertebrateIndividual(Base,GenProtocole):
     Comments = Column(Unicode(540))
     Sampled = Column(BIT, server_default=text("((0))"))
     Disturbed = Column(BIT)
-    timestamp = Column(DateTime, nullable=False)
+    # timestamp = Column(DateTime, nullable=False)
 
     TStation = relationship('Station')
