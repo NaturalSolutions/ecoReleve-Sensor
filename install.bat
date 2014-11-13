@@ -1,13 +1,10 @@
 :: ecoReleve-Sensor installation script
 :: Requires Python 3.4.1, conda and conda-build
-<<<<<<< HEAD
-
 conda install pandas
 =======
 :: Minimum version of Pandas should be 0.15.0
 
 conda install pandas=0.15.0
->>>>>>> 37378bf9b788431dd92bad10918dd9d51cffa2f5
 conda install pyodbc
 conda install reportlab
 conda install scikit-learn
