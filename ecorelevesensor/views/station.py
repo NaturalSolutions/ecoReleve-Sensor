@@ -149,8 +149,10 @@ def insert_protocol (request):
 		# setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
 		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
+		DBSession.flush()
+		id_proto= new_proto.PK
 
-		return 'protocol added with success'
+		return id_proto
 	except :
 		return 'error'
 
