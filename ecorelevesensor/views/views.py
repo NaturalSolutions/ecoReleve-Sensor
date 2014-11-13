@@ -88,7 +88,6 @@ def station_graph(request):
 		today = datetime.date.today()
 		begin_date = datetime.date(day=1, month=today.month, year=today.year-1)
 		end_date = datetime.date(day=1, month=today.month, year=today.year)
-
 		# Query
 		query = select([
 				func.count(Station.id).label('nb'),
