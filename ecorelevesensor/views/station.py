@@ -167,16 +167,7 @@ def insert_protocol (request):
 	protocolName=data['name']
 
 	# insert new row in the protocol
-<<<<<<< HEAD
-	
-	new_proto=dict_proto[protocolName]()
-	new_proto.InitFromFields(data)
 
-	try : 
-		DBSession.add(new_proto)
-		DBSession.flush()
-		id_proto=new_proto.PK
-=======
 	try :
 		new_proto=dict_proto[protocolName]()
 		# setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
@@ -184,9 +175,6 @@ def insert_protocol (request):
 		DBSession.add(new_proto)
 		DBSession.flush()
 		id_proto= new_proto.PK
-
-		return id_proto
->>>>>>> 918d202941a218f1113e15d17ba3d6cddf4cd917
 	except :
 		DBSession.commit()
 
