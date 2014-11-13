@@ -18,6 +18,33 @@ import datetime
 from sqlalchemy.sql import func
 import json
 prefix = 'station'
+dict_proto={
+	'Bird Biometry': TProtocolBirdBiometry,
+	'Chiroptera capture':TProtocolChiropteraCapture,
+	'Simplified Habitat':TProtocolSimplifiedHabitat,
+	'Chiroptera detection':TProtocolChiropteraDetection,
+	'Building and Activities':TProtocolBuildingAndActivity,
+	'station description':TProtocolStationDescription,
+	'Vertebrate individual death':TProtocolVertebrateIndividualDeath,
+	'Phytosociology habitat': TProtocolPhytosociologyHabitat,
+	'Phytosociology releve': TProtocolPhytosociologyReleve,
+	'Sighting conditions': TProtocolSightingCondition,
+	'Simplified Habitat': TProtocolSimplifiedHabitat,
+	'Station equipment': TProtocolStationEquipment,
+	'Track clue': TProtocolTrackClue,
+	'Capture Group': TProtocolCaptureGroup,
+	'Capture Individual': TProtocolCaptureIndividual,
+	'Nest Description': TProtocolNestDescription,
+	'Clutch Description': TProtocolClutchDescription,
+	'Entomo population': TProtocolEntomoPopulation,
+	# 'Entomo Pop Census': TSubProtocolEntomoPopCensus,
+	'Release Group': TProtocolReleaseGroup,
+	'Release Individual': TProtocolReleaseIndividual,
+	'Transects': TProtocolTransect,
+	# 'SubProtocol Transect': TSubProtocolTransect,
+	'Vertebrate group': TProtocolVertebrateGroup,
+	'Vertebrate individual': TProtocolVertebrateIndividual
+	}
 
 @view_config(route_name=prefix, renderer='json', request_method='GET')
 def monitoredSites(request):
@@ -38,9 +65,19 @@ def monitoredSite(request):
 @view_config(route_name=prefix+'/area', renderer='json', request_method='GET')
 def monitoredSitesArea(request):	
 	print('passed')
-	proto_view_Name=request.matchdict['name_vue']
-	proto_view_Table=Base.metadata.tables[proto_view_Name]
-	join_table=proto_view_Table.join(Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
+	proto_view_Name=request.matchdict['name_vue'].replace('%20',' ')
+	print ('______________')
+	print (proto_view_Name)
+	try :
+		proto_view_Table=Base.metadata.tables[proto_view_Name]
+		join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
+	except :
+		print('_______except______')
+		proto_view_Table=dict_proto[proto_view_Name]()
+		join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
+
+	print (proto_view_Table)
+
 	
 	slct=select([Station.area]).distinct().select_from(join_table)
 	data = DBSession.execute(slct).fetchall()
@@ -52,9 +89,21 @@ def monitoredSitesArea(request):
 def monitoredSitesLocality(request):
 	print('passed')
 
-	proto_view_Name=request.matchdict['name_vue']
-	proto_view_Table=Base.metadata.tables[proto_view_Name]
-	join_table=proto_view_Table.join(Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
+	proto_view_Name=request.matchdict['name_vue'].replace('%20',' ')
+	print ('______________')
+	print (proto_view_Name)
+	try :
+		proto_view_Table=Base.metadata.tables[proto_view_Name]
+		join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
+
+	except :
+		print('_______except______')
+		
+		proto_view_Table=dict_proto[proto_view_Name]()
+		join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
+		
+	print (proto_view_Table)
+
 	
 	slct=select([Station.locality]).distinct().select_from(join_table)
 	data = DBSession.execute(slct).fetchall()
@@ -111,48 +160,26 @@ def check_newStation (request):
 def insert_protocol (request):
 	print('----_____----')
 
-	dict_proto={
-	'Bird Biometry': TProtocolBirdBiometry,
-	'Chiroptera capture':TProtocolChiropteraCapture,
-	'Simplified Habitat':TProtocolSimplifiedHabitat,
-	'Chiroptera detection':TProtocolChiropteraDetection,
-	'Building and Activities':TProtocolBuildingAndActivity,
-	'station description':TProtocolStationDescription,
-	'Vertebrate individual death':TProtocolVertebrateIndividualDeath,
-	'Phytosociology habitat': TProtocolPhytosociologyHabitat,
-	'Phytosociology releve': TProtocolPhytosociologyReleve,
-	'Sighting conditions': TProtocolSightingCondition,
-	'Simplified Habitat': TProtocolSimplifiedHabitat,
-	'Station equipment': TProtocolStationEquipment,
-	'Track clue': TProtocolTrackClue,
-	'Capture Group': TProtocolCaptureGroup,
-	'Capture Individual': TProtocolCaptureIndividual,
-	'Nest Description': TProtocolNestDescription,
-	'Clutch Description': TProtocolClutchDescription,
-	'Entomo population': TProtocolEntomoPopulation,
-	# 'Entomo Pop Census': TSubProtocolEntomoPopCensus,
-	'Release Group': TProtocolReleaseGroup,
-	'Release Individual': TProtocolReleaseIndividual,
-	'Transects': TProtocolTransect,
-	# 'SubProtocol Transect': TSubProtocolTransect,
-	'Vertebrate group': TProtocolVertebrateGroup,
-	'Vertebrate individual': TProtocolVertebrateIndividual
-	}
+	
 	print(request.params)
 	data=dict(request.params)
 	print(data)
 	protocolName=data['name']
 
 	# insert new row in the protocol
-	try :
-		new_proto=dict_proto[protocolName]()
-		# setattr(new_proto,'FK_TSta_ID',data.get('TSta_PK_ID'))
-		new_proto.InitFromFields(data)
-		DBSession.add(new_proto)
+	
+	new_proto=dict_proto[protocolName]()
+	new_proto.InitFromFields(data)
 
-		return 'protocol added with success'
+	try : 
+		DBSession.add(new_proto)
+		DBSession.flush()
+		id_proto=new_proto.PK
 	except :
-		return 'error'
+		DBSession.commit()
+
+	return id_proto
+
 
 @view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='POST')
 def uptdate_protocol (request):

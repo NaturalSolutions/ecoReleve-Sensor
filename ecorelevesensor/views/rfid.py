@@ -7,9 +7,9 @@ import re
 from datetime import datetime
 
 from pyramid.view import view_config
-from sqlalchemy import select, insert, text, desc, bindparam, or_
+from sqlalchemy import select, insert, text, desc, bindparam, or_, outerjoin
 from sqlalchemy.exc import IntegrityError
-
+import json
 from ecorelevesensor.models import (
     DBSession,
     DataRfid,
@@ -184,3 +184,57 @@ def rfid_validate(request):
             return 'Warning : no new row inserted.'
     else:
         return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
+
+@view_config(route_name=prefix + 'search', renderer='json', request_method='POST')
+def rfids_search(request):
+    
+    join_table=outerjoin(MonitoredSiteEquipment, ObjectRfid, ObjectRfid.id==MonitoredSiteEquipment.obj
+        ).outerjoin(MonitoredSite, MonitoredSiteEquipment.site==MonitoredSite.id)
+
+    query = select(join_table.c)
+    # Look over the criteria list
+    criteria = json.loads(request.POST.get('criteria', '{}'))
+    print(criteria)
+    for column_name, obj in criteria.items():
+        if column_name in join_table.c:
+            column = join_table.c[column_name]
+            value = obj['value']
+            op = obj.get('op', 'is')
+            if op in ['is', 'null']:
+                query = query.where(column == value)
+            elif op == 'is not':
+                query = query.where(column != value or column == None)
+            elif op == 'not null':
+                query = query.where(column != value)
+            elif op == 'begin with':
+                query = query.where(column.like(value + '%'))
+            elif op == 'not begin with':
+                query = query.where(column.notlike(value + '%'))
+
+    # Set sorting columns and order
+    order_by = json.loads(request.POST.get('order_by', '[]'))
+    order_by_clause = []
+    for obj in order_by:
+        column, order = obj.split(':')
+        if column in join_table.columns:
+            if order == 'asc':
+                order_by_clause.append(join_table.columns[column].asc())
+            elif order == 'desc':
+                order_by_clause.append(join_table.columns[column].desc())
+    if len(order_by_clause) > 0:
+        query = query.order_by(*order_by_clause)
+    
+    # Run query
+    total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
+    
+    # Define the limit and offset if exist
+    offset = int(request.POST.get('offset', 0))
+    limit = int(request.POST.get('per_page', 0))
+    if limit > 0:
+        query = query.limit(limit)
+    if offset > 0:
+        query = query.offset(offset)
+    result = [{'total_entries':total}]
+    data = DBSession.execute(query).fetchall()
+    result.append([OrderedDict(row) for row in data])
+    return result
