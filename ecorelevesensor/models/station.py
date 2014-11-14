@@ -10,10 +10,11 @@ from sqlalchemy import (
     Sequence,
     String,
     Table,
-    func
+    func,
+    text
 )
 from sqlalchemy.orm import relationship
-
+from sqlalchemy.dialects.mssql.base import BIT
 from ..models import Base
 
 class Station(Base):
@@ -33,7 +34,7 @@ class Station(Base):
     ele = Column(Integer)
     precision = Column('Precision', Integer)
     creator = Column('Creator', Integer)
-    updateRegion=Column('regionUpdate',Boolean)
+    updateRegion=Column('regionUpdate',BIT,server_default=text("((0))"))
     creationDate = Column('Creation_date', DateTime, server_default=func.now())
     protocol_argos = relationship('ProtocolArgos', uselist=False, backref='station')
     protocol_gps = relationship('ProtocolGps', uselist=False, backref='station')

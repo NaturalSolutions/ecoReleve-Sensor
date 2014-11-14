@@ -4,7 +4,7 @@ Created on Fri Sep 19 17:24:09 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_, bindparam
+from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update
 from ecorelevesensor.models import * #(TProtocolBirdBiometry,
 # 	TProtocolChiropteraCapture,TProtocolSimplifiedHabitat,
 # 	TProtocolChiropteraDetection,TProtocolBuildingAndActivity,
@@ -14,7 +14,7 @@ from ecorelevesensor.models import * #(TProtocolBirdBiometry,
 # 	DBSession,
 # 	User)
 import numpy as np
-import datetime
+import sys, datetime, transaction
 from sqlalchemy.sql import func
 import json
 prefix = 'station'
@@ -116,30 +116,43 @@ def insertNewStation(request):
 	data=request.params
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
+	try:
 
-	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0:
+		if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 and data.get('PK')!=None:
 
-		# get userID with fieldWorker_Name
+			# get userID with fieldWorker_Name
 
-		users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
-		users_ID = DBSession.execute(users_ID_query).fetchall()
-		users_ID=[row[0] for row in users_ID]
-		if len(users_ID) <3 :
-			users_ID.extend([None,None])
+			users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
+			users_ID = DBSession.execute(users_ID_query).fetchall()
+			users_ID=[row[0] for row in users_ID]
+			if len(users_ID) <3 :
+				users_ID.extend([None,None])
 
-		station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
-			date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
-			creator=request.authenticated_userid, updateRegion=0,
-			fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
+			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
+				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
+				creator=request.authenticated_userid,
+				fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
 
-		DBSession.add(station)
-		DBSession.flush()
-		id_sta=station.id
-	
-		print(id_sta)
-		return id_sta
-	else :
-		return 'a station exists at a same date and coordinates'
+			DBSession.add(station)
+			DBSession.flush()
+			id_sta=station.id
+		
+			print(id_sta)
+			return id_sta
+
+		elif data.get('PK')!=None :
+			up_station=DBSession.query(Station).get(data['PK'])
+			del data['PK']
+			for k, v in data.items() :
+				setattr(up_station,k,v)
+
+			transaction.commit()
+			return 'station updated with success'
+
+		else :
+			return 'a station exists at a same date and coordinates'
+	except :
+		return "Unexpected error:", sys.exc_info()[0]
 
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
@@ -158,35 +171,35 @@ def check_newStation (request):
 
 @view_config(route_name=prefix+'/addProtocol', renderer='json', request_method='POST')
 def insert_protocol (request):
-	print('----_____----')
 
-	
-	print(request.params)
 	data=dict(request.params)
-	print(data)
 	protocolName=data['name']
 
-	# insert new row in the protocol
-	new_proto=dict_proto[protocolName]()
-	new_proto.InitFromFields(data)
-	
-	try :	
-		DBSession.add(new_proto)
-		DBSession.flush()
-		id_proto= new_proto.PK
-	except :
-		DBSession.commit()
+		# insert new row in the protocol
+	try:
+		if new_proto.PK==None :
+			print('_______add proto_____')	
+			new_proto=dict_proto[protocolName]()
+			new_proto.InitFromFields(data)
+			DBSession.add(new_proto)
+			DBSession.flush()
+			id_proto= new_proto.PK
+			print(id_proto)
+			return id_proto
+		else :
+			print('_______update proto__________')
+			up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
+			del data['name']
+			del data['PK']
+			for k, v in data.items() :
+				setattr(up_proto,k,v)
+			transaction.commit()
 
-	return id_proto
-
-
-@view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='POST')
-def uptdate_protocol (request):
-
-	date=request.params
-	up_proto=dict_proto[data.get('protocolName')]
-
-@view_config(route_name=prefix+'/updateProtocol', renderer='json', request_method='GET')
+			return 'protocol updated with succes'
+	except:
+   		return "Unexpected error:", sys.exc_info()[0]
+    
+@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
 def get_protocol (request):
 
 	data=request.params
