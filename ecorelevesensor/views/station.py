@@ -116,21 +116,44 @@ def insertNewStation(request):
 	data=request.params
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
-	try:
 
-		if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 and data.get('PK')!=None:
+	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 and data.has_key('PK')==False :
+		try :
+			
+			# get REGION and UTM by stored procedure
+			print ('_______Region___________')
+			stmt_Region = text("""
+				DECLARE @geoPlace varchar(255);
+				EXEC """ + dbConfig['data_schema'] + """.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
+				SELECT @geoPlace;"""
+			).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+			geoRegion=DBSession.execute(stmt_Region).scalar()
+			print (geoRegion)
 
-			# get userID with fieldWorker_Name
+			print ('_______UTM___________')
+			stmt_UTM=text("""
+				DECLARE @geoPlace varchar(255);
+				EXEC """ + dbConfig['data_schema'] + """.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
+				SELECT @geoPlace;"""
+			).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+			geoUTM=DBSession.execute(stmt_UTM).scalar()
+			print (geoUTM)
 
+			#get userID with fieldWorker_Name
 			users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
 			users_ID = DBSession.execute(users_ID_query).fetchall()
 			users_ID=[row[0] for row in users_ID]
 			if len(users_ID) <3 :
 				users_ID.extend([None,None])
 
+			#get ID fieldActivity
+			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption.in_((data['FieldActivity_Name'])))
+			id_field=DBSession.execute(id_field_query).scalar()
+
+			# set station and insert it
 			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
 				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
-				creator=request.authenticated_userid,
+				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
 				fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
 
 			DBSession.add(station)
@@ -140,7 +163,13 @@ def insertNewStation(request):
 			print(id_sta)
 			return id_sta
 
-		elif data.get('PK')!=None :
+		except :
+			return "Unexpected error during INSERT station:", sys.exc_info()[0]
+
+	elif data.has_key('PK') :
+		
+		try : 
+
 			up_station=DBSession.query(Station).get(data['PK'])
 			del data['PK']
 			for k, v in data.items() :
@@ -149,10 +178,12 @@ def insertNewStation(request):
 			transaction.commit()
 			return 'station updated with success'
 
-		else :
-			return 'a station exists at a same date and coordinates'
-	except :
-		return "Unexpected error:", sys.exc_info()[0]
+		except :
+			return "Unexpected error during UPDATE station:", sys.exc_info()[0]
+
+	else :
+		return 'a station exists at same date and coordinates'
+	
 
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):

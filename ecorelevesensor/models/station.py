@@ -24,6 +24,7 @@ class Station(Base):
     name = Column('Name', String)
     area = Column('Region', String)
     locality = Column('Place', String)
+    utm=Column('UTM20',String)
     fieldActivityId = Column('FieldActivity_ID', Integer)
     fieldActivityName = Column('FieldActivity_Name', String)
     fieldWorker1= Column('FieldWorker1', Integer)
