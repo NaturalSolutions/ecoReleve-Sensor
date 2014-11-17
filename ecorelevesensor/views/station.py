@@ -119,7 +119,7 @@ def insertNewStation(request):
 
 	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 and data.has_key('PK')==False :
 		try :
-			
+
 			# get REGION and UTM by stored procedure
 			print ('_______Region___________')
 			stmt_Region = text("""
@@ -147,7 +147,7 @@ def insertNewStation(request):
 				users_ID.extend([None,None])
 
 			#get ID fieldActivity
-			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption.in_((data['FieldActivity_Name'])))
+			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
 			id_field=DBSession.execute(id_field_query).scalar()
 
 			# set station and insert it
@@ -207,8 +207,9 @@ def insert_protocol (request):
 	protocolName=data['name']
 
 		# insert new row in the protocol
-	try:
-		if new_proto.PK==None :
+
+	if request.params.has_key('PK')!=True :
+		try : 
 			print('_______add proto_____')	
 			new_proto=dict_proto[protocolName]()
 			new_proto.InitFromFields(data)
@@ -217,7 +218,12 @@ def insert_protocol (request):
 			id_proto= new_proto.PK
 			print(id_proto)
 			return id_proto
-		else :
+		except : 
+			return "Unexpected error in INSERT protocols:", sys.exc_info()[0]
+
+	else :
+		try : 
+
 			print('_______update proto__________')
 			up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
 			del data['name']
@@ -227,8 +233,8 @@ def insert_protocol (request):
 			transaction.commit()
 
 			return 'protocol updated with succes'
-	except:
-   		return "Unexpected error:", sys.exc_info()[0]
+		except : 
+			return "Unexpected error in UPDATE protocols:", sys.exc_info()[0]
     
 @view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
 def get_protocol (request):
