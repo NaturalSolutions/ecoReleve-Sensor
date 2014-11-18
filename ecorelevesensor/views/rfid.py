@@ -3,7 +3,7 @@ Created on Thu Aug 28 16:45:25 2014
 @author: Natural Solutions (Thomas)
 """
 
-import re
+import re, operator
 from datetime import datetime
 
 from pyramid.view import view_config
@@ -22,6 +22,19 @@ from ecorelevesensor.models import (
 from ecorelevesensor.models.object import ObjectRfid
 
 prefix='rfid/'
+
+def get_operator_fn(op):
+    return {
+        '<' : operator.lt,
+        '>' : operator.gt,
+        '=' : operator.eq,
+        '<>': operator.ne,
+        '<=': operator.le,
+        '>=': operator.ge,
+        }[op]
+def eval_binary_expr(op1, operator, op2):
+    op1,op2 = op1, op2
+    return get_operator_fn(operator)(op1, op2)
 
 @view_config(route_name='rfid', renderer='json', request_method='GET')
 def rfid_get(request):
@@ -195,22 +208,10 @@ def rfids_search(request):
     # Look over the criteria list
     criteria = json.loads(request.POST.get('criteria', '{}'))
     print(criteria)
+    query = select(join_table)
     for column_name, obj in criteria.items():
-        if column_name in join_table.c:
-            column = join_table.c[column_name]
-            value = obj['value']
-            op = obj.get('op', 'is')
-            if op in ['is', 'null']:
-                query = query.where(column == value)
-            elif op == 'is not':
-                query = query.where(column != value or column == None)
-            elif op == 'not null':
-                query = query.where(column != value)
-            elif op == 'begin with':
-                query = query.where(column.like(value + '%'))
-            elif op == 'not begin with':
-                query = query.where(column.notlike(value + '%'))
-
+        query=query.where(eval_binary_expr(table.c[column_name], obj['Operator'], obj['Value']))
+        
     # Set sorting columns and order
     order_by = json.loads(request.POST.get('order_by', '[]'))
     order_by_clause = []

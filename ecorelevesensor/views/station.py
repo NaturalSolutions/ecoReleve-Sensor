@@ -4,47 +4,40 @@ Created on Fri Sep 19 17:24:09 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update
-from ecorelevesensor.models import * #(TProtocolBirdBiometry,
-# 	TProtocolChiropteraCapture,TProtocolSimplifiedHabitat,
-# 	TProtocolChiropteraDetection,TProtocolBuildingAndActivity,
-# 	TProtocolVertebrateIndividualDeath, TProtocolStationDescription,
-# 	Station, Individual,
-# 	Base,
-# 	DBSession,
-# 	User)
-import numpy as np
+from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, func
+from ecorelevesensor.models import * 
 import sys, datetime, transaction
 from sqlalchemy.sql import func
-import json
+import json,datetime
 prefix = 'station'
-dict_proto={
-	'Bird Biometry': TProtocolBirdBiometry,
-	'Chiroptera capture':TProtocolChiropteraCapture,
-	'Simplified Habitat':TProtocolSimplifiedHabitat,
-	'Chiroptera detection':TProtocolChiropteraDetection,
-	'Building and Activities':TProtocolBuildingAndActivity,
-	'station description':TProtocolStationDescription,
-	'Vertebrate individual death':TProtocolVertebrateIndividualDeath,
-	'Phytosociology habitat': TProtocolPhytosociologyHabitat,
-	'Phytosociology releve': TProtocolPhytosociologyReleve,
-	'Sighting conditions': TProtocolSightingCondition,
-	'Simplified Habitat': TProtocolSimplifiedHabitat,
-	'Station equipment': TProtocolStationEquipment,
-	'Track clue': TProtocolTrackClue,
-	'Capture Group': TProtocolCaptureGroup,
-	'Capture Individual': TProtocolCaptureIndividual,
-	'Nest Description': TProtocolNestDescription,
-	'Clutch Description': TProtocolClutchDescription,
-	'Entomo population': TProtocolEntomoPopulation,
-	# 'Entomo Pop Census': TSubProtocolEntomoPopCensus,
-	'Release Group': TProtocolReleaseGroup,
-	'Release Individual': TProtocolReleaseIndividual,
-	'Transects': TProtocolTransect,
-	# 'SubProtocol Transect': TSubProtocolTransect,
-	'Vertebrate group': TProtocolVertebrateGroup,
-	'Vertebrate individual': TProtocolVertebrateIndividual
-	}
+
+def getRegion(data) :
+	stmt_Region = text("""
+		DECLARE @geoPlace varchar(255);
+		EXEC """ + dbConfig['data_schema'] + """.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
+		SELECT @geoPlace;"""
+	).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+	geoRegion=DBSession.execute(stmt_Region).scalar()
+	print (geoRegion)
+	return geoRegion
+
+def getUTM(data) :
+	stmt_UTM=text("""
+		DECLARE @geoPlace varchar(255);
+		EXEC """ + dbConfig['data_schema'] + """.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
+		SELECT @geoPlace;"""
+	).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+	geoUTM=DBSession.execute(stmt_UTM).scalar()
+	print (geoUTM)
+	return geoUTM
+
+def getWorkerID(workerList) :
+	users_ID_query = select([User.id], User.fullname.in_((workerList)))
+	users_ID = DBSession.execute(users_ID_query).fetchall()
+	users_ID=[row[0] for row in users_ID]
+	if len(users_ID) <3 :
+		users_ID.extend([None,None])
+	return users_ID
 
 @view_config(route_name=prefix, renderer='json', request_method='GET')
 def monitoredSites(request):
@@ -63,16 +56,13 @@ def monitoredSite(request):
 
 	
 @view_config(route_name=prefix+'/area', renderer='json', request_method='GET')
-def monitoredSitesArea(request):	
-	print('passed')
+def monitoredSitesArea(request):
+
 	proto_view_Name=request.matchdict['name_vue'].replace('%20',' ')
-	print ('______________')
-	print (proto_view_Name)
 	try :
 		proto_view_Table=Base.metadata.tables[proto_view_Name]
 		join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
 	except :
-		print('_______except______')
 		proto_view_Table=dict_proto[proto_view_Name]()
 		join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
 
@@ -87,17 +77,14 @@ def monitoredSitesArea(request):
 
 @view_config(route_name=prefix+'/locality', renderer='json', request_method='GET')
 def monitoredSitesLocality(request):
-	print('passed')
 
 	proto_view_Name=request.matchdict['name_vue'].replace('%20',' ')
-	print ('______________')
 	print (proto_view_Name)
 	try :
 		proto_view_Table=Base.metadata.tables[proto_view_Name]
 		join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
 
 	except :
-		print('_______except______')
 		
 		proto_view_Table=dict_proto[proto_view_Name]()
 		join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
@@ -164,7 +151,7 @@ def insertNewStation(request):
 			return id_sta
 
 		except :
-			return "Unexpected error during INSERT station:", sys.exc_info()[0]
+			return 'Unexpected error during INSERT station:', sys.exc_info()[0]
 
 	elif data.has_key('PK') :
 		
@@ -179,15 +166,49 @@ def insertNewStation(request):
 			return 'station updated with success'
 
 		except :
-			return "Unexpected error during UPDATE station:", sys.exc_info()[0]
+			return 'Unexpected error during UPDATE station:', sys.exc_info()[0]
 
 	else :
 		return 'a station exists at same date and coordinates'
-	
+
+
+@view_config(route_name=prefix+'/addMultStation', renderer='json', request_method='POST')
+def insertMultStation(request):
+
+	try :
+		data=list(request.params)
+		print (type(data))
+		data=json.loads(data[0])
+		print(data[0])
+		check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
+			Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
+
+		creation_date=datetime.datetime.now()
+		userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
+		col=tuple(['date','lat','lon','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator'])
+		print (creation_date)
+
+		final=[dict(zip(col,[
+			datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S')
+			,row['latitude']
+			,row['longitude']
+			,creation_date
+			,userID[0]
+			,userID[1]
+			,userID[2]
+			,request.authenticated_userid])) for row in data if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S'), 'lat':row['latitude'], 'lon':row['longitude']}).scalar() == 0 ]
+
+		print (len(final))
+		query_insert=Station.__table__.insert()
+		print (query_insert)
+		pkList=query_insert.execute(final)
+		return str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing'
+	except :
+		return 'Unexpected error during INSERT station: ', sys.exc_info()[0]
 
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
-	print ('_____________________')
+	print ('_________Search Station____________')
 
 	data=request.params
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
@@ -198,59 +219,6 @@ def check_newStation (request):
 	else :
 
 		return 1
-
-
-@view_config(route_name=prefix+'/addProtocol', renderer='json', request_method='POST')
-def insert_protocol (request):
-
-	data=dict(request.params)
-	protocolName=data['name']
-
-		# insert new row in the protocol
-
-	if request.params.has_key('PK')!=True :
-		try : 
-			print('_______add proto_____')	
-			new_proto=dict_proto[protocolName]()
-			new_proto.InitFromFields(data)
-			DBSession.add(new_proto)
-			DBSession.flush()
-			id_proto= new_proto.PK
-			print(id_proto)
-			return id_proto
-		except : 
-			return "Unexpected error in INSERT protocols:", sys.exc_info()[0]
-
-	else :
-		try : 
-
-			print('_______update proto__________')
-			up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
-			del data['name']
-			del data['PK']
-			for k, v in data.items() :
-				setattr(up_proto,k,v)
-			transaction.commit()
-
-			return 'protocol updated with succes'
-		except : 
-			return "Unexpected error in UPDATE protocols:", sys.exc_info()[0]
-    
-@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
-def get_protocol (request):
-
-	data=request.params
-	id_sta=data.get('id_sta')
-	proto_onSta={}
-	for protoName, Tproto in dict_proto :
-		print(protoName+' : '+ Tproto)
-		query=select(Tproto,Tproto.FK_TSta_ID==id_sta)
-		res=DBSession.execute(query).scalar()
-		print(res)
-		if res!=None :
-			proto_onSta[protoName]=res
-
-	return proto_onSta
 
 
 @view_config(route_name=prefix+'/station_byDate', renderer='json', request_method='GET')
