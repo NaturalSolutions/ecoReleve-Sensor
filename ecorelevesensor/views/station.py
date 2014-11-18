@@ -175,8 +175,9 @@ def insert_protocol (request):
 		DBSession.add(new_proto)
 		DBSession.flush()
 		id_proto= new_proto.PK
-	except :
+		except :
 		DBSession.commit()
+		
 
 	return id_proto
 
