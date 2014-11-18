@@ -6,7 +6,7 @@ class GenProtocole ():
 		print('-------------------OK GenProtocole-------------------')
 	def InitFromFields (self,GivenFields):
 		for Key,Value in  GivenFields.items():
-			if (Key != 'name'):
+			if (Key != 'name' or Key != 'PK'):
 				setattr(self,self.GetAttributeNameFromColumn(Key),Value)
 				print(' Set Attribute ' + Key + ':' + str(Value) )
 			if (Key =='Name_Sex' or Key=='name_sex') :
