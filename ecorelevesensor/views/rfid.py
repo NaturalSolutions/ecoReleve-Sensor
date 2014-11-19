@@ -17,7 +17,8 @@ from ecorelevesensor.models import (
     Individual,
     MonitoredSite, 
     MonitoredSiteEquipment,
-    MonitoredSitePosition
+    MonitoredSitePosition,
+    Base
 )
 from ecorelevesensor.models.object import ObjectRfid
 
@@ -239,3 +240,14 @@ def rfids_search(request):
     data = DBSession.execute(query).fetchall()
     result.append([OrderedDict(row) for row in data])
     return result
+
+@view_config(route_name=prefix + 'getFields', renderer='json', request_method='GET')
+def rfids_field(request):
+        print('____________FIELDS_________________')
+        table=Base.metadata.tables['RFID_MonitoredSite']
+        print (table.c)
+        columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
+        final=dict([(col.name,col.type) for col in columns ])
+        # [(['identifier','begin_date','end_date','Name','name_type'])]
+        print (final)
+        return dict(final)

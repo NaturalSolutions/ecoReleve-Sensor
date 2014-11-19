@@ -66,6 +66,8 @@ def add_routes(config):
     config.add_route('rfid/byName', 'ecoReleve-Core/rfid/byName/{name}')
     config.add_route('rfid/byDate', 'ecoReleve-Core/rfid/byDate')
     config.add_route('rfid/search', 'ecoReleve-Core/rfid/search')
+    config.add_route('rfid/getFields', 'ecoReleve-Core/rfid/getFields')
+
 
     
     ##### GSM #####
