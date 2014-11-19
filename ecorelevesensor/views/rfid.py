@@ -250,4 +250,4 @@ def rfids_field(request):
         final=dict([(col.name,col.type) for col in columns ])
         # [(['identifier','begin_date','end_date','Name','name_type'])]
         print (final)
-        return dict(final)
+        return final

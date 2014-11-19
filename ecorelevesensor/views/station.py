@@ -11,6 +11,12 @@ from sqlalchemy.sql import func
 import json,datetime
 prefix = 'station'
 
+def getFieldActitityID (data) :
+
+	id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
+	id_field=DBSession.execute(id_field_query).scalar()
+	return id_field
+
 def getRegion(data) :
 	stmt_Region = text("""
 		DECLARE @geoPlace varchar(255);
@@ -109,82 +115,73 @@ def insertNewStation(request):
 	print(date)
 	if 'PK' not in data :
 		if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 :
-			try :
 
-				# get REGION and UTM by stored procedure
-				print ('_______Region___________')
-				stmt_Region = text("""
-					DECLARE @geoPlace varchar(255);
-					EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
-					SELECT @geoPlace;"""
-				).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
-				geoRegion=DBSession.execute(stmt_Region).scalar()
-				print (geoRegion)
+			# get REGION and UTM by stored procedure
+			print ('_______Region___________')
+			stmt_Region = text("""
+				DECLARE @geoPlace varchar(255);
+				EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
+				SELECT @geoPlace;"""
+			).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+			geoRegion=DBSession.execute(stmt_Region).scalar()
+			print (geoRegion)
 
-				print ('_______UTM___________')
-				stmt_UTM=text("""
-					DECLARE @geoPlace varchar(255);
-					EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
-					SELECT @geoPlace;"""
-				).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
-				geoUTM=DBSession.execute(stmt_UTM).scalar()
-				print (geoUTM)
+			print ('_______UTM___________')
+			stmt_UTM=text("""
+				DECLARE @geoPlace varchar(255);
+				EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
+				SELECT @geoPlace;"""
+			).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+			geoUTM=DBSession.execute(stmt_UTM).scalar()
+			print (geoUTM)
 
-				#get userID with fieldWorker_Name
-				users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
-				users_ID = DBSession.execute(users_ID_query).fetchall()
-				users_ID=[row[0] for row in users_ID]
-				if len(users_ID) <3 :
-					users_ID.extend([None,None])
+			#get userID with fieldWorker_Name
+			users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
+			users_ID = DBSession.execute(users_ID_query).fetchall()
+			users_ID=[row[0] for row in users_ID]
+			if len(users_ID) <3 :
+				users_ID.extend([None,None])
 
-				#get ID fieldActivity
-				id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
-				id_field=DBSession.execute(id_field_query).scalar()
+			#get ID fieldActivity
+			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
+			id_field=DBSession.execute(id_field_query).scalar()
 
-				# set station and insert it
-				station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
-					date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
-					creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
-					fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
+			# set station and insert it
+			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
+				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
+				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
+				fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
 
-				DBSession.add(station)
-				DBSession.flush()
-				id_sta=station.id
-			
-				print(id_sta)
-				return id_sta
-
-			except :
-				return 'Unexpected error during INSERT station:'
+			DBSession.add(station)
+			DBSession.flush()
+			id_sta=station.id
+		
+			print(id_sta)
+			return id_sta
 			
 		else :
 			return 'a station exists at same date and coordinates'
 			
 	elif 'PK' in data :
 		
-		try : 
-			print('_______________________')
-			print(type(data['PK']))
-			up_station=DBSession.query(Station).get(data['PK'])
-			print('__________2_____________')
-			data['DATE']=data['Date_']
-			print('__________2.1_____________')
-			del data['Date_']
-			del data['PK']
-			del data['id']
-			print(type(data))
-			print('__________3_____________')
-			for k, v in data.items() :
-				setattr(up_station,k,v)
-				print(v)
-				
-			print(up_station)
-			
-			transaction.commit()
-			return 'station updated with success'
+		print('_______________________')
+		print(type(data['PK']))
+		up_station=DBSession.query(Station).get(data['PK'])
+		
+		data['date']=data['Date_']
+		del data['Date_'],data['PK'],data['id'],data['FieldWorker4'],data['FieldWorker5'],data['FieldWorkersNumber']
+		colToAttr=dict({v.name:k for k,v in up_station.__mapper__.c.items()})
 
-		except :
-			return 'Unexpected error during UPDATE station:'
+		for k, v in data.items() :
+			if 'FieldWorker' in k :
+				v=getWorkerID([v])[0]
+			setattr(up_station,colToAttr[k],v)
+			print(k+' : ')
+		up_station.fieldActivityId=getFieldActitityID(data)
+
+		print (up_station.fieldActivityName)
+		transaction.commit()
+		return 'station updated with success'
 
 	
 
@@ -192,39 +189,39 @@ def insertNewStation(request):
 @view_config(route_name=prefix+'/addMultStation', renderer='json', request_method='POST')
 def insertMultStation(request):
 
-	try :
-		data=list(request.params)
-		print (type(data))
-		data=json.loads(data[0])
-		print(data[0])
-		check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
-			Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
+	data=list(request.params)
+	print (type(data))
+	data=json.loads(data[0])
+	print(data[0])
+	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
+		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
 
-		creation_date=datetime.datetime.now()
-		userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
-		col=tuple(['date','lat','lon','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator'])
-		print (creation_date)
+	creation_date=datetime.datetime.now()
+	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
+	col=tuple(['name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator'])
+	print (creation_date)
 
-		final=[dict(zip(col,[
-			datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S')
-			,row['latitude']
-			,row['longitude']
-			,creation_date
-			,userID[0]
-			,userID[1]
-			,userID[2]
-			,request.authenticated_userid])) for row in data if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S'), 'lat':row['latitude'], 'lon':row['longitude']}).scalar() == 0 ]
+	final=[dict(zip(col,[
+		row['name']
+		,datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S')
+		,row['latitude']
+		,row['longitude']
+		,creation_date
+		,userID[0]
+		,userID[1]
+		,userID[2]
+		,request.authenticated_userid])) for row in data 
+	if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'],'%Y-%m-%d %H:%M:%S'), 'lat':row['latitude'], 'lon':row['longitude']}).scalar() == 0 ]
 
-		print (len(final))
-		query_insert=Station.__table__.insert()
-		print (query_insert)
-		pkList=query_insert.execute(final)
-		query=select(Station.id).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
-		pkIDs=DBSession.execute(query).fetchall()
-		print (pkIDs)
-		return str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing'
-	except :
-		return 'Unexpected error during INSERT station:'
+	query_insert=Station.__table__.insert()
+	pkList=query_insert.execute(final)
+	query=select([Station.id,Station.date,Station.lat,Station.lon]).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
+	pkIDs=DBSession.execute(query).fetchall()
+	result=[{'id':pk, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon} for pk,d,lat,lon in pkIDs]
+	return {
+	'response':str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing',
+	'data': result }
+
 
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
