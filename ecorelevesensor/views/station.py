@@ -105,53 +105,53 @@ def insertNewStation(request):
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
 
 	if DBSession.execute(check_duplicate_station, {'date':data['Date_'], 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 and data.has_key('PK')==False :
-		# try :
+		try :
 
-		# get REGION and UTM by stored procedure
-		print ('_______Region___________')
-		stmt_Region = text("""
-			DECLARE @geoPlace varchar(255);
-			EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
-			SELECT @geoPlace;"""
-		).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
-		geoRegion=DBSession.execute(stmt_Region).scalar()
-		print (geoRegion)
+			# get REGION and UTM by stored procedure
+			print ('_______Region___________')
+			stmt_Region = text("""
+				DECLARE @geoPlace varchar(255);
+				EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
+				SELECT @geoPlace;"""
+			).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+			geoRegion=DBSession.execute(stmt_Region).scalar()
+			print (geoRegion)
 
-		print ('_______UTM___________')
-		stmt_UTM=text("""
-			DECLARE @geoPlace varchar(255);
-			EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
-			SELECT @geoPlace;"""
-		).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
-		geoUTM=DBSession.execute(stmt_UTM).scalar()
-		print (geoUTM)
+			print ('_______UTM___________')
+			stmt_UTM=text("""
+				DECLARE @geoPlace varchar(255);
+				EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
+				SELECT @geoPlace;"""
+			).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+			geoUTM=DBSession.execute(stmt_UTM).scalar()
+			print (geoUTM)
 
-		#get userID with fieldWorker_Name
-		users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
-		users_ID = DBSession.execute(users_ID_query).fetchall()
-		users_ID=[row[0] for row in users_ID]
-		if len(users_ID) <3 :
-			users_ID.extend([None,None])
+			#get userID with fieldWorker_Name
+			users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
+			users_ID = DBSession.execute(users_ID_query).fetchall()
+			users_ID=[row[0] for row in users_ID]
+			if len(users_ID) <3 :
+				users_ID.extend([None,None])
 
-		#get ID fieldActivity
-		id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
-		id_field=DBSession.execute(id_field_query).scalar()
+			#get ID fieldActivity
+			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
+			id_field=DBSession.execute(id_field_query).scalar()
 
-		# set station and insert it
-		station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
-			date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
-			creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
-			fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
+			# set station and insert it
+			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
+				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
+				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
+				fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2])
 
-		DBSession.add(station)
-		DBSession.flush()
-		id_sta=station.id
-	
-		print(id_sta)
-		return id_sta
+			DBSession.add(station)
+			DBSession.flush()
+			id_sta=station.id
+		
+			print(id_sta)
+			return id_sta
 
-	# except :
-	# 	return 'Unexpected error during INSERT station:', sys.exc_info()[0]
+		except :
+			return 'Unexpected error during INSERT station:'
 
 	elif data.has_key('PK') :
 		
@@ -159,6 +159,8 @@ def insertNewStation(request):
 
 			up_station=DBSession.query(Station).get(data['PK'])
 			del data['PK']
+			data['DATE']=data['Date_']
+			del data['Date_']
 			for k, v in data.items() :
 				setattr(up_station,k,v)
 
@@ -166,7 +168,7 @@ def insertNewStation(request):
 			return 'station updated with success'
 
 		except :
-			return 'Unexpected error during UPDATE station:', sys.exc_info()[0]
+			return 'Unexpected error during UPDATE station:'
 
 	else :
 		return 'a station exists at same date and coordinates'
@@ -202,9 +204,12 @@ def insertMultStation(request):
 		query_insert=Station.__table__.insert()
 		print (query_insert)
 		pkList=query_insert.execute(final)
+		query=select(Station.id).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
+		pkIDs=DBSession.execute(query).fetchall()
+		print (pkIDs)
 		return str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing'
 	except :
-		return 'Unexpected error during INSERT station: ', sys.exc_info()[0]
+		return 'Unexpected error during INSERT station:'
 
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
