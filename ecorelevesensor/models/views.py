@@ -16,18 +16,21 @@ from ecorelevesensor.models.data import (
     ProtocolArgos,
     ProtocolGps,
     ProtocolIndividualEquipment,
-    ProtocolCaptureIndividual,
-    ProtocolReleaseIndividual,
+    # ProtocolCaptureIndividual,
+    # ProtocolReleaseIndividual,
     SatTrx,
     Station
 )
+from ecorelevesensor.models import (TProtocolCaptureIndividual,TProtocolReleaseIndividual)
+
+
 
 ReleaseSta = select([
     Station.area.label('release_area'),
     func.year(Station.date).label('release_year'),
-    ProtocolReleaseIndividual.ind_id.label('ind_id')
-    ]).select_from(join(Station, ProtocolReleaseIndividual,
-        ProtocolReleaseIndividual.station_id == Station.id
+    TProtocolReleaseIndividual.FK_TInd_ID.label('ind_id')
+    ]).select_from(join(Station, TProtocolReleaseIndividual,
+        TProtocolReleaseIndividual.FK_TSta_ID == Station.id
     )).alias()
 
 V_SearchIndiv = select([
