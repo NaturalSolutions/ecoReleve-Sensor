@@ -350,7 +350,6 @@ def views_filter_result(request):
 	 	query = query.where(and_(between(table.c['LAT'], float(bbox[1]), float(bbox[3])), between(table.c['LON'], float(bbox[0]), float(bbox[2]))))
 	 	
 	 	rows = DBSession.execute(query).fetchall()[0:15]
-
 	 	tmp={}
 	 	result = {'columns':[], 'rows':[]}
 
@@ -383,6 +382,8 @@ def get_operator_fn(op):
         '<>': operator.ne,
         '<=': operator.le,
         '>=': operator.ge,
+        'Like': operator.eq,
+        'Not Like': operator.ne,
         }[op]
 def eval_binary_expr(op1, operator, op2):
     op1,op2 = op1, op2

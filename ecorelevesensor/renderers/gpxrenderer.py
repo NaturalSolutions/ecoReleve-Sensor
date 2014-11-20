@@ -29,8 +29,8 @@ class GPXRenderer(object):
 					date = str(item)
 				elif key == "Site_name":
 					sitename = str(item)
-				gpx = gpx + "\n<wpt lat='"+lat+"' lon='"+lon+"'>\n<ele></ele>\n<time>"+date+"</time>\n<desc></desc>\n<name>"+sitename+"</name>\n<sym>Flag, Blue</sym>\n</wpt>\n";
-			gpx = gpx + "</gpx>"
+			gpx = gpx + "\n<wpt lat='"+lat+"' lon='"+lon+"'>\n<ele></ele>\n<time>"+date+"</time>\n<desc></desc>\n<name>"+sitename+"</name>\n<sym>Flag, Blue</sym>\n</wpt>\n";
+		gpx = gpx + "</gpx>"
 		fout.write(gpx)
 		
 		gpxFile=fout.getvalue()
