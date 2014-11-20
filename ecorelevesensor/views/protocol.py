@@ -34,6 +34,13 @@ dict_proto={
 	'Vertebrate individual': TProtocolVertebrateIndividual
 	}
 
+def getWorkerID(workerList) :
+	users_ID_query = select([User.id], User.fullname.in_((workerList)))
+	users_ID = DBSession.execute(users_ID_query).fetchall()
+	users_ID=[row[0] for row in users_ID]
+	if len(users_ID) <3 :
+		users_ID.extend([None,None])
+	return users_ID
 
 @view_config(route_name=prefix+'/addProtocol', renderer='json', request_method='POST')
 def insert_protocol (request):
@@ -44,33 +51,30 @@ def insert_protocol (request):
 		# insert new row in the protocol
 
 	if request.params.has_key('PK')!=True :
-		try : 
-			print('_______add proto_____')	
-			new_proto=dict_proto[protocolName]()
-			new_proto.InitFromFields(data)
-			DBSession.add(new_proto)
-			DBSession.flush()
-			id_proto= new_proto.PK
-			print(id_proto)
-			return id_proto
-		except : 
-			return "Unexpected error in INSERT protocols:", sys.exc_info()[0]
+		
+		print('_______add proto_____')	
+		new_proto=dict_proto[protocolName]()
+		new_proto.InitFromFields(data)
+		DBSession.add(new_proto)
+		DBSession.flush()
+		id_proto= new_proto.PK
+		print(id_proto)
+		return id_proto
+		
 
 	else :
-		try : 
+		
 
-			print('_______update proto__________')
-			up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
-			del data['name']
-			del data['PK']
-			for k, v in data.items() :
-				setattr(up_proto,k,v)
-			transaction.commit()
+		print('_______update proto__________')
+		up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
+		del data['name'],data['PK'],data['FK_TSta_ID']
+		print(up_proto)
+		up_proto.InitFromFields(data)
+		id_proto=up_proto.PK
+		transaction.commit()
 
-			return 'protocol updated with succes'
-		except : 
-			return "Unexpected error in UPDATE protocols:", sys.exc_info()[0]
-    
+		return id_proto
+
 @view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
 def get_protocol (request):
 

@@ -247,7 +247,19 @@ def rfids_field(request):
         table=Base.metadata.tables['RFID_MonitoredSite']
         print (table.c)
         columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
-        final=dict([(col.name,col.type) for col in columns ])
+        
+        final=[]
+        for col in table.c :
+            name=col.name
+            Ctype=str(col.type)
+            if 'VARCHAR' in Ctype:
+                Ctype='String'
+            final.append((name,Ctype))
+
+
+
+
+        # final=[(col.name,str(col.type) )for col in table.c if str(col.type)]
         # [(['identifier','begin_date','end_date','Name','name_type'])]
         print (final)
         return final

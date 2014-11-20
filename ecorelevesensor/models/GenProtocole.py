@@ -5,32 +5,51 @@ class GenProtocole ():
 	def __init__(self):
 		print('-------------------OK GenProtocole-------------------')
 	def InitFromFields (self,GivenFields):
+
+		sex_value={'sex>male':18873,
+				'sex>female': 18874,
+				'sex>(indeterminate)':18875,
+				'':None}
+
+		age_value={'age>newborn':18877,
+				'age>juvenile': 18878,
+				'age>adult':18879,
+				'age>(indeterminate)':18880,
+				'age>embryo (egg)':18993,
+				'':None}
+
 		for Key,Value in  GivenFields.items():
 			if (Key != 'name' or Key != 'PK'):
 				setattr(self,self.GetAttributeNameFromColumn(Key),Value)
 				print(' Set Attribute ' + Key + ':' + str(Value) )
+
 			if (Key =='Name_Sex' or Key=='name_sex') :
-				sex_value={'sex>male':18873,
-				'sex>female': 18874,
-				'sex>(indeterminate)':18875}
+				
+				print(' Set Attribute Id_Sex:' + str(sex_value[Value]) )
 				try :
 					setattr(self,self.GetAttributeNameFromColumn('Id_Sex'),sex_value[Value])
 				except :
 					setattr(self,self.GetAttributeNameFromColumn('id_sex'),sex_value[Value])
+					continue
+
 			if (Key =='Name_Age' or Key=='name_age') :
-				sex_value={'age>newborn':18877,
-				'age>juvenile': 18878,
-				'age>adult':18879,
-				'age>(indeterminate)':18880,
-				'age>embryo (egg)':18993}
+				
+				print(' Set Attribute Id_Age:' + str(age_value[Value]) )
+
 				try :
-					setattr(self,self.GetAttributeNameFromColumn('Id_Age'),sex_value[Value])
+					setattr(self,self.GetAttributeNameFromColumn('Id_Age'),age_value[Value])
 				except :
-					setattr(self,self.GetAttributeNameFromColumn('id_age'),sex_value[Value])
+					setattr(self,self.GetAttributeNameFromColumn('id_age'),age_value[Value])
+					continue
+
 			if (Key=='Id_Observer' or Key=='Id_Assistant') :
-				users_ID_query = select([User.id], User.fullname.in_((Value)))
+				users_ID_query = select([User.id], User.fullname.in_(([Value])))
 				users_ID = DBSession.execute(users_ID_query).fetchone()
-				setattr(self,self.GetAttributeNameFromColumn(Key),users_ID)
+				try:
+					setattr(self,self.GetAttributeNameFromColumn(Key),users_ID[0])
+				except :
+					setattr(self,self.GetAttributeNameFromColumn(Key),None)
+					continue
 
 			if (Key=='Name_Taxon' or Key=='name_taxon') :
 				taxName=Value.split('>')[-1]
@@ -40,11 +59,13 @@ class GenProtocole ():
 				query=select([Tthesaurus.c.ID]).where(Tthesaurus.c.topic_en==taxName)
 				print(query)
 				id_taxon=DBSession.execute(query).fetchone()
-				print (id_taxon)
+				print(' Set Attribute Id_Taxon:' + str(id_taxon) )
+
 				try :
 					setattr(self,self.GetAttributeNameFromColumn('Id_Taxon'),id_taxon[0])
 				except :
 					setattr(self,self.GetAttributeNameFromColumn('id_taxon'),id_taxon[0])
+					continue
 
 
 
