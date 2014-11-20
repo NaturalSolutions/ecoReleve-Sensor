@@ -256,10 +256,5 @@ def rfids_field(request):
                 Ctype='String'
             final.append((name,Ctype))
 
-
-
-
-        # final=[(col.name,str(col.type) )for col in table.c if str(col.type)]
-        # [(['identifier','begin_date','end_date','Name','name_type'])]
         print (final)
         return final
