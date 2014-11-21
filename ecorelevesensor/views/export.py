@@ -60,7 +60,10 @@ def views_filter_export(request):
 		for col in columns:
 			coll.append(table.c[col])
 		
-		query = select(coll)
+		if type_export != 'gpx' :
+			query = select(coll)
+		else :
+			query = select('*')
 
 
 		#filters selection
