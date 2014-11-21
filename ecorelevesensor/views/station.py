@@ -158,6 +158,7 @@ def insertNewStation(request):
 		
 			print(id_sta)
 			return id_sta
+			# return {'id':id_sta,'region':geoRegion,'utm':geoUTM}
 			
 		else :
 			return 'a station exists at same date and coordinates'
