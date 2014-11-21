@@ -20,7 +20,7 @@ def getFieldActitityID (data) :
 def getRegion(lat,lon) :
 	stmt_Region = text("""
 		DECLARE @geoPlace varchar(255);
-		EXEC """ + dbConfig['data_schema'] + """.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
+		EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
 		SELECT @geoPlace;"""
 	).bindparams(bindparam('lat', value=lat , type_=Numeric(9,5)),bindparam('lon', value=lon , type_=Numeric(9,5)))
 	geoRegion=DBSession.execute(stmt_Region).scalar()
@@ -30,7 +30,7 @@ def getRegion(lat,lon) :
 def getUTM(lat,long) :
 	stmt_UTM=text("""
 		DECLARE @geoPlace varchar(255);
-		EXEC """ + dbConfig['data_schema'] + """.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
+		EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
 		SELECT @geoPlace;"""
 	).bindparams(bindparam('lat', value=lat, type_=Numeric(9,5)),bindparam('lon', value=lon , type_=Numeric(9,5)))
 	geoUTM=DBSession.execute(stmt_UTM).scalar()

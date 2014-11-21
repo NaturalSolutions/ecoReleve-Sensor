@@ -6,6 +6,7 @@ class GenProtocole ():
 		print('-------------------OK GenProtocole-------------------')
 	def InitFromFields (self,GivenFields):
 
+		# dictionnary to retrieve ID from Thesaurus
 		sex_value={'sex>male':18873,
 				'sex>female': 18874,
 				'sex>(indeterminate)':18875,
@@ -19,7 +20,7 @@ class GenProtocole ():
 				'':None}
 
 		for Key,Value in  GivenFields.items():
-			if (Key != 'name' or Key != 'PK'):
+			if Key not in ['PK','name','Id_Sex','id_sex','Id_Age','id_age','Id_Taxon','id_taxon'] :
 				setattr(self,self.GetAttributeNameFromColumn(Key),Value)
 				print(' Set Attribute ' + Key + ':' + str(Value) )
 
@@ -55,16 +56,16 @@ class GenProtocole ():
 				taxName=Value.split('>')[-1]
 				print (taxName)
 				Tthesaurus=Base.metadata.tables['Tthesaurus']
-				print (Tthesaurus.c["ID"])
+				print (Tthesaurus.c['ID'])
 				query=select([Tthesaurus.c.ID]).where(Tthesaurus.c.topic_en==taxName)
 				print(query)
-				id_taxon=DBSession.execute(query).fetchone()
+				id_taxon=DBSession.execute(query).scalar()
 				print(' Set Attribute Id_Taxon:' + str(id_taxon) )
 
 				try :
-					setattr(self,self.GetAttributeNameFromColumn('Id_Taxon'),id_taxon[0])
+					setattr(self,self.GetAttributeNameFromColumn('Id_Taxon'),id_taxon)
 				except :
-					setattr(self,self.GetAttributeNameFromColumn('id_taxon'),id_taxon[0])
+					setattr(self,self.GetAttributeNameFromColumn('id_taxon'),id_taxon)
 					continue
 
 
@@ -74,18 +75,4 @@ class GenProtocole ():
 	def GetAttributeNameFromColumn(self,ColumnName):
 		return ColumnName
 
-
-
-
-
-
-# class SpecificProtocole(GenProtocole):
-# 	def __init__(self):
-# 		print('--------------------OK Specific-------------------')
-# 	def GetAttributeNameFromColumn (self,ColumnName):
-# 		print('Specific')
-# 		if ColumnName=='Id_Sex':
-# 			return 'Id_SexBezin'
-# 		else:
-# 			return super(SpecificProtocole, self).GetAttributeNameFromColumn(self,ColumnName)
 
