@@ -241,7 +241,7 @@ def rfids_search(request):
     # Run query
     total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
     
-    Define the limit and offset if exist
+    #Define the limit and offset if exist
     offset = int(request.POST.get('offset', 0))
     limit = int(request.POST.get('per_page', 0))
 
