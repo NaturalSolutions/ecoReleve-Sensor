@@ -17,22 +17,22 @@ def getFieldActitityID (data) :
 	id_field=DBSession.execute(id_field_query).scalar()
 	return id_field
 
-def getRegion(data) :
+def getRegion(lat,lon) :
 	stmt_Region = text("""
 		DECLARE @geoPlace varchar(255);
 		EXEC """ + dbConfig['data_schema'] + """.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
 		SELECT @geoPlace;"""
-	).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+	).bindparams(bindparam('lat', value=lat , type_=Numeric(9,5)),bindparam('lon', value=lon , type_=Numeric(9,5)))
 	geoRegion=DBSession.execute(stmt_Region).scalar()
 	print (geoRegion)
 	return geoRegion
 
-def getUTM(data) :
+def getUTM(lat,long) :
 	stmt_UTM=text("""
 		DECLARE @geoPlace varchar(255);
 		EXEC """ + dbConfig['data_schema'] + """.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
 		SELECT @geoPlace;"""
-	).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+	).bindparams(bindparam('lat', value=lat, type_=Numeric(9,5)),bindparam('lon', value=lon , type_=Numeric(9,5)))
 	geoUTM=DBSession.execute(stmt_UTM).scalar()
 	print (geoUTM)
 	return geoUTM
@@ -198,7 +198,7 @@ def insertMultStation(request):
 
 	creation_date=datetime.datetime.now()
 	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
-	col=tuple(['name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator'])
+	col=tuple(['name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator', 'Region'])
 	print (creation_date)
 
 	final=[dict(zip(col,[
@@ -210,14 +210,16 @@ def insertMultStation(request):
 		,userID[0]
 		,userID[1]
 		,userID[2]
-		,request.authenticated_userid])) for row in data 
+		,request.authenticated_userid
+		,getRegion(row['latitude'],row['longitude'])])) for row in data 
 	if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'],'%Y-%m-%d %H:%M:%S'), 'lat':row['latitude'], 'lon':row['longitude']}).scalar() == 0 ]
 
 	query_insert=Station.__table__.insert()
 	pkList=query_insert.execute(final)
-	query=select([Station.id,Station.date,Station.lat,Station.lon]).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
+	query=select([Station.id,Station.date, Station.lat,Station.lon, Station.fieldWorker1,Station.fieldWorker2,Station.fieldWorker3,Station.fieldActivityName,Station.area]
+		).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
 	pkIDs=DBSession.execute(query).fetchall()
-	result=[{'id':pk, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon} for pk,d,lat,lon in pkIDs]
+	result=[{'id':pk, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon,'FieldWorker1':f1,'FieldWorker2':f2,'FieldWorker3':f3,'FieldActivity_Name':fname, 'Region':area} for pk,d,lat,lon,f1,f2,f3,fname,area in pkIDs]
 	return {
 	'response':str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing',
 	'data': result }

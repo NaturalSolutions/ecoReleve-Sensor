@@ -34,6 +34,13 @@ dict_proto={
 	'Vertebrate individual': TProtocolVertebrateIndividual
 	}
 
+def getWorkerID(workerList) :
+	users_ID_query = select([User.id], User.fullname.in_((workerList)))
+	users_ID = DBSession.execute(users_ID_query).fetchall()
+	users_ID=[row[0] for row in users_ID]
+	if len(users_ID) <3 :
+		users_ID.extend([None,None])
+	return users_ID
 
 def getWorkerID(workerList) :
 	users_ID_query = select([User.id], User.fullname.in_((workerList)))
@@ -49,7 +56,9 @@ def insert_protocol (request):
 	protocolName=data['name']
 	# insert new row in the protocol
 	if request.params.has_key('PK')!=True :
-		print('_______add proto_____')
+		
+		print('_______add proto_____')	
+
 		new_proto=dict_proto[protocolName]()
 		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
@@ -57,7 +66,11 @@ def insert_protocol (request):
 		id_proto= new_proto.PK
 		print(id_proto)
 		return id_proto
+
+
 	else :
+		
+
 		print('_______update proto__________')
 		up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
 		del data['name'],data['PK'],data['FK_TSta_ID']
@@ -67,6 +80,7 @@ def insert_protocol (request):
 		transaction.commit()
 
 		return id_proto
+
 @view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
 def get_protocol (request):
 
