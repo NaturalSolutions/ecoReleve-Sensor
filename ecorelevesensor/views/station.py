@@ -163,7 +163,6 @@ def insertNewStation(request):
 		else :
 			geoUTM=None
 			geoRegion=data['Region']
-			locality=data['Place']
 			data['LAT'] = None
 			data['LON'] = None
 
