@@ -191,8 +191,6 @@ def insertNewStation(request):
 		return id_sta
 		# return {'id':id_sta,'region':geoRegion,'utm':geoUTM}
 			
-		
-			
 	elif 'PK' in data :
 		
 		print('_______________________')
@@ -200,7 +198,11 @@ def insertNewStation(request):
 		up_station=DBSession.query(Station).get(data['PK'])
 		
 		data['date']=data['Date_']
-		del data['Date_'],data['PK'],data['id'],data['FieldWorker4'],data['FieldWorker5'],data['FieldWorkersNumber']
+		del data['Date_'],data['PK'],data['FieldWorker4'],data['FieldWorker5'],data['FieldWorkersNumber']
+		if data['LAT']=='NULL':
+			data['LAT']=None
+			data['LON']=None
+
 		colToAttr=dict({v.name:k for k,v in up_station.__mapper__.c.items()})
 
 		for k, v in data.items() :
