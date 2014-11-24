@@ -61,47 +61,65 @@ def monitoredSite(request):
 	return data
 
 	
-@view_config(route_name=prefix+'/area', renderer='json', request_method='GET')
+@view_config(route_name=prefix+'/area', renderer='json', request_method='POST')
 def monitoredSitesArea(request):
 
-	proto_view_Name=request.matchdict['name_vue'].replace('%20',' ')
-	try :
-		proto_view_Table=Base.metadata.tables[proto_view_Name]
-		join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
-	except :
-		proto_view_Table=dict_proto[proto_view_Name]()
-		join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
+	req = request.POST
 
-	print (proto_view_Table)
+	if 'name_view' in req :
+		print('name_view')
+		try :
+			proto_view_Table = Base.metadata.tables[proto_view_Name]
+			join_table = join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
+		except :
+			proto_view_Table = dict_proto[proto_view_Name]()
+			join_table = join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
+
+		print (proto_view_Table)
 
 	
-	slct=select([Station.area]).distinct().select_from(join_table)
-	data = DBSession.execute(slct).fetchall()
+		slct = select([Station.area]).distinct().select_from(join_table)
+		data = DBSession.execute(slct).fetchall()
+		return [row['Region' or 'Area'] for row in data]
 
-	return [row['Region' or 'Area'] for row in data]
+
+	else :
+		table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
+		slct = select([table.c['Country']]).distinct()
+		data =  DBSession.execute(slct).fetchall()
+		return [row[0] for row in data]
 
 
-@view_config(route_name=prefix+'/locality', renderer='json', request_method='GET')
+
+@view_config(route_name=prefix+'/locality', renderer='json', request_method='POST')
 def monitoredSitesLocality(request):
 
-	proto_view_Name=request.matchdict['name_vue'].replace('%20',' ')
-	print (proto_view_Name)
-	try :
-		proto_view_Table=Base.metadata.tables[proto_view_Name]
-		join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
+	req = request.POST
 
-	except :
-		
-		proto_view_Table=dict_proto[proto_view_Name]()
-		join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
-		
-	print (proto_view_Table)
+	if 'name_view' in req :
+		print('name_view')
+		try :
+			proto_view_Table=Base.metadata.tables[proto_view_Name]
+			join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
 
-	
-	slct=select([Station.locality]).distinct().select_from(join_table)
-	data = DBSession.execute(slct).fetchall()
+		except :
+			
+			proto_view_Table=dict_proto[proto_view_Name]()
+			join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
 
-	return [row['Place' or 'Locality'] for row in data]
+		slct=select([Station.locality]).distinct().select_from(join_table)
+		data = DBSession.execute(slct).fetchall()
+		return [row['Place' or 'Locality'] for row in data]
+	else :
+		table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
+		if 'Region' in req :
+			query=select([table.c['Place']]).distinct().where(table.c['Country']==req.get('Region'))
+		else :
+			query=select([table.c['Place']]).distinct()
+		data=DBSession.execute(query).fetchall()
+		return [row[0] for row in data]
+
+
 
 @view_config(route_name=prefix+'/addStation', renderer='json', request_method='POST')
 def insertNewStation(request):
@@ -136,6 +154,7 @@ def insertNewStation(request):
 					SELECT @geoPlace;"""
 				).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
 				geoUTM=DBSession.execute(stmt_UTM).scalar()
+				locality=None
 				print (geoUTM)
 
 			else :
@@ -144,7 +163,10 @@ def insertNewStation(request):
 		else :
 			geoUTM=None
 			geoRegion=data['Region']
-			
+			locality=data['Place']
+			data['LAT'] = None
+			data['LON'] = None
+
 		#get userID with fieldWorker_Name
 		users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
 		users_ID = DBSession.execute(users_ID_query).fetchall()
@@ -168,7 +190,7 @@ def insertNewStation(request):
 	
 		print(id_sta)
 		return id_sta
-			# return {'id':id_sta,'region':geoRegion,'utm':geoUTM}
+		# return {'id':id_sta,'region':geoRegion,'utm':geoUTM}
 			
 		
 			
@@ -208,9 +230,8 @@ def insertMultStation(request):
 
 	creation_date=datetime.datetime.now()
 	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
-	col=tuple(['name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator', 'Region'])
+	col=tuple(['Name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator', 'Region'])
 	print (creation_date)
-
 	final=[dict(zip(col,[
 		row['name']
 		,datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S')
@@ -226,10 +247,11 @@ def insertMultStation(request):
 
 	query_insert=Station.__table__.insert()
 	pkList=query_insert.execute(final)
-	query=select([Station.id,Station.date, Station.lat,Station.lon, Station.fieldWorker1,Station.fieldWorker2,Station.fieldWorker3,Station.fieldActivityName,Station.area,Station.utm]
+
+	query=select([Station.id,Station.name,Station.date, Station.lat,Station.lon, Station.fieldWorker1,Station.fieldWorker2,Station.fieldWorker3,Station.fieldActivityName,Station.area,Station.utm]
 		).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
 	pkIDs=DBSession.execute(query).fetchall()
-	result=[{'PK':pk, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon,'FieldWorker1':f1,'FieldWorker2':f2,'FieldWorker3':f3,'FieldActivity_Name':fname, 'Region':area, 'UTM':utm} for pk,d,lat,lon,f1,f2,f3,fname,area,utm in pkIDs]
+	result=[{'PK':pk, 'Name':name, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon,'FieldWorker1':f1,'FieldWorker2':f2,'FieldWorker3':f3,'FieldActivity_Name':fname, 'Region':area, 'UTM':utm} for pk,name,d,lat,lon,f1,f2,f3,fname,area,utm in pkIDs]
 	return {
 	'response':str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing',
 	'data': result }

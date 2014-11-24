@@ -222,6 +222,7 @@ def rfids_search(request):
     data=DBSession.execute(query).fetchall()    
     print(data)
     print(len(data))
+   
     # Set sorting columns and order
 
     order_by = json.loads(request.POST.get('order_by', '[]'))
@@ -269,3 +270,18 @@ def rfids_field(request):
 
         print (final)
         return final
+
+@view_config(route_name=prefix + 'search_geoJSON', renderer='json', request_method='POST')
+def rfids_geoJSON(request):
+
+    table=Base.metadata.tables['RFID_MonitoredSite']
+    criteria = json.loads(request.POST.get('criteria', '{}'))
+    query = select(table.c)
+    for column_name, obj in criteria.items():
+        query=query.where(eval_binary_expr(table.c[column_name], obj['Operator'], obj['Value']))
+    print('___________geoJSON________________')
+    data=DBSession.execute(query).fetchall()    
+    geoJson=[]
+    for row in data:
+        geoJson.append({'type':'Feature', 'properties':{'name':row['Name']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
+    return geoJson

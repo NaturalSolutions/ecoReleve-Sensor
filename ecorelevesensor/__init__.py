@@ -67,7 +67,7 @@ def add_routes(config):
     config.add_route('rfid/byDate', 'ecoReleve-Core/rfid/byDate')
     config.add_route('rfid/search', 'ecoReleve-Core/rfid/search')
     config.add_route('rfid/getFields', 'ecoReleve-Core/rfid/getFields')
-
+    config.add_route('rfid/search_geoJSON', 'ecoReleve-Core/rfid/search_geoJSON')
 
     
     ##### GSM #####
@@ -88,10 +88,10 @@ def add_routes(config):
     config.add_route('monitoredSite/list', 'ecoReleve-Core/monitoredSite/list')
     
     ##### Stations #####
-    config.add_route('station/area', 'ecoReleve-Core/station/area/{name_vue}')
-    config.add_route('station/locality', 'ecoReleve-Core/station/locality/{name_vue}')
+    config.add_route('station/area', 'ecoReleve-Core/station/area')
+    config.add_route('station/locality', 'ecoReleve-Core/station/locality')
     config.add_route('station/get', 'ecoReleve-Core/station/get')
-    config.add_route('station/id', 'ecoReleve-Core/station/{id}')
+    config.add_route('station/id', 'ecoReleve-Core/station/id')
     config.add_route('station', 'ecoReleve-Core/station')
     config.add_route('station/addStation', 'ecoReleve-Core/station/addStation/insert')
     config.add_route('station/addMultStation', 'ecoReleve-Core/station/addMultStation/insert')
