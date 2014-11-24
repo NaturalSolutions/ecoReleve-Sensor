@@ -203,11 +203,9 @@ def rfid_validate(request):
 @view_config(route_name=prefix + 'search', renderer='json', request_method='POST')
 def rfids_search(request):
 
-
- 
     # test data obj => {criteria,order_by,offest,per_page,total_page} ====>>>>> See individuals front
     # criteria={"begin_date":{"Value":"11/11/2013","Operator":">"},"Name":{"Value":"E6","Operator":"="}}
-    # table=Base.metadata.tables['RFID_MonitoredSite']
+    table=Base.metadata.tables['RFID_MonitoredSite']
     # page=1
     # limit=25
     # offset=0
@@ -254,20 +252,20 @@ def rfids_search(request):
     result.append([OrderedDict(row) for row in data])
     return result
 
-@view_config(route_name=prefix + 'getFields', renderer='json', request_method='GET')
+@view_config(route_name=prefix + 'getFields', renderer='json', request_method='POST')
 def rfids_field(request):
         print('____________FIELDS_________________')
         table=Base.metadata.tables['RFID_MonitoredSite']
         print (table.c)
         columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
         
-        final=[]
+        final={}
         for col in table.c :
             name=col.name
             Ctype=str(col.type)
             if 'VARCHAR' in Ctype:
                 Ctype='String'
-            final.append((name,Ctype))
+            final[name]=Ctype
 
         print (final)
         return final
