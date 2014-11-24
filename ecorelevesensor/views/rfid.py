@@ -284,4 +284,4 @@ def rfids_geoJSON(request):
     geoJson=[]
     for row in data:
         geoJson.append({'type':'Feature', 'properties':{'name':row['Name']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
-    return geoJson
+    return {'type':'FeatureCollection', 'features':geoJson}
