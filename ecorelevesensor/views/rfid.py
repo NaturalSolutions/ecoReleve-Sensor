@@ -260,7 +260,7 @@ def rfids_field(request):
         columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
         
         final={}
-        for col in table.c :
+        for col in columns :
             name=col.name
             Ctype=str(col.type)
             if 'VARCHAR' in Ctype:
