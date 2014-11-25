@@ -210,19 +210,17 @@ def rfids_search(request):
     # limit=25
     # offset=0
     # order_by={"id:asc"}
-
+    criteria=request.json_body.get('criteria',{})
     # Look over the criteria list
-    criteria = json.loads(request.POST.get('criteria', '{}'))
-    print(criteria)
+    print('___________SEARCH________________')
     query = select(table.c)
     for column_name, obj in criteria.items():
         query=query.where(eval_binary_expr(table.c[column_name], obj['Operator'], obj['Value']))
     print('___________SEARCH________________')
     print(query)
     data=DBSession.execute(query).fetchall()    
-    print(data)
-    print(len(data))
-   
+ 
+    print (data)
     # Set sorting columns and order
 
     order_by = json.loads(request.POST.get('order_by', '[]'))

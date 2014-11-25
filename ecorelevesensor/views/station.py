@@ -8,7 +8,7 @@ from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, upda
 from ecorelevesensor.models import * 
 import sys, datetime, transaction
 from sqlalchemy.sql import func
-import json,datetime
+import json,datetime,math
 prefix = 'station'
 
 def getFieldActitityID (data) :
@@ -131,7 +131,7 @@ def insertNewStation(request):
 	date=data.get('Date_')
 	print (data)
 	print(date)
-	if 'PK' not in data :
+	if 'PK' not in data or data['PK']==None :
 
 		if (data['LON'],data['LAT'])!=('NULL','NULL') :
 
@@ -228,7 +228,8 @@ def insertMultStation(request):
 	print(data[0])
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
-
+	print (check_duplicate_station)
+	input('__________')
 	creation_date=datetime.datetime.now()
 	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
 	col=tuple(['Name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator', 'Region'])
@@ -244,7 +245,8 @@ def insertMultStation(request):
 		,userID[2]
 		,request.authenticated_userid
 		,getRegion(row['latitude'],row['longitude'])])) for row in data 
-	if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'],'%Y-%m-%d %H:%M:%S'), 'lat':row['latitude'], 'lon':row['longitude']}).scalar() == 0 ]
+	if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'],'%Y-%m-%d %H:%M:%S'), 'lat':math.ceil(row['latitude']*1e5)/1e5, 'lon':math.ceil(row['longitude']*1e5)/1e5 }).scalar() == 0 ]
+	
 
 	query_insert=Station.__table__.insert()
 	pkList=query_insert.execute(final)
