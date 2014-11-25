@@ -188,8 +188,8 @@ def insertNewStation(request):
 		id_sta=station.id
 	
 		print(id_sta)
-		return id_sta
-		# return {'id':id_sta,'region':geoRegion,'utm':geoUTM}
+		# return id_sta
+		return {'PK':id_sta,'Region':geoRegion,'utm':geoUTM}
 			
 	elif 'PK' in data :
 		
@@ -252,7 +252,7 @@ def insertMultStation(request):
 	query=select([Station.id,Station.name,Station.date, Station.lat,Station.lon, Station.fieldWorker1,Station.fieldWorker2,Station.fieldWorker3,Station.fieldActivityName,Station.area,Station.utm]
 		).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
 	pkIDs=DBSession.execute(query).fetchall()
-	result=[{'PK':pk, 'Name':name, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon,'FieldWorker1':f1,'FieldWorker2':f2,'FieldWorker3':f3,'FieldActivity_Name':fname, 'Region':area, 'UTM':utm} for pk,name,d,lat,lon,f1,f2,f3,fname,area,utm in pkIDs]
+	result=[{'PK':pk, 'Name':name, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon,'FieldWorker1':data[0]['fieldWorker1'],'FieldWorker2':data[0]['fieldWorker2'],'FieldWorker3':data[0]['fieldWorker3'],'FieldActivity_Name':fname, 'Region':area, 'UTM':utm} for pk,name,d,lat,lon,f1,f2,f3,fname,area,utm in pkIDs]
 	return {
 	'response':str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing',
 	'data': result }
