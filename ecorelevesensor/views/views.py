@@ -170,7 +170,6 @@ def views_details(request):
 	 try:
 			name_vue = request.matchdict['name']
 			table = Base.metadata.tables[name_vue]
-			print(table)
 			for column in table.c:
 				 name_c = str(column.name)
 				 type_c = str(column.type)
@@ -187,10 +186,7 @@ def views_count(request):
 	 		
 			name_vue = request.matchdict['name']
 			table = Base.metadata.tables[name_vue]
-			print(name_vue)
 			count = DBSession.execute(table.count()).scalar()
-			print('___________plouf')
-			print(count)
 			return count
 	 except Exception as e:
 			print(e)
@@ -223,7 +219,6 @@ def views_filter_count(request):
 
 @view_config(route_name = 'core/views/export/filter/geo', renderer = 'json')
 def views_filter(request):
-	 print('_________'+'core/views/export/filter/geo'+'_________')
 	 try:
 			#name_vue = request.matchdict['name']
 			#table = Base.metadata.tables[name_vue]
@@ -245,13 +240,6 @@ def views_filter(request):
 				column=fltr['Column']
 				query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
-
-			'''
-			count = DBSession.execute(query).scalar()
-
-			print(count)
-
-			'''
 
 			for lat, lon, nb in  DBSession.execute(query).fetchall():
 				 result['features'].append({'type':'Feature', 'properties':{'count': nb}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
@@ -311,7 +299,7 @@ def views_filter_result(request):
 
 	 	criteria = request.json_body.get('criteria', {})
 
-	 	print(criteria)
+
 	 	
 	 	viewName = criteria['viewName']
 	 	table = Base.metadata.tables[viewName]
@@ -326,7 +314,6 @@ def views_filter_result(request):
 
 	 	#columns selection
 	 	columns=criteria['columns']
-	 	print(columns)
 
 	 	coll=[]
 
@@ -359,10 +346,8 @@ def views_filter_result(request):
 	 		for j in range(len(rows[i])):
 	 			tmp[columns[j]] = rows[i][j]
  			result['rows'].append(tmp)
-	 		print(tmp)
 
 	 	result['columns']=columns
-	 	print(result)
 
 
 

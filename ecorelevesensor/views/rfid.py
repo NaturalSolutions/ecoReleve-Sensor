@@ -33,6 +33,8 @@ def get_operator_fn(op):
         '<>': operator.ne,
         '<=': operator.le,
         '>=': operator.ge,
+        'Like': operator.eq,
+        'Not Like': operator.ne,
         }[op]
 def eval_binary_expr(op1, operator, op2):
     op1,op2 = op1, op2
@@ -212,19 +214,31 @@ def rfids_search(request):
     # order_by={"id:asc"}
 
     # Look over the criteria list
-    criteria = json.loads(request.POST.get('criteria', '{}'))
+    #criteria = request.params.get('criteria', '{}')
+
+
+    print('______________Criterias____________')
+    criteria = request.json_body.get('criteria', {})
+    print(type(criteria))
     print(criteria)
+
     query = select(table.c)
-    for column_name, obj in criteria.items():
-        query=query.where(eval_binary_expr(table.c[column_name], obj['Operator'], obj['Value']))
+
+
+    for obj in criteria:
+
+        query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
+
     print('___________SEARCH________________')
+
+
     print(query)
     data=DBSession.execute(query).fetchall()    
-    print(data)
-    print(len(data))
    
     # Set sorting columns and order
 
+
+    '''
     order_by = json.loads(request.POST.get('order_by', '[]'))
     order_by_clause = []
     for obj in order_by:
@@ -236,21 +250,31 @@ def rfids_search(request):
                 order_by_clause.append(table.columns[column].desc())
     if len(order_by_clause) > 0:
         query = query.order_by(*order_by_clause)
-    
+    '''
+
+
     # Run query
     total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
     
     #Define the limit and offset if exist
+
+    '''
     offset = int(request.POST.get('offset', 0))
     limit = int(request.POST.get('per_page', 0))
+
+
 
     if limit > 0:
         query = query.limit(limit)
     if offset > 0:
         query = query.offset(offset)
+    '''
     result = [{'total_entries':total}]
+
     data = DBSession.execute(query).fetchall()
     result.append([OrderedDict(row) for row in data])
+    
+
     return result
 
 @view_config(route_name=prefix + 'getFields', renderer='json', request_method='POST')
@@ -275,13 +299,40 @@ def rfids_field(request):
 def rfids_geoJSON(request):
 
     table=Base.metadata.tables['RFID_MonitoredSite']
-    criteria = json.loads(request.POST.get('criteria', '{}'))
+
+    criteria = request.json_body.get('criteria', {})
+    print(type(criteria))
+    print(criteria)
+
     query = select(table.c)
-    for column_name, obj in criteria.items():
-        query=query.where(eval_binary_expr(table.c[column_name], obj['Operator'], obj['Value']))
-    print('___________geoJSON________________')
+
+
+    for obj in criteria:
+
+        query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
+
     data=DBSession.execute(query).fetchall()    
     geoJson=[]
     for row in data:
         geoJson.append({'type':'Feature', 'properties':{'name':row['Name']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
     return {'type':'FeatureCollection', 'features':geoJson}
+
+
+
+@view_config(route_name=prefix + 'update', renderer='json', request_method='POST')
+def rfid_update(request):
+    data = request.body
+    rfid = json.loads(request.body.decode(encoding='UTF-8'))
+
+    #table or view?
+    table=Base.metadata.tables['RFID_MonitoredSite']
+
+    query = select(table.c)
+
+    '''
+    SELECT obj.*,eq.lat, eq.lon,eq.begin_date,eq.end_date, MS.name_Type,MS.Name
+    FROM T_Object obj JOIN  [T_MonitoredSiteEquipment] eq ON obj.PK_id=eq.FK_obj
+    JOIN [dbo].[TMonitoredStations] MS ON eq.FK_site=MS.TGeo_pk_id 
+    '''
+
+    
