@@ -212,15 +212,15 @@ def rfids_search(request):
     # limit=25
     # offset=0
     # order_by={"id:asc"}
-
+    criteria=request.json_body.get('criteria',{})
     # Look over the criteria list
+
     #criteria = request.params.get('criteria', '{}')
 
 
-    print('______________Criterias____________')
+
     criteria = request.json_body.get('criteria', {})
-    print(type(criteria))
-    print(criteria)
+
 
     query = select(table.c)
 
@@ -229,12 +229,12 @@ def rfids_search(request):
 
         query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
 
-    print('___________SEARCH________________')
+
 
 
     print(query)
     data=DBSession.execute(query).fetchall()    
-   
+
     # Set sorting columns and order
 
 
