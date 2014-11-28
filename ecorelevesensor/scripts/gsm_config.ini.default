@@ -1,0 +1,7 @@
+# -*- coding: utf-8 -*-
+
+[DEFAULT]
+mail_server = outlook.office365.com
+mail_user = your e-mail address here
+mail_passwd = your password here
+mail_folder = see INSTALL.txt
