@@ -9,8 +9,21 @@ from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, upda
 from ecorelevesensor.models import * 
 import sys, datetime, transaction
 from sqlalchemy.sql import func
-import json,datetime,math
+import json,datetime,math,time
+from sqlalchemy.types import *
+import pandas
+
 prefix = 'station'
+
+class Geometry(UserDefinedType):
+    def get_col_spec(self):
+        return "GEOMETRY"
+
+    # def bind_expression(self, bindvalue):
+    #     return func.ST_PointFromText(bindvalue, type_=self)
+
+    # def column_expression(self, col):
+    #     return func.ST_AsText(col, type_=self)
 
 def getFieldActitityID (data) :
 
@@ -25,17 +38,15 @@ def getRegion(lat,lon) :
 		SELECT @geoPlace;"""
 	).bindparams(bindparam('lat', value=lat , type_=Numeric(9,5)),bindparam('lon', value=lon , type_=Numeric(9,5)))
 	geoRegion=DBSession.execute(stmt_Region).scalar()
-	print (geoRegion)
 	return geoRegion
 
-def getUTM(lat,long) :
+def getUTM(lat,lon) :
 	stmt_UTM=text("""
 		DECLARE @geoPlace varchar(255);
 		EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
 		SELECT @geoPlace;"""
 	).bindparams(bindparam('lat', value=lat, type_=Numeric(9,5)),bindparam('lon', value=lon , type_=Numeric(9,5)))
 	geoUTM=DBSession.execute(stmt_UTM).scalar()
-	print (geoUTM)
 	return geoUTM
 
 def getWorkerID(workerList) :
@@ -86,7 +97,7 @@ def monitoredSitesArea(request):
 
 	else :
 		table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
-		slct = select([table.c['Country']]).distinct()
+		slct = select([table.c['Region']]).distinct()
 		data =  DBSession.execute(slct).fetchall()
 		return [row[0] for row in data]
 
@@ -112,11 +123,10 @@ def monitoredSitesLocality(request):
 		data = DBSession.execute(slct).fetchall()
 		return [row['Place' or 'Locality'] for row in data]
 	else :
-		table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
 		if 'Region' in req :
-			query=select([table.c['Place']]).distinct().where(table.c['Country']==req.get('Region'))
+			query=select([Station.locality]).distinct().where(Station.area==req.get('Region'))
 		else :
-			query=select([table.c['Place']]).distinct()
+			query=select([Station.locality]).distinct()
 		data=DBSession.execute(query).fetchall()
 		return [row[0] for row in data]
 
@@ -236,51 +246,145 @@ def insertNewStation(request):
 			return response
 	
 
-
 @view_config(route_name=prefix+'/addMultStation', renderer='json', request_method='POST')
 def insertMultStation(request):
 
 	data=list(request.params)
-	print (type(data))
 	data=json.loads(data[0])
-	print(data[0])
-	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
-		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
-	print (check_duplicate_station)
-	input('__________')
+
+	start=time.time()
 	creation_date=datetime.datetime.now()
 	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
-	col=tuple(['Name','date','LAT','LON','Creation_date','FieldWorker1','FieldWorker2','FieldWorker3','Creator', 'Region'])
-	print (creation_date)
+	col=tuple(['name','date','LAT','LON','FieldWorker1','FieldWorker2','FieldWorker3','FieldActivity_Name','Creator','Creation_date'])
+
+	# ----------------------------------------------
+	#### TODO ==> Add elevation field ####
 	final=[dict(zip(col,[
 		row['name']
 		,datetime.datetime.strptime(row['waypointTime'].replace('-','/'),'%Y/%m/%d %H:%M:%S')
 		,row['latitude']
 		,row['longitude']
-		,creation_date
 		,userID[0]
 		,userID[1]
 		,userID[2]
+		,row['fieldActivity']
 		,request.authenticated_userid
-		,getRegion(row['latitude'],row['longitude'])])) for row in data 
-	if DBSession.execute(check_duplicate_station, {'date':datetime.datetime.strptime(row['waypointTime'],'%Y-%m-%d %H:%M:%S'), 'lat':math.ceil(row['latitude']*1e5)/1e5, 'lon':math.ceil(row['longitude']*1e5)/1e5 }).scalar() == 0 ]
+		,creation_date
+		])) for row in data ]
+	
+	# ----------------------------------------------
+	# Create temporary Table and insert all waypoints
+	tempName='tempTable'+str(request.authenticated_userid)
+	tempTable=Table (tempName,
+		Base.metadata,
+		Column('PK', Integer, primary_key=True),
+		Column('TSta_PK_ID', Integer, nullable=True),
+    	Column('date',DateTime),
+    	Column('name', String),
+    	Column('region', String),
+    	Column('place', String),
+		Column('UTM20',String),
+		Column('FieldActivity_ID', Integer),
+		Column('FieldActivity_Name', String),
+		Column('FieldWorker1', Integer),
+		Column('FieldWorker2', Integer),
+		Column('FieldWorker3', Integer),
+		Column('LAT',Numeric(9,5)),
+		Column('LON',Numeric(9,5)),
+		Column('ele',Integer),
+		Column('Precision', Integer),
+		Column('Creator', Integer),
+		Column('Creation_date', DateTime),
+		Column('GeoPoint',Geometry)
+		)
+	if tempTable.exists() :
+		print('table exists')
+		tempTable.drop()
+
+	tempTable.create(checkfirst=True)
+	DBSession.execute(tempTable.insert(),final)
+
+	# -------------------------- #
+	# Launch procedure : check duplicate, 
+	# retrieve UTM, Region from coord, fieldActivity_ID from fieldActivity_Name,
+	# and insert in Table(Station)
+	# -------------------------- #
+
+	df=pandas.DataFrame(data=final)
+	query='''DELETE {tableName}
+	WHERE EXISTS (SELECT* FROM TStations t WHERE t.LAT={tableName}.LAT 
+	AND t.LON={tableName}.LON AND t.DATE={tableName}.date AND t.name={tableName}.name);
+
+	UPDATE {tableName} SET GeoPoint=geometry::STPointFromText('Point('+convert(varchar,LON)
+		+' '+convert(varchar,LAT)+'
+		)',4326);
+
+
+	CREATE SPATIAL INDEX IX_tempTable_GeoPoint ON {tableName}(GeoPoint) 
+	USING GEOMETRY_GRID WITH ( BOUNDING_BOX = ({minLON},{minLAT},{maxLON},{maxLAT}) ,
+	GRIDS =(LEVEL_1 = LOW, LEVEL_2 = LOW, LEVEL_3 = LOW, LEVEL_4 = LOW));
 	
 
-	query_insert=Station.__table__.insert()
-	pkList=query_insert.execute(final)
+	UPDATE {tableName} SET {tableName}.region=geo.Place, {tableName}.UTM20=u.code, {tableName}.FieldActivity_ID=th.TProt_PK_ID
+	
+	FROM {tableName} tmp LEFT join geo_CNTRIES_and_RENECO_MGMTAreas geo 
+	ON tmp.lon >= geo.minLon AND tmp.lon <= geo.maxLon AND tmp.lat >= geo.minLat AND tmp.lat <= geo.maxLat
+	
+	LEFT JOIN geo_utm_grid_20x20_km u 
+	ON tmp.lon >= u.minLon AND tmp.lon <= u.maxLon AND tmp.lat >= u.minLat AND tmp.lat <= u.maxLat
+	
+	LEFT JOIN TThemeEtude th 
+	ON tmp.FieldActivity_Name=th.Caption
+	
+	WHERE geometry::STPointFromText('Point(' + CONVERT(varchar, tmp.lon) + ' ' 
+	+ CONVERT(varchar, tmp.lat) +')', 4326).STWithin(geo.valid_geom)=1  AND 
+	geometry::STPointFromText('Point(' + CONVERT(varchar, tmp.lon) + ' ' 
+	+ CONVERT(varchar, tmp.lat) +')', 4326).STWithin(u.ogr_geometry)=1 ;
+	
 
-	query=select([Station.id,Station.name,Station.date, Station.lat,Station.lon, Station.fieldWorker1,Station.fieldWorker2,Station.fieldWorker3,Station.fieldActivityName,Station.area,Station.utm]
-		).where(and_(Station.creationDate==creation_date, Station.creator==request.authenticated_userid))
-	pkIDs=DBSession.execute(query).fetchall()
-	result=[{'PK':pk, 'Name':name, 'Date_': d.strftime('%d/%m/%Y %H:%M:%S'),'LAT':lat, 'LON':lon,'FieldWorker1':data[0]['fieldWorker1'],
-	'FieldWorker2':data[0]['fieldWorker2'],'FieldWorker3':data[0]['fieldWorker3'],
-	'FieldActivity_Name':fname, 'Region':area, 'UTM':utm, 'FieldWorker4':'','FieldWorker5':'' } 
-	for pk,name,d,lat,lon,f1,f2,f3,fname,area,utm in pkIDs]
-	return {
-	'response':str(len(final))+' stations was added with succes, '+str(len(data)-len(final))+' are already existing',
-	'data': result }
+	INSERT INTO TStations (date,LAT,LON,name,FieldActivity_Name,FieldActivity_ID,
+		FieldWorker1,FieldWorker2,FieldWorker3, Creator, Region, UTM20,Creation_date)
+	OUTPUT INSERTED.TSta_PK_ID INTO {tableName} (TSta_PK_ID)
+	SELECT date,LAT,LON,name,FieldActivity_Name,FieldActivity_ID,FieldWorker1,FieldWorker2,FieldWorker3,
+	 Creator, region,UTM20,Creation_date
+	 FROM {tableName};
+
+	'''.format(tableName=tempName, minLON=min(df['LON']), minLAT=min(df['LAT']), maxLON=max(df['LON']), maxLAT=max(df['LAT']))
+
+	try :
+		DBSession.execute(query)
+		print (time.time()-start)
+		
+		# -------------------------- #
+		# Retrieve new station created 
+		query=select([Station]).where(and_(Station.creator==request.authenticated_userid,Station.creationDate==creation_date))
+		stationList=DBSession.execute(query).fetchall()
+		result=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
+		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':data[0]['fieldWorker1']
+		,'FieldWorker2':data[0]['fieldWorker2'],'FieldWorker3':data[0]['fieldWorker3']
+		,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
+		, 'FieldWorker4':'','FieldWorker5':'' } for sta in stationList]
+		transaction.commit()
+		
+		return {
+		'response':str(len(stationList))+' stations was added with succes, '
+		+str(len(final)-len(stationList))+' are already existing'
+		,'data': result }
+
+	except Exception as err:
+		print ('_______EXCEPTION______')
+		msg = err.args[0] if err.args else ""
+		response=Response('Problem occurs on station import : '+str(type(err))+' = '+msg)
+		response.status_int = 500
+		return response 
+
+	finally:
+		transaction.commit()
+		tempTable.drop(Base.metadata.bind)
+		Base.metadata.remove(tempTable)
 
 
+	
 @view_config(route_name=prefix+'/searchStation', renderer='json', request_method='GET')
 def check_newStation (request):
 	print ('_________Search Station____________')
