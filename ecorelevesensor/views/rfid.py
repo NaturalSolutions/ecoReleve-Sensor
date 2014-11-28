@@ -214,18 +214,15 @@ def rfids_search(request):
     print(request.POST['criteria'])
     criteria=request.json_body.get('criteria',{})
     # Look over the criteria list
-<<<<<<< HEAD
+
     print(criteria)
-=======
+
 
     #criteria = request.params.get('criteria', '{}')
 
 
 
     criteria = request.json_body.get('criteria', {})
-
-
->>>>>>> f1606595eded38d6c43b8e3b0e729ed76582ea17
     query = select(table.c)
 
 
@@ -234,27 +231,8 @@ def rfids_search(request):
         query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
 
 
-
-
-    print(query)
-    data=DBSession.execute(query).fetchall()    
-
     # Set sorting columns and order
 
-<<<<<<< HEAD
-    # order_by = json.loads(request.POST.get('order_by', '[]'))
-    # order_by_clause = []
-    # for obj in order_by:
-    #     column, order = obj.split(':')
-    #     if column in table.columns:
-    #         if order == 'asc':
-    #             order_by_clause.append(table.columns[column].asc())
-    #         elif order == 'desc':
-    #             order_by_clause.append(table.columns[column].desc())
-    # if len(order_by_clause) > 0:
-    #     query = query.order_by(*order_by_clause)
-    
-=======
 
     '''
     order_by = json.loads(request.POST.get('order_by', '[]'))
@@ -271,12 +249,11 @@ def rfids_search(request):
     '''
 
 
->>>>>>> f1606595eded38d6c43b8e3b0e729ed76582ea17
-    # Run query
+
     total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
     
     #Define the limit and offset if exist
-<<<<<<< HEAD
+
     # offset = int(request.POST.get('offset', 0))
     # limit = int(request.POST.get('per_page', 0))
 
@@ -287,14 +264,11 @@ def rfids_search(request):
     # result = [{'total_entries':total}]
     # data = DBSession.execute(query).fetchall()
     # result.append([OrderedDict(row) for row in data])
-    return [OrderedDict(row) for row in data]
-=======
+
 
     '''
     offset = int(request.POST.get('offset', 0))
     limit = int(request.POST.get('per_page', 0))
-
-
 
     if limit > 0:
         query = query.limit(limit)
@@ -306,9 +280,7 @@ def rfids_search(request):
     data = DBSession.execute(query).fetchall()
     result.append([OrderedDict(row) for row in data])
     
-
     return result
->>>>>>> f1606595eded38d6c43b8e3b0e729ed76582ea17
 
 @view_config(route_name=prefix + 'getFields', renderer='json', request_method='POST')
 def rfids_field(request):
