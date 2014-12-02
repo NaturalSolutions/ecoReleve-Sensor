@@ -5,7 +5,7 @@ Created on Mon Sep  1 17:28:02 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join
+from sqlalchemy import select, distinct, join, and_, desc
 from ecorelevesensor.models import DBSession, MonitoredSite, MonitoredSitePosition
 prefix = 'monitoredSite'
 
@@ -68,11 +68,12 @@ def monitored_site(request):
 def monitoredSite_byName(request):
 
 	nameSite=request.params.get('name')
+	typeSite=request.params.get('type')
 	query=select([MonitoredSitePosition.lat.label('lat'),MonitoredSitePosition.lon.label('lon')
 		, MonitoredSite.id.label('id_site'),MonitoredSitePosition.ele.label('ele'),MonitoredSitePosition.precision.label('precision')]
 		).select_from(join(MonitoredSitePosition, MonitoredSite , MonitoredSitePosition.site == MonitoredSite.id)
-		).where(MonitoredSite.name==nameSite)
+		).where(and_(MonitoredSite.name==nameSite, MonitoredSite.type_==typeSite)).order_by(desc(MonitoredSitePosition.begin_date))
 
-	data = DBSession.execute(query).fetchone()
+	data = DBSession.execute(query).first()
 
 	return dict([ (key,val) for key,val in data.items()])
