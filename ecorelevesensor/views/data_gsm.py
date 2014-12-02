@@ -4,13 +4,14 @@ Created on Tue Sep 23 17:15:47 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import desc, select, func, insert
-from ecorelevesensor.models import AnimalLocation, DBSession, DataGsm
+from sqlalchemy import desc, select, func, insert, join, Integer, cast, and_, Float 
+from ecorelevesensor.models import AnimalLocation, DBSession, DataGsm, SatTrx, ObjectsCaracValues, Individual,V_Individuals_LatLonDate
 from ecorelevesensor.utils.distance import haversine
 
 import pandas as pd
 import numpy as np
 import re
+import datetime
 
 prefix = 'dataGsm/'
 
@@ -136,3 +137,37 @@ def data_gsm_all(request):
         response = 'An error occured.'
         request.response.status_code = 500
     return response
+
+@view_config(route_name=prefix + 'details', renderer='json', request_method='POST')
+def indiv_details(request):
+
+
+    params=request.POST.get('id')
+    join_table = join(SatTrx, ObjectsCaracValues, SatTrx.ptt == cast(ObjectsCaracValues.value, Integer)
+        ).join(Individual, ObjectsCaracValues.object==Individual.id) 
+
+    query=select([Individual.id.label('ind_id'),Individual.survey_type.label('survey_type'), Individual.status.label('status')
+        , Individual.monitoring_status.label('monitoring_status'), Individual.birth_date.label('birth_date'), Individual.ptt.label('ptt'),ObjectsCaracValues.begin_date.label('begin_date'),ObjectsCaracValues.end_date.label('end_date')]
+        ).select_from(join_table
+        ).where(and_(SatTrx.model.like('GSM%'),ObjectsCaracValues.carac_type==19,ObjectsCaracValues.object_type=='Individual')
+        ).where(ObjectsCaracValues.value==params).alias()
+   
+    data=DBSession.execute(query).fetchone()
+    
+    if data['end_date'] == None :
+        end_date=datetime.datetime.now()
+    else :
+        end_date=data['end_date'] 
+
+    result=dict([ (key[0],key[1]) for key in data.items()])
+    result['duration']=(end_date.month-data['begin_date'].month)+(end_date.year-data['begin_date'].year)*12
+    
+    query = select([cast(V_Individuals_LatLonDate.c.lat, Float), cast(V_Individuals_LatLonDate.c.lon, Float), V_Individuals_LatLonDate.c.date]
+                     ).where(V_Individuals_LatLonDate.c.ind_id == result['ind_id']).order_by(desc(V_Individuals_LatLonDate.c.date))
+     
+    lastObs=DBSession.execute(query).first()
+    result['last_observation']=lastObs['date'].strftime('%d/%m/%Y')
+    result['birth_date']=result['birth_date'].strftime('%d/%m/%Y')
+    del result['begin_date'], result['end_date']
+    print (result)
+    return result

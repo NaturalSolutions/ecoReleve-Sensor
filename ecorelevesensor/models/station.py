@@ -15,13 +15,14 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.mssql.base import BIT
+from .monitored_site import MonitoredSite
 from ..models import Base
-
 class Station(Base):
     __tablename__ = 'TStations'
     id = Column('TSta_PK_ID', Integer, Sequence('TStations_pk_id'), primary_key=True)
     date = Column(DateTime, index=True, nullable=False)
     name = Column('Name', String)
+    id_siteMonitored=Column('TSta_FK_TGeo_ID',Integer,ForeignKey(MonitoredSite.id))
     area = Column('Region', String)
     locality = Column('Place', String)
     utm=Column('UTM20',String)

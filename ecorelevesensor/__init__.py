@@ -73,6 +73,7 @@ def add_routes(config):
     
     ##### GSM #####
     config.add_route('dataGsm/upload', 'ecoReleve-Core/dataGsm/upload')
+    config.add_route('dataGsm/details', 'ecoReleve-Core/dataGsm/details')
     config.add_route('dataGsm/unchecked/list', 'ecoReleve-Core/dataGsm/unchecked/list')
     config.add_route('dataGsm/unchecked/import', 'ecoReleve-Core/dataGsm/{id}/unchecked/import')
     config.add_route('dataGsm/unchecked', 'ecoReleve-Core/dataGsm/{id}/unchecked')
@@ -85,8 +86,10 @@ def add_routes(config):
     config.add_route('monitoredSite/name', 'ecoReleve-Core/monitoredSite/name')
     config.add_route('monitoredSite/type', 'ecoReleve-Core/monitoredSite/type')
     config.add_route('monitoredSite', 'ecoReleve-Core/monitoredSite')
-    config.add_route('monitoredSite/id', 'ecoReleve-Core/monitoredSite/{id}')
+    config.add_route('monitoredSite/id', 'ecoReleve-Core/monitoredSite/id')
     config.add_route('monitoredSite/list', 'ecoReleve-Core/monitoredSite/list')
+    config.add_route('monitoredSite/info', 'ecoReleve-Core/monitoredSite/info')
+
     
     ##### Stations #####
     config.add_route('station/area', 'ecoReleve-Core/station/area')
