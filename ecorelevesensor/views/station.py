@@ -97,7 +97,7 @@ def monitoredSitesArea(request):
 
 	else :
 		table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
-		slct = select([table.c['Region']]).distinct()
+		slct = select([table.c['Place']]).distinct()
 		data =  DBSession.execute(slct).fetchall()
 		return [row[0] for row in data]
 
