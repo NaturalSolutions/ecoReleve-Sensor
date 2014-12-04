@@ -144,75 +144,78 @@ def insertNewStation(request):
 	print(date)
 
 	if 'PK' not in data or data['PK']=='' :
-		try: 
-			if (data['LON'],data['LAT'])!=('NULL','NULL') :
+		# try: 
+		if (data['LON'],data['LAT'])!=('NULL','NULL') :
 
-				if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 :
+			if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 :
 
-					# get REGION and UTM by stored procedure
-					print ('_______Region___________')
-					stmt_Region = text("""
-						DECLARE @geoPlace varchar(255);
-						EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
-						SELECT @geoPlace;"""
-					).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
-					geoRegion=DBSession.execute(stmt_Region).scalar()
-					print (geoRegion)
+				# get REGION and UTM by stored procedure
+				print ('_______Region___________')
+				stmt_Region = text("""
+					DECLARE @geoPlace varchar(255);
+					EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
+					SELECT @geoPlace;"""
+				).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+				geoRegion=DBSession.execute(stmt_Region).scalar()
+				print (geoRegion)
 
-					print ('_______UTM___________')
-					stmt_UTM=text("""
-						DECLARE @geoPlace varchar(255);
-						EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
-						SELECT @geoPlace;"""
-					).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
-					geoUTM=DBSession.execute(stmt_UTM).scalar()
-					locality=None
-					print (geoUTM)
-
-				else :
-					response=Response('a station exists at same date and coordinates')
-					response.status_int = 500
-					return response
+				print ('_______UTM___________')
+				stmt_UTM=text("""
+					DECLARE @geoPlace varchar(255);
+					EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
+					SELECT @geoPlace;"""
+				).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
+				geoUTM=DBSession.execute(stmt_UTM).scalar()
+				locality=None
+				print (geoUTM)
 
 			else :
-				geoUTM=None
-				geoRegion=data['Region']
-				data['LAT'] = None
-				data['LON'] = None
+				response=Response('a station exists at same date and coordinates')
+				response.status_int = 500
+				return response
 
-			#get userID with fieldWorker_Name
-			users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
-			users_ID = DBSession.execute(users_ID_query).fetchall()
-			users_ID=[row[0] for row in users_ID]
-			
-			if len(users_ID) <3 :
-				users_ID.extend([None,None])
+		else :
+			geoUTM=None
+			geoRegion=data['Region']
+			data['LAT'] = None
+			data['LON'] = None
 
-			#get ID fieldActivity
-			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
-			id_field=DBSession.execute(id_field_query).scalar()
-
-			# set station and insert it
-			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
-				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
-				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
-				fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2],id_siteMonitored=data['id_site'])
-
-			DBSession.add(station)
-			DBSession.flush()
-			id_sta=station.id
+		#get userID with fieldWorker_Name
+		users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
+		users_ID = DBSession.execute(users_ID_query).fetchall()
+		users_ID=[row[0] for row in users_ID]
 		
-			print(id_sta)
-			# return id_sta
-			return {'PK':id_sta,'Region':geoRegion,'UTM20':geoUTM}
+		if len(users_ID) <3 :
+			users_ID.extend([None,None])
 
-		except Exception as err: 
+		if data['id_site']=='':
+			data['id_site']=None
+		#get ID fieldActivity:
+
+		id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
+		id_field=DBSession.execute(id_field_query).scalar()
+
+		# set station and insert it
+		station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
+			date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
+			creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
+			fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2],id_siteMonitored=data['id_site'])
+
+		DBSession.add(station)
+		DBSession.flush()
+		id_sta=station.id
+	
+		print(id_sta)
+		# return id_sta
+		return {'PK':id_sta,'Region':geoRegion,'UTM20':geoUTM}
+
+		# except Exception as err: 
 			
-			print('error :',err)
-			msg = err.args[0] if err.args else ""
-			response=Response('Problem occurs on station insert : '+str(type(err))+' = '+msg)
-			response.status_int = 500
-			return response	
+		# 	print('error :',err)
+		# 	msg = err.args[0] if err.args else ""
+		# 	response=Response('Problem occurs on station insert : '+str(type(err))+' = '+msg)
+		# 	response.status_int = 500
+		# 	return response	
 
 	elif 'PK' in data :
 		

@@ -4,14 +4,14 @@ Created on Tue Sep 23 17:15:47 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import desc, select, func, insert, join, Integer, cast, and_, Float 
+from sqlalchemy import desc, select, func, insert, join, Integer, cast, and_, Float
 from ecorelevesensor.models import AnimalLocation, DBSession, DataGsm, SatTrx, ObjectsCaracValues, Individual,V_Individuals_LatLonDate
 from ecorelevesensor.utils.distance import haversine
 
 import pandas as pd
 import numpy as np
 import re
-import datetime,transaction
+import datetime,transaction,json
 
 prefix = 'dataGsm/'
 
@@ -84,17 +84,20 @@ def data_gsm_unchecked(request):
 def data_gsm_unchecked_import(request):
     '''Import unchecked GSM data.
     '''
+    ptt=request.matchdict['id']
+    data = list(request.params)
+    print(data)
+    data=json.loads(data[0]).get('data')
+    id_ind=json.loads(data[0]).get('id_ind')
+    select_stmt = DBSession.execute(select([DataGsm],DataGsm.id.in_(data))).fetchall()
+    query = insert(AnimalLocation, select_stmt)
+    DBSession.execute(query)
+    # query = select([
+    #     DataGsm.platform_,
+    #     func.count(DataGsm.id).label('nb')
+    # ]).group_by(DataGsm.platform_)
     
-    data = request.json_body.get('data')
-    select_stmt = select(DataGsm)
-    query = insert(AnimalLocation, select([DataGsm.__table__.c]))
-    
-    query = select([
-        DataGsm.platform_,
-        func.count(DataGsm.id).label('nb')
-    ]).group_by(DataGsm.platform_)
-    
-    return [dict(row) for row in DBSession.execute(query).fetchall()]
+    # return [dict(row) for row in DBSession.execute(query).fetchall()]
     
 def asInt(s):
     try:
@@ -150,9 +153,9 @@ def indiv_details(request):
         , Individual.monitoring_status.label('monitoring_status'), Individual.birth_date.label('birth_date'), Individual.ptt.label('ptt'),ObjectsCaracValues.begin_date.label('begin_date'),ObjectsCaracValues.end_date.label('end_date')]
         ).select_from(join_table
         ).where(and_(SatTrx.model.like('GSM%'),ObjectsCaracValues.carac_type==19,ObjectsCaracValues.object_type=='Individual')
-        ).where(ObjectsCaracValues.value==params).alias()
+        ).where(ObjectsCaracValues.value==params).order_by(desc(ObjectsCaracValues.begin_date))
    
-    data=DBSession.execute(query).fetchone()
+    data=DBSession.execute(query).first()
     transaction.commit()
     if data['end_date'] == None :
         end_date=datetime.datetime.now()
@@ -169,7 +172,8 @@ def indiv_details(request):
      
     lastObs=DBSession.execute(query).fetchone()
     result['last_observation']=lastObs['date'].strftime('%d/%m/%Y')
-    result['birth_date']=result['birth_date'].strftime('%d/%m/%Y')
+    if result['birth_date']!= None:
+        result['birth_date']=result['birth_date'].strftime('%d/%m/%Y')
     del result['begin_date'], result['end_date']
     print (result)
     return result
