@@ -38,7 +38,8 @@ def data_gsm_unchecked(request):
             DataGsm.lat,
             DataGsm.lon,
             DataGsm.date
-        ]).where(DataGsm.platform_ == platform).where(DataGsm.checked == False).order_by(desc(DataGsm.date))
+        ]).where(DataGsm.platform_ == platform).where(DataGsm.checked == False
+        ).order_by(desc(DataGsm.date)).limit(1000)
         # Create list of features from query result
         features = [
             {
@@ -62,7 +63,7 @@ def data_gsm_unchecked(request):
             DataGsm.date.label('date')]
         ).where(DataGsm.platform_ == platform
         ).where(DataGsm.checked == False
-        ).order_by(desc(DataGsm.date))
+        ).order_by(desc(DataGsm.date)).limit(1000)
         data = DBSession.execute(query).fetchall()
         # Load data from the DB then
         # compute the distance between 2 consecutive points.

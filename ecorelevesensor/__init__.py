@@ -99,10 +99,10 @@ def add_routes(config):
     config.add_route('station', 'ecoReleve-Core/station')
     config.add_route('station/addStation', 'ecoReleve-Core/station/addStation/insert')
     config.add_route('station/addMultStation', 'ecoReleve-Core/station/addMultStation/insert')
-    config.add_route('station/searchStation', 'ecoReleve-Core/station/search')
     config.add_route('station/station_byDate', 'ecoReleve-Core/station/search_byDate')
     config.add_route('station/addProtocol', 'ecoReleve-Core/station/addStation/addProtocol')
     config.add_route('station/getProtocol', 'ecoReleve-Core/station/addStation/getProtocol')
+    config.add_route('station/search', 'ecoReleve-Core/station/search')
 
 
 
