@@ -12,6 +12,8 @@ from sqlalchemy.sql import func
 import json,datetime,math,time,operator
 from sqlalchemy.types import *
 import pandas
+from collections import OrderedDict
+
 
 prefix = 'station'
 
@@ -463,11 +465,11 @@ def station_search (request) :
 	order_by_clause = []
 	for obj in order_by:
 		column, order = obj.split(':')
-		if column in V_SearchIndiv.columns:
+		if column in table_sta.c:
 			if order == 'asc':
-				order_by_clause.append(V_SearchIndiv.columns[column].asc())
+				order_by_clause.append(table_sta.c[column].asc())
 			elif order == 'desc':
-				order_by_clause.append(V_SearchIndiv.columns[column].desc())
+				order_by_clause.append(table_sta.c[column].desc())
 	if len(order_by_clause) > 0:
 		query = query.order_by(*order_by_clause)
 
@@ -490,6 +492,6 @@ def station_search (request) :
 		,'FieldWorker2':data[0]['FieldWorker2'],'FieldWorker3':data[0]['FieldWorker3']
 		,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
 		, 'FieldWorker4':'','FieldWorker5':'' } for sta in data]
-	result.append(res)
+	result.append([OrderedDict(row) for row in res])
 	print (result)
 	return result
