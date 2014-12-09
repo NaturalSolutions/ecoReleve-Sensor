@@ -16,19 +16,19 @@ import pandas
 prefix = 'station'
 
 def get_operator_fn(op):
-    return {
-        '<' : operator.lt,
-        '>' : operator.gt,
-        '=' : operator.eq,
-        '<>': operator.ne,
-        '<=': operator.le,
-        '>=': operator.ge,
-        'Like': operator.eq,
-        'Not Like': operator.ne,
-        }[op]
+	return {
+		'<' : operator.lt,
+		'>' : operator.gt,
+		'=' : operator.eq,
+		'<>': operator.ne,
+		'<=': operator.le,
+		'>=': operator.ge,
+		'Like': operator.eq,
+		'Not Like': operator.ne,
+		}[op]
 def eval_binary_expr(op1, operator, op2):
-    op1,op2 = op1, op2
-    return get_operator_fn(operator)(op1, op2)
+	op1,op2 = op1, op2
+	return get_operator_fn(operator)(op1, op2)
 
 class Geometry(UserDefinedType):
 	def get_col_spec(self):
@@ -410,11 +410,13 @@ def station_search (request) :
 	table_sta=Base.metadata.tables['TStations']
 	table_MonSite=Base.metadata.tables['TMonitoredStations']
 	join_table=join(Station,MonitoredSite,Station.id_siteMonitored==MonitoredSite.id)
-	data=request.json_body
-	print(data)
-	# print(request.json_body.get('criteria',{}))
-	criteria=data.get('criteria',{})
-	print (criteria)
+	# data=request.json_body
+	# print(data)
+	# # print(request.json_body.get('criteria',{}))
+	# criteria=data.get('criteria',{})
+	# print (criteria)
+
+	criteria = json.loads(request.POST.get('criteria', '{}'))
 	
 	dictio={
 	'beginDate':'date',
@@ -424,45 +426,70 @@ def station_search (request) :
 	'maxLon':'LON',
 	'minLon':'LON',
 	'FieldWorker':'FieldWorker1',
-	'FieldActivity_Name':'FieldActivity_ID',
+	'fieldActivity':'FieldActivity_ID',
 	'siteName':'name',
 	'siteType':'name_Type'
 	}
 	useJoin=False
 	query = select(table_sta.c)
-	
+
 	for key, obj in criteria.items():
-		try:
-			Col=dictio[key]
-		except: 
-			Col=key
-		if key=='FieldActivity_Name':
-			obj['Value']=getFieldActitityID(obj['Value'])
+		if obj['Value'] != None:
+			try:
+				Col=dictio[key]
+			except: 
+				Col=key
+			if key=='fieldActivity':
+				obj['Value']=getFieldActitityID(obj['Value'])
 
-		if key=='FieldWorker': 
-			users_ID_query = select([User.id], User.fullname==obj['Value'])
-			users_ID = DBSession.execute(users_ID_query).fetchone()
-			obj['Value']=users_ID[0]
+			if key=='FieldWorker': 
+				users_ID_query = select([User.id], User.fullname==obj['Value'])
+				users_ID = DBSession.execute(users_ID_query).fetchone()
+				obj['Value']=users_ID[0]
 
-		if key=='siteType' or key=='siteName' and obj['Value']!=None :
-			useJoin=True
+			if key=='siteType' or key=='siteName' and obj['Value']!=None :
+				useJoin=True
 
-			Col=dictio[key]
-			query=query.where(eval_binary_expr(table_MonSite.c[Col], obj['Operator'], obj['Value']))
-		else:
-			query=query.where(eval_binary_expr(table_sta.c[Col], obj['Operator'], obj['Value']))
+				Col=dictio[key]
+				query=query.where(eval_binary_expr(table_MonSite.c[Col], obj['Operator'], obj['Value']))
+			else:
+				query=query.where(eval_binary_expr(table_sta.c[Col], obj['Operator'], obj['Value']))
 
 	print(query)
 	if useJoin==True: query=query.select_from(join_table)
 	print(query)
 
-	data=DBSession.execute(query.limit(25)).fetchall()
+	order_by = json.loads(request.POST.get('order_by', '[]'))
+	order_by_clause = []
+	for obj in order_by:
+		column, order = obj.split(':')
+		if column in V_SearchIndiv.columns:
+			if order == 'asc':
+				order_by_clause.append(V_SearchIndiv.columns[column].asc())
+			elif order == 'desc':
+				order_by_clause.append(V_SearchIndiv.columns[column].desc())
+	if len(order_by_clause) > 0:
+		query = query.order_by(*order_by_clause)
+
+	total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
+	
+	# Define the limit and offset if exist
+	offset = int(request.POST.get('offset', 0))
+	limit = int(request.POST.get('per_page', 0))
+	if limit > 0:
+		query = query.limit(limit)
+	if offset > 0:
+		query = query.offset(offset)
+	result = [{'total_entries':total}]
+
+	data=DBSession.execute(query).fetchall()
 	print('_____DATA______')
 	
-	result=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
+	res=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
 		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':data[0]['FieldWorker1']
 		,'FieldWorker2':data[0]['FieldWorker2'],'FieldWorker3':data[0]['FieldWorker3']
 		,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
 		, 'FieldWorker4':'','FieldWorker5':'' } for sta in data]
+	result.append(res)
 	print (result)
 	return result
