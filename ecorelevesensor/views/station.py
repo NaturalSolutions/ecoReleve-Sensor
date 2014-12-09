@@ -425,29 +425,17 @@ def station_search (request) :
 	'minLon':'LON',
 	'FieldWorker':'FieldWorker1',
 	'FieldActivity_Name':'FieldActivity_ID',
-	'siteName':'TMonitoredStations.Name',
-	'siteType':'TMonitoredStations.name_Type'
+	'siteName':'name',
+	'siteType':'name_Type'
 	}
-
-	if 'siteType' in criteria or 'siteName' in criteria:
-		table=join_table
-		print (table)
-
-	else :
-		table=table_sta
-
-	query = select(table.c)
-	print(query)
+	useJoin=False
+	query = select(table_sta.c)
+	
 	for key, obj in criteria.items():
-		print(key)
-		print(obj)
-
 		try:
 			Col=dictio[key]
 		except: 
 			Col=key
-
-		print(Col)
 		if key=='FieldActivity_Name':
 			obj['Value']=getFieldActitityID(obj['Value'])
 
@@ -456,11 +444,19 @@ def station_search (request) :
 			users_ID = DBSession.execute(users_ID_query).fetchone()
 			obj['Value']=users_ID[0]
 
-		query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
+		if key=='siteType' or key=='siteName' and obj['Value']!=None :
+			useJoin=True
+
+			Col=dictio[key]
+			query=query.where(eval_binary_expr(table_MonSite.c[Col], obj['Operator'], obj['Value']))
+		else:
+			query=query.where(eval_binary_expr(table_sta.c[Col], obj['Operator'], obj['Value']))
+
+	print(query)
+	if useJoin==True: query=query.select_from(join_table)
 	print(query)
 
-	
-	data=DBSession.execute(query).fetchall()
+	data=DBSession.execute(query.limit(25)).fetchall()
 	print('_____DATA______')
 	
 	result=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
