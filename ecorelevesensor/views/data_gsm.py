@@ -4,8 +4,8 @@ Created on Tue Sep 23 17:15:47 2014
 """
 
 from pyramid.view import view_config
-from sqlalchemy import desc, select, func, insert, join, Integer, cast, and_, Float
-from ecorelevesensor.models import AnimalLocation, DBSession, DataGsm, SatTrx, ObjectsCaracValues, Individual,V_Individuals_LatLonDate
+from sqlalchemy import desc, select, func, insert, join, Integer, cast, and_, Float, or_
+from ecorelevesensor.models import AnimalLocation,ProtocolIndividualEquipment, DBSession, DataGsm, SatTrx, ObjectsCaracValues, Individual,V_Individuals_LatLonDate
 from ecorelevesensor.utils.distance import haversine
 
 import pandas as pd
@@ -19,11 +19,35 @@ prefix = 'dataGsm/'
 def data_gsm_unchecked_list(request):
     '''List unchecked GSM data.
     '''
-    query = select([
+    unchecked = select([
         DataGsm.platform_,
-        func.count(DataGsm.id).label('nb')
-    ]).group_by(DataGsm.platform_)
-    return [dict(row) for row in DBSession.execute(query).fetchall()]
+        DataGsm.date
+    ]).alias()
+
+
+    print (unchecked)
+
+    pie = ProtocolIndividualEquipment
+    unchecked_with_ind = select([
+        pie.ind_id.label('ind_id'),
+        unchecked.c.platform_,
+        func.count().label('nb')
+    ]).select_from(
+        unchecked.join(SatTrx, SatTrx.ptt == unchecked.c.platform_)
+        .outerjoin(
+            pie,
+            and_(SatTrx.id == pie.sat_id,
+                 unchecked.c['DateTime'] >= pie.begin_date,
+                 or_(
+                     unchecked.c['DateTime'] < pie.end_date,
+                     pie.end_date == None
+                )
+            )
+        )
+    ).group_by(unchecked.c.platform_, pie.ind_id).order_by(unchecked.c.platform_)
+    # Populate Json array
+    data = DBSession.execute(unchecked_with_ind).fetchall()
+    return [dict(row) for row in data]
 
 @view_config(route_name=prefix + 'unchecked', renderer='json')
 def data_gsm_unchecked(request):

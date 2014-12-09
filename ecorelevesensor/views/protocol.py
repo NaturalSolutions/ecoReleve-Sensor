@@ -1,5 +1,5 @@
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update
+from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, alias
 from ecorelevesensor.models import *
 import numpy as np
 import sys, datetime, transaction
@@ -42,14 +42,6 @@ def getWorkerID(workerList) :
 		users_ID.extend([None,None])
 	return users_ID
 
-def getWorkerID(workerList) :
-	users_ID_query = select([User.id], User.fullname.in_((workerList)))
-	users_ID = DBSession.execute(users_ID_query).fetchall()
-	users_ID=[row[0] for row in users_ID]
-	if len(users_ID) <3 :
-		users_ID.extend([None,None])
-	return users_ID
-
 @view_config(route_name=prefix+'/addProtocol', renderer='json', request_method='POST')
 def insert_protocol (request):
 	data=dict(request.params)
@@ -57,8 +49,6 @@ def insert_protocol (request):
 	# insert new row in the protocol
 	if request.params.has_key('PK')!=True :
 		
-		print('_______add proto_____')	
-
 		new_proto=dict_proto[protocolName]()
 		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
@@ -67,11 +57,8 @@ def insert_protocol (request):
 		print(id_proto)
 		return id_proto
 
-
 	else :
-		
 
-		print('_______update proto__________')
 		up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
 		del data['name'],data['PK'],data['FK_TSta_ID']
 		print(up_proto)
@@ -81,18 +68,17 @@ def insert_protocol (request):
 
 		return id_proto
 
-@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
+@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='POST')
 def get_protocol (request):
 
-	data=request.params
+	data=dict(request.POST)
+	print(data)
 	id_sta=data.get('id_sta')
-	proto_onSta={}
-	for protoName, Tproto in dict_proto :
-		print(protoName+' : '+ Tproto)
-		query=select(Tproto,Tproto.FK_TSta_ID==id_sta)
-		res=DBSession.execute(query).scalar()
-		print(res)
-		if res!=None :
-			proto_onSta[protoName]=res
-	
-	return proto_onSta
+	print(id_sta)
+	protoOnSta={}
+
+	for protoName, Tproto in dict_proto.items() :
+			query=select([Tproto]).where(Tproto.FK_TSta_ID==id_sta)
+			protoOnSta.update({protoName: [dict(row) for row in DBSession.execute(query).fetchall()]})
+	print(protoOnSta)
+	return protoOnSta

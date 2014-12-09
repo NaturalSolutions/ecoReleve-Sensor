@@ -412,11 +412,6 @@ def station_search (request) :
 	table_sta=Base.metadata.tables['TStations']
 	table_MonSite=Base.metadata.tables['TMonitoredStations']
 	join_table=join(Station,MonitoredSite,Station.id_siteMonitored==MonitoredSite.id)
-	# data=request.json_body
-	# print(data)
-	# # print(request.json_body.get('criteria',{}))
-	# criteria=data.get('criteria',{})
-	# print (criteria)
 
 	criteria = json.loads(request.POST.get('criteria', '{}'))
 	
@@ -495,3 +490,4 @@ def station_search (request) :
 	result.append([OrderedDict(row) for row in res])
 	print (result)
 	return result
+
