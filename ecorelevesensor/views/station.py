@@ -448,12 +448,7 @@ def station_search (request) :
 			try:
 				Col=dictio[key.lower()]
 			except: 
-				Col=key	
-			if key.lower() == 'fieldworker':
-				users_ID_query = select([User.id], User.fullname==obj['Value'])
-				users_ID = DBSession.execute(users_ID_query).fetchone()
-				obj['Value']=users_ID[0]
-				
+				Col=key					
 			else :
 				query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 
