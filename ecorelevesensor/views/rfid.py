@@ -284,21 +284,36 @@ def rfids_search(request):
 
 @view_config(route_name=prefix + 'getFields', renderer='json', request_method='POST')
 def rfids_field(request):
-        print('____________FIELDS_________________')
-        table=Base.metadata.tables['RFID_MonitoredSite']
-        print (table.c)
-        columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
-        
-        final={}
-        for col in columns :
-            name=col.name
-            Ctype=str(col.type)
-            if 'VARCHAR' in Ctype:
-                Ctype='String'
-            final[name]=Ctype
+    print('____________FIELDS_________________')
 
-        print (final)
-        return final
+    dictCell={
+    'VARCHAR':'string',
+    'INTEGER':'number',
+    'DECIMAL':'number',
+    'DATETIME':'string',
+    'BIT':'boolean',
+    }
+
+    table=Base.metadata.tables['RFID_MonitoredSite']
+    print (table.c)
+
+    columns=[table.c['PK_id'],table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
+    
+    final=[]
+    for col in columns :
+        name=col.name
+        dislay=True
+        Ctype=str(col.type).split('(')[0]
+        if col.name=='PK_id':
+            display=False
+        if Ctype in dictCell:        
+            Ctype=dictCell[Ctype]  
+        else:
+            Ctype='string'
+        final.append({name:name,label:name.upper().replace('_',' '),cell:Ctype, renderable:display})
+
+    print (final)
+    return final
 
 @view_config(route_name=prefix + 'search_geoJSON', renderer='json', request_method='POST')
 def rfids_geoJSON(request):

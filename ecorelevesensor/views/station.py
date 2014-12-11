@@ -5,7 +5,7 @@ Created on Fri Sep 19 17:24:09 2014
 from pyramid.response import Response
 import pyramid.httpexceptions as exc
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, func
+from sqlalchemy import select, distinct, join, text,Table, and_,or_,cast, String, bindparam, update, func, Date
 from ecorelevesensor.models import * 
 import sys, datetime, transaction
 from sqlalchemy.sql import func
@@ -30,6 +30,11 @@ def get_operator_fn(op):
 		}[op]
 def eval_binary_expr(op1, operator, op2):
 	op1,op2 = op1, op2
+	print (op1.type)
+	if 'date' in str(op1.type).lower() :
+		op1=cast(op1,Date)
+		print(op1)
+		print(get_operator_fn(operator)(op1, op2))
 	return get_operator_fn(operator)(op1, op2)
 
 class Geometry(UserDefinedType):
@@ -140,7 +145,6 @@ def monitoredSitesLocality(request):
 			query=select([Station.locality]).distinct()
 		data=DBSession.execute(query).fetchall()
 		return [row[0] for row in data]
-
 
 
 @view_config(route_name=prefix+'/addStation', renderer='json', request_method='POST')
@@ -409,66 +413,70 @@ def station_byDate (request) :
 @view_config(route_name=prefix+'/search', renderer='json', request_method='POST')
 def station_search (request) :
 
-	table_sta=Base.metadata.tables['TStations']
-	table_MonSite=Base.metadata.tables['TMonitoredStations']
-	join_table=join(Station,MonitoredSite,Station.id_siteMonitored==MonitoredSite.id)
-
+	table=Base.metadata.tables['V_Search_AllStation_with_MonitoredSite_Indiv']
+	
 	criteria = json.loads(request.POST.get('criteria', '{}'))
 	
 	dictio={
-	'beginDate':'date',
-	'endDate':'date',
-	'maxLat':'LAT',
-	'minLat':'LAT',
-	'maxLon':'LON',
-	'minLon':'LON',
-	'FieldWorker':'FieldWorker1',
-	'fieldActivity':'FieldActivity_ID',
-	'siteName':'name',
-	'siteType':'name_Type'
+	'pk':'id',
+	'region':'Region',
+	'begindate':'date',
+	'enddate':'date',
+	'date_':'date',
+	'maxlat':'LAT',
+	'minlat':'LAT',
+	'maxlon':'LON',
+	'minlon':'LON',
+	'fieldactivity':'FieldActivity_Name',
+	'sitename':'site_name',
+	'monitoredsitetype':'site_type',
+	'individ':'ind_id',
+	'fieldworker': 'id_FieldWorker'
 	}
-	useJoin=False
-	query = select(table_sta.c)
+
+	query=select([table.c['id'].label('PK'), table.c['Name']
+		,cast(table.c['date'],String).label('Date_')
+		,table.c['LAT'], table.c['LON'],table.c['FieldWorker1']
+		,table.c['FieldWorker2'],table.c['FieldWorker3']
+		,table.c['FieldActivity_Name'], table.c['Region']
+		, table.c['UTM20']]).distinct()
 
 	for key, obj in criteria.items():
+		print(key)
+		print(obj)
 		if obj['Value'] != None:
 			try:
-				Col=dictio[key]
+				Col=dictio[key.lower()]
 			except: 
-				Col=key
-			if key=='fieldActivity':
-				obj['Value']=getFieldActitityID(obj['Value'])
-
-			if key=='FieldWorker': 
+				Col=key	
+			if key.lower() == 'fieldworker':
 				users_ID_query = select([User.id], User.fullname==obj['Value'])
 				users_ID = DBSession.execute(users_ID_query).fetchone()
 				obj['Value']=users_ID[0]
+				
+			else :
+				query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 
-			if key=='siteType' or key=='siteName' and obj['Value']!=None :
-				useJoin=True
-
-				Col=dictio[key]
-				query=query.where(eval_binary_expr(table_MonSite.c[Col], obj['Operator'], obj['Value']))
-			else:
-				query=query.where(eval_binary_expr(table_sta.c[Col], obj['Operator'], obj['Value']))
-
-	print(query)
-	if useJoin==True: query=query.select_from(join_table)
 	print(query)
 
 	order_by = json.loads(request.POST.get('order_by', '[]'))
+	print(order_by)
 	order_by_clause = []
 	for obj in order_by:
 		column, order = obj.split(':')
-		if column in table_sta.c:
+		if column in dictio :
+			column=dictio[column]
+		if column in table.c:
+			print('______________________________')
 			if order == 'asc':
-				order_by_clause.append(table_sta.c[column].asc())
+				order_by_clause.append(table.c[column].asc())
 			elif order == 'desc':
-				order_by_clause.append(table_sta.c[column].desc())
+				order_by_clause.append(table.c[column].desc())
 	if len(order_by_clause) > 0:
+		print(order_by_clause)
 		query = query.order_by(*order_by_clause)
 
-	total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
+	
 	
 	# Define the limit and offset if exist
 	offset = int(request.POST.get('offset', 0))
@@ -477,17 +485,22 @@ def station_search (request) :
 		query = query.limit(limit)
 	if offset > 0:
 		query = query.offset(offset)
-	result = [{'total_entries':total}]
+	
 
 	data=DBSession.execute(query).fetchall()
+	transaction.commit()
+
+	total = DBSession.execute(select([func.count(table.c['id'])])).scalar()
+	result = [{'total_entries':total}]
 	print('_____DATA______')
 	
-	res=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
-		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':data[0]['FieldWorker1']
-		,'FieldWorker2':data[0]['FieldWorker2'],'FieldWorker3':data[0]['FieldWorker3']
-		,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
-		, 'FieldWorker4':'','FieldWorker5':'' } for sta in data]
-	result.append([OrderedDict(row) for row in res])
-	print (result)
+	# res=[{'PK':sta['id'], 'Name':sta['Name'], 'Date_': sta.date
+	# 	,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':sta['FieldWorker1']
+	# 	,'FieldWorker2':sta['FieldWorker2'],'FieldWorker3':sta['FieldWorker3']
+	# 	,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
+	# 	, 'FieldWorker4':'','FieldWorker5':'' } for sta in data]
+	result.append([OrderedDict(row) for row in data])
+	
 	return result
+
 
