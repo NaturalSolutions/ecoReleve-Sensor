@@ -4,7 +4,11 @@ Created on Thu Aug 28 16:45:25 2014
 """
 
 import re, operator
+
+
 from datetime import datetime
+
+from ecorelevesensor.utils.generator import Generator
 
 from pyramid.view import view_config
 from sqlalchemy import select, insert, text, desc, bindparam, or_, outerjoin, func
@@ -24,6 +28,8 @@ from ecorelevesensor.models.object import ObjectRfid
 from collections import OrderedDict
 
 prefix='rfid/'
+
+gene= Generator('RFID_MonitoredSite')
 
 def get_operator_fn(op):
     return {
@@ -202,34 +208,59 @@ def rfid_validate(request):
     else:
         return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
 
-@view_config(route_name=prefix + 'search', renderer='json', request_method='POST')
+@view_config(route_name=prefix + 'search', renderer='json', request_method='GET')
 def rfids_search(request):
 
-    # test data obj => {criteria,order_by,offest,per_page,total_page} ====>>>>> See individuals front
-    # criteria={"begin_date":{"Value":"11/11/2013","Operator":">"},"Name":{"Value":"E6","Operator":"="}}
-    table=Base.metadata.tables['RFID_MonitoredSite']
+    print('________Search___________')
+
+    print(request.GET)
+
+    try:
+        criteria = json.loads(request.GET.get('criteria',{}))
+    except:
+        criteria={}
+        
+    if(request.GET.get('offset')):
+        offset = json.loads(request.GET.get('offset',{}))
+        perPage = json.loads(request.GET.get('per_page',{}))
+        orderBy = json.loads(request.GET.get('order_by',{}))
+        content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+    else :
+        content = gene.get_search(criteria)
     
-   
-    print(request.params)
-    print(request.POST['criteria'])
-    criteria=request.json_body.get('criteria',{})
+
+    
+
+    #print(content)
+    return content
+
+    # test data obj => {criteria,order_by,offest,per_page,total_page} ====>>>>> See individuals front
+    table=Base.metadata.tables['RFID_MonitoredSite']
+    # page=1
+    # limit=25
+    # offset=0
+    # order_by={"id:asc"}
+    
+    #criteria=request.json_body.get('criteria',{})
+    
+
     # Look over the criteria list
-
-    print(criteria)
-
 
     #criteria = request.params.get('criteria', '{}')
 
 
-
-    criteria = request.json_body.get('criteria', {})
     query = select(table.c)
 
-
+    '''
     for obj in criteria:
 
         query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
+    '''
 
+
+
+    print(query)
+    data=DBSession.execute(query).fetchall()    
 
     # Set sorting columns and order
 
@@ -249,43 +280,51 @@ def rfids_search(request):
     '''
 
 
-
+    # Run query
     total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
     
     #Define the limit and offset if exist
 
-    # offset = int(request.POST.get('offset', 0))
-    # limit = int(request.POST.get('per_page', 0))
-
-    # if limit > 0:
-    #     query = query.limit(limit)
-    # if offset > 0:
-    #     query = query.offset(offset)
-    # result = [{'total_entries':total}]
-    # data = DBSession.execute(query).fetchall()
-    # result.append([OrderedDict(row) for row in data])
-
-
     '''
     offset = int(request.POST.get('offset', 0))
     limit = int(request.POST.get('per_page', 0))
+
+
 
     if limit > 0:
         query = query.limit(limit)
     if offset > 0:
         query = query.offset(offset)
     '''
-    result = [{'total_entries':total}]
+    result = []
 
     data = DBSession.execute(query).fetchall()
-    result.append([OrderedDict(row) for row in data])
+    result=[OrderedDict(row) for row in data]
     
+
     return result
 
-@view_config(route_name=prefix + 'getFields', renderer='json', request_method='POST')
+@view_config(route_name=prefix + 'search', renderer='json', request_method='POST')
+def rfids_update(request):
+    data=request.json_body
+    print('________POST_______')
+    print(data)
+    gene.update_data(data,'PK_obj')
+
+@view_config(route_name=prefix + 'getFields', renderer='json', request_method='GET')
 def rfids_field(request):
     print('____________FIELDS_________________')
 
+
+    colist=[
+    {'name':'PK_id','label':'ID','display':True,'edit':False},
+    {'name':'lat','label':'Lat','display':True, 'edit':True},
+    ]
+    check = request.GET.get('checked') == 'true'
+    cols = gene.get_col(colist, checked=check)
+
+    return cols
+    
     dictCell={
     'VARCHAR':'string',
     'INTEGER':'number',
@@ -297,23 +336,45 @@ def rfids_field(request):
     table=Base.metadata.tables['RFID_MonitoredSite']
     print (table.c)
 
-    columns=[table.c['PK_id'],table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
+    columns=[table.c['PK_id'],table.c['Name']]
     
     final=[]
     for col in columns :
         name=col.name
-        dislay=True
+        display=True
         Ctype=str(col.type).split('(')[0]
         if col.name=='PK_id':
             display=False
-        if Ctype in dictCell:        
-            Ctype=dictCell[Ctype]  
+        if Ctype in dictCell:
+            Ctype=dictCell[Ctype]
         else:
             Ctype='string'
-        final.append({name:name,label:name.upper().replace('_',' '),cell:Ctype, renderable:display})
+        final.append(dict({ 'name' : name, 'label' : name.upper().replace('_',' '), 'cell' : Ctype, 'renderable' : display}))
 
     print (final)
     return final
+
+
+@view_config(route_name=prefix + 'getFilters', renderer='json', request_method='GET')
+def rfids_filters(request):
+    print('____________FIELDS_________________')
+    table=Base.metadata.tables['RFID_MonitoredSite']
+    print (table.c)
+    columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
+    
+    final={}
+    for col in columns :
+        name=col.name
+        Ctype=str(col.type)
+        if 'VARCHAR' in Ctype:
+            Ctype='String'
+        final[name]=Ctype
+
+    print (final)
+    return final
+
+
+
 
 @view_config(route_name=prefix + 'search_geoJSON', renderer='json', request_method='POST')
 def rfids_geoJSON(request):

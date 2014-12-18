@@ -7,7 +7,7 @@ import pyramid.httpexceptions as exc
 from pyramid.view import view_config
 from sqlalchemy import select, distinct, join, text,Table, and_,or_,cast, String, bindparam, update, func, Date
 from ecorelevesensor.models import * 
-import sys, datetime, transaction
+import sys, datetime, transaction, time
 from sqlalchemy.sql import func
 import json,datetime,math,time,operator
 from sqlalchemy.types import *
@@ -412,7 +412,7 @@ def station_byDate (request) :
 
 @view_config(route_name=prefix+'/search', renderer='json', request_method='POST')
 def station_search (request) :
-
+	start=time.time()
 	table=Base.metadata.tables['V_Search_AllStation_with_MonitoredSite_Indiv']
 	
 	criteria = json.loads(request.POST.get('criteria', '{}'))
@@ -459,8 +459,8 @@ def station_search (request) :
 	order_by_clause = []
 	for obj in order_by:
 		column, order = obj.split(':')
-		if column in dictio :
-			column=dictio[column]
+		if column.lower() in dictio :
+			column=dictio[column.lower()]
 		if column in table.c:
 			print('______________________________')
 			if order == 'asc':
@@ -471,8 +471,7 @@ def station_search (request) :
 		print(order_by_clause)
 		query = query.order_by(*order_by_clause)
 
-	
-	
+
 	# Define the limit and offset if exist
 	offset = int(request.POST.get('offset', 0))
 	limit = int(request.POST.get('per_page', 0))
@@ -483,10 +482,10 @@ def station_search (request) :
 	
 
 	data=DBSession.execute(query).fetchall()
-	transaction.commit()
+	# transaction.commit()
 
-	total = DBSession.execute(select([func.count(table.c['id'])])).scalar()
-	result = [{'total_entries':total}]
+	# total = DBSession.execute(select([func.count(table.c['id'])])).scalar()
+	# result = [{'total_entries':total}]
 	print('_____DATA______')
 	
 	# res=[{'PK':sta['id'], 'Name':sta['Name'], 'Date_': sta.date
@@ -494,8 +493,9 @@ def station_search (request) :
 	# 	,'FieldWorker2':sta['FieldWorker2'],'FieldWorker3':sta['FieldWorker3']
 	# 	,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
 	# 	, 'FieldWorker4':'','FieldWorker5':'' } for sta in data]
-	result.append([OrderedDict(row) for row in data])
-	
-	return result
-
+	# result.append([OrderedDict(row) for row in data])
+	stop=time.time()
+	print ('____ time '+str(stop-start))
+	# return result
+	return [OrderedDict(row) for row in data]
 
