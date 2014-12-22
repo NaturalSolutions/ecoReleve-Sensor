@@ -32,7 +32,8 @@ class DataRfid(Base):
     chip_code = Column(String(10), nullable=False)
     date = Column('date_', DateTime, nullable=False)
     creation_date = Column(DateTime, server_default=func.now())
-    validated = Column(Boolean, server_default='0')
+    validated = Column('validated',Boolean, server_default='0')
+    checked = Column('checked',Boolean, server_default='0')
     __table_args__ = (
         Index('idx_Tdatarfid_chipcode_date', chip_code, date),
         UniqueConstraint(obj, chip_code, date),

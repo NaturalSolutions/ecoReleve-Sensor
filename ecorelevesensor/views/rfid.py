@@ -99,6 +99,7 @@ def rfid_import(request):
     message = ""
     field_label = []
     isHead = False
+    now=datetime.now()
     try:
         creator = request.authenticated_userid
         content = request.POST['data']
@@ -166,14 +167,19 @@ def rfid_import(request):
                         format_dt = '%d/%m/%Y %H:%M:%S'
                         if re.search('PM|AM',time):
                             format_dt = '%m/%d/%Y %I:%M:%S%p'
+                            format_dtBis='%d/%m/%Y %I:%M:%S%p'
                         dt = date+' '+time
-                        dt = datetime.strptime(dt, format_dt)
+                        try :
+                            dt = datetime.strptime(dt, format_dt)
+                        except :
+                            dt = datetime.strptime(dt, format_dtBis)
+
                     i=i+1
                 Rfids.add((creator, idModule, code, dt))
                 chip_codes.add(code)
             j=j+1
-        Rfids = [{DataRfid.creator.name: crea, DataRfid.obj.name: idMod, 
-                DataRfid.chip_code.name: c, DataRfid.date.name: d} for crea, idMod, c, d  in Rfids]
+        Rfids = [{DataRfid.creator.name: crea, DataRfid.obj.name: idMod, DataRfid.checked.name: '0',
+                DataRfid.chip_code.name: c, DataRfid.date.name: d, DataRfid.creation_date.name: now} for crea, idMod, c, d  in Rfids]
         # Insert data.
         DBSession.execute(insert(DataRfid), Rfids)
         message = str(len(Rfids)) +' rows inserted.'
@@ -187,6 +193,7 @@ def rfid_import(request):
         request.response.status_code = 500
         message = 'Error : data already exist.\n\nDetail :\n' + str(e.orig)
     except Exception as e:
+        print(e)
         request.response.status_code = 520
         message = 'Error'
     return message
@@ -196,9 +203,9 @@ def rfid_validate(request):
     #TODO: SQL SERVER specific code removal
     stmt = text("""
         DECLARE @error int, @nb int;
-        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :user, @nb OUTPUT, @error OUTPUT;
+        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT, @error OUTPUT;
         SELECT @error, @nb;"""
-    ).bindparams(bindparam('user', request.authenticated_userid))
+    ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', 0.5),bindparam('checked', 0))
     error_code, nb = DBSession.execute(stmt).fetchone()
     if error_code == 0:
         if nb > 0:
@@ -208,154 +215,63 @@ def rfid_validate(request):
     else:
         return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
 
-@view_config(route_name=prefix + 'search', renderer='json', request_method='GET')
+@view_config(route_name=prefix + 'validate/search', renderer='json', request_method='GET')
 def rfids_search(request):
 
     print('________Search___________')
 
-    print(request.GET)
+    data_helper= Generator('V_dataRFID_as_file')
 
-    try:
-        criteria = json.loads(request.GET.get('criteria',{}))
-    except:
-        criteria={}
+    criteria=[{'Column':'checked','Operator':'=', 'Value': 0}]
         
     if(request.GET.get('offset')):
         offset = json.loads(request.GET.get('offset',{}))
         perPage = json.loads(request.GET.get('per_page',{}))
         orderBy = json.loads(request.GET.get('order_by',{}))
-        content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+        content = data_helper.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
     else :
-        content = gene.get_search(criteria)
+        content = data_helper.get_search(criteria)
     
-
-    
-
-    #print(content)
     return content
 
-    # test data obj => {criteria,order_by,offest,per_page,total_page} ====>>>>> See individuals front
-    table=Base.metadata.tables['RFID_MonitoredSite']
-    # page=1
-    # limit=25
-    # offset=0
-    # order_by={"id:asc"}
-    
-    #criteria=request.json_body.get('criteria',{})
-    
 
-    # Look over the criteria list
-
-    #criteria = request.params.get('criteria', '{}')
-
-
-    query = select(table.c)
-
-    '''
-    for obj in criteria:
-
-        query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
-    '''
-
-
-
-    print(query)
-    data=DBSession.execute(query).fetchall()    
-
-    # Set sorting columns and order
-
-
-    '''
-    order_by = json.loads(request.POST.get('order_by', '[]'))
-    order_by_clause = []
-    for obj in order_by:
-        column, order = obj.split(':')
-        if column in table.columns:
-            if order == 'asc':
-                order_by_clause.append(table.columns[column].asc())
-            elif order == 'desc':
-                order_by_clause.append(table.columns[column].desc())
-    if len(order_by_clause) > 0:
-        query = query.order_by(*order_by_clause)
-    '''
-
-
-    # Run query
-    total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
-    
-    #Define the limit and offset if exist
-
-    '''
-    offset = int(request.POST.get('offset', 0))
-    limit = int(request.POST.get('per_page', 0))
-
-
-
-    if limit > 0:
-        query = query.limit(limit)
-    if offset > 0:
-        query = query.offset(offset)
-    '''
-    result = []
-
-    data = DBSession.execute(query).fetchall()
-    result=[OrderedDict(row) for row in data]
-    
-
-    return result
-
-@view_config(route_name=prefix + 'search', renderer='json', request_method='POST')
+@view_config(route_name=prefix + 'validate/search', renderer='json', request_method='POST')
 def rfids_update(request):
-    data=request.json_body
-    print('________POST_______')
-    print(data)
-    gene.update_data(data,'PK_obj')
 
-@view_config(route_name=prefix + 'getFields', renderer='json', request_method='GET')
+    data_helper= Generator('V_dataRFID_as_file')
+    data=request.json_body
+
+    data_helper.update_data(data,'PK_obj')
+
+@view_config(route_name=prefix + 'validate/getFields', renderer='json', request_method='GET')
 def rfids_field(request):
+
     print('____________FIELDS_________________')
 
+    data_helper= Generator('V_dataRFID_as_file')
 
     colist=[
-    {'name':'PK_id','label':'ID','display':True,'edit':False},
-    {'name':'lat','label':'Lat','display':True, 'edit':True},
+    {'name':'id_obj','label':'ID_OBJ','display':False,'edit':False},
+    {'name':'id_creator','label':'ID_Creator','display':False, 'edit':False},
+    {'name':'checked','label':'CHECKED','display':False, 'edit':False},
+    {'name':'nb_chip_code','label':'NB DIFFERENT CHIP CODE','display':True, 'edit':False},
+    {'name':'total_scan','label':'TOTAL SCAN','display':True, 'edit':False},
+    {'name':'creation_date','label':'CREATION DATE','display':True, 'edit':False},
+    {'name':'frequency_hour','label':'FREQUENCY','display':False, 'edit':False},
+    {'name':'begin_date','label':'Begin Date','display':True, 'edit':False},
+    {'name':'end_date','label':'End Date','display':True, 'edit':False},
+    {'name':'site_name','label':'Site Name','display':True, 'edit':False},
+    {'name':'site_type','label':'Site Type','display':True, 'edit':False},
     ]
+
     check = request.GET.get('checked') == 'true'
-    cols = gene.get_col(colist, checked=check)
+    cols = data_helper.get_col(colist, checked=check)
 
     return cols
-    
-    dictCell={
-    'VARCHAR':'string',
-    'INTEGER':'number',
-    'DECIMAL':'number',
-    'DATETIME':'string',
-    'BIT':'boolean',
-    }
-
-    table=Base.metadata.tables['RFID_MonitoredSite']
-    print (table.c)
-
-    columns=[table.c['PK_id'],table.c['Name']]
-    
-    final=[]
-    for col in columns :
-        name=col.name
-        display=True
-        Ctype=str(col.type).split('(')[0]
-        if col.name=='PK_id':
-            display=False
-        if Ctype in dictCell:
-            Ctype=dictCell[Ctype]
-        else:
-            Ctype='string'
-        final.append(dict({ 'name' : name, 'label' : name.upper().replace('_',' '), 'cell' : Ctype, 'renderable' : display}))
-
-    print (final)
-    return final
 
 
-@view_config(route_name=prefix + 'getFilters', renderer='json', request_method='GET')
+
+@view_config(route_name=prefix + 'validate/getFilters', renderer='json', request_method='GET')
 def rfids_filters(request):
     print('____________FIELDS_________________')
     table=Base.metadata.tables['RFID_MonitoredSite']

@@ -431,7 +431,6 @@ def station_search (request) :
 	'sitename':'site_name',
 	'monitoredsitetype':'site_type',
 	'individ':'ind_id',
-	'fieldworker': 'id_FieldWorker'
 	}
 
 	query=select([table.c['id'].label('PK'), table.c['Name']
@@ -439,20 +438,30 @@ def station_search (request) :
 		,table.c['LAT'], table.c['LON'],table.c['FieldWorker1']
 		,table.c['FieldWorker2'],table.c['FieldWorker3']
 		,table.c['FieldActivity_Name'], table.c['Region']
-		, table.c['UTM20']]).distinct()
+		, table.c['UTM20']])
 
 	for key, obj in criteria.items():
 		print(key)
 		print(obj)
+
 		if obj['Value'] != None:
 			try:
 				Col=dictio[key.lower()]
 			except: 
 				Col=key					
 			else :
-				query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
+				if key == 'fieldworker' :
+					query=query.where(or_(table.c['FieldWorker1_ID']==obj['Value'],
+						table.c['FieldWorker2_ID']==obj['Value'],
+						table.c['FieldWorker3_ID']==obj['Value']))
+				else:
+					query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 
 	print(query)
+
+	total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
+	result = [{'total_entries':total}]
+
 
 	order_by = json.loads(request.POST.get('order_by', '[]'))
 	print(order_by)
@@ -462,7 +471,6 @@ def station_search (request) :
 		if column.lower() in dictio :
 			column=dictio[column.lower()]
 		if column in table.c:
-			print('______________________________')
 			if order == 'asc':
 				order_by_clause.append(table.c[column].asc())
 			elif order == 'desc':
@@ -480,22 +488,13 @@ def station_search (request) :
 	if offset > 0:
 		query = query.offset(offset)
 	
-
 	data=DBSession.execute(query).fetchall()
-	# transaction.commit()
 
-	# total = DBSession.execute(select([func.count(table.c['id'])])).scalar()
-	# result = [{'total_entries':total}]
 	print('_____DATA______')
-	
-	# res=[{'PK':sta['id'], 'Name':sta['Name'], 'Date_': sta.date
-	# 	,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':sta['FieldWorker1']
-	# 	,'FieldWorker2':sta['FieldWorker2'],'FieldWorker3':sta['FieldWorker3']
-	# 	,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
-	# 	, 'FieldWorker4':'','FieldWorker5':'' } for sta in data]
-	# result.append([OrderedDict(row) for row in data])
+
+	result.append([OrderedDict(row) for row in data])
 	stop=time.time()
 	print ('____ time '+str(stop-start))
-	# return result
-	return [OrderedDict(row) for row in data]
+	return result
+	# return [OrderedDict(row) for row in data]
 

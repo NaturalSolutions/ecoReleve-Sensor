@@ -12,7 +12,7 @@ class Generator :
         self.dictCell={
             'VARCHAR':'string',
             'NVARCHAR':'string',
-            'INTEGER':'number',
+            'INTEGER':'integer',
             'DECIMAL':'number',
             'DATETIME':'date',
             'BIT':'boolean'
@@ -75,26 +75,26 @@ class Generator :
 
         return final
 
+    def where (self,query,col,operator,value):
+
+        return query.where(self.eval_binary_expr(self.table.c[col], operator, value))
+
+
     def get_search(self,criteria={},offset=None,per_page=None, order_by=None) :
 
         query = select(self.table.c)
         result=[]
         total=None
 
-        '''
         for obj in criteria:
-
-            query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
-
-        '''
-        for obj in criteria:
+            print (obj)
             if obj['Value'] != None or obj['Value']!='':
                 try:
                     Col=dictio[key]
                 except: 
                     Col=obj['Column']
                 
-                query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
+                query=self.where(query,Col, obj['Operator'], obj['Value'])
 
         if offset!=None:
             query, total=self.get_page(query,offset,per_page, order_by)
@@ -106,7 +106,7 @@ class Generator :
             result.append([OrderedDict(row) for row in data])
         else :
             result = [OrderedDict(row) for row in data]
-            print(result)
+        
         return result
 
 

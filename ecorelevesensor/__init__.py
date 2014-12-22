@@ -66,18 +66,20 @@ def add_routes(config):
     config.add_route('rfid/byName', 'ecoReleve-Core/rfid/byName/{name}')
     config.add_route('rfid/byDate', 'ecoReleve-Core/rfid/byDate')
     config.add_route('rfid/search', 'ecoReleve-Core/rfid/search')
-    config.add_route('rfid/getFields', 'ecoReleve-Core/rfid/getFields')
+    
     config.add_route('rfid/search_geoJSON', 'ecoReleve-Core/rfid/search_geoJSON')
     config.add_route('rfid/update', 'ecoReleve-Core/rfid/update')
-    config.add_route('rfid/getFilters', 'ecoReleve-Core/rfid/getFilters')
 
+    config.add_route('rfid/validate/getFields', 'ecoReleve-Core/rfid/validate/getFields')
+    config.add_route('rfid/validate/getFilters', 'ecoReleve-Core/rfid/validate/getFilters')
+    config.add_route('rfid/validate/search', 'ecoReleve-Core/rfid/validate/search')
     
     ##### GSM #####
     config.add_route('dataGsm/upload', 'ecoReleve-Core/dataGsm/upload')
-    config.add_route('dataGsm/details', 'ecoReleve-Core/dataGsm/details/{id}')
+    config.add_route('dataGsm/details', 'ecoReleve-Core/dataGsm/{id}/details/{ind_id}')
     config.add_route('dataGsm/unchecked/list', 'ecoReleve-Core/dataGsm/unchecked/list')
     config.add_route('dataGsm/unchecked/import', 'ecoReleve-Core/dataGsm/{id}/unchecked/import')
-    config.add_route('dataGsm/unchecked', 'ecoReleve-Core/dataGsm/{id}/unchecked')
+    config.add_route('dataGsm/unchecked', 'ecoReleve-Core/dataGsm/{id}/unchecked/{ind_id}')
     
      ##### Transmitter #####
     config.add_route('transmitter/search/values', 'ecoReleve-Core/transmitter/search/values')
