@@ -38,14 +38,11 @@ class Generator :
             op1=cast(op1,Date)
         return self.get_operator_fn(operator)(op1, op2)
     
-    def get_col(self,columnsList, checked=False):
+    def get_col(self,columnsList=False, checked=False):
         
         ###### model of columnsList #####
 
-        # columnsList=[
 
-        # {'name':'FieldActivity','label':'FIELD ACTIVITY','display':True}
-        # ]
         final=[]
 
         for obj in columnsList :
@@ -87,8 +84,11 @@ class Generator :
         total=None
 
         for obj in criteria:
-            print (obj)
-            if obj['Value'] != None or obj['Value']!='':
+
+            print('__________________')
+            print(obj['Value'])
+            if obj['Value'] != None and obj['Value']!='':
+
                 try:
                     Col=dictio[key]
                 except: 
@@ -106,7 +106,7 @@ class Generator :
             result.append([OrderedDict(row) for row in data])
         else :
             result = [OrderedDict(row) for row in data]
-        
+
         return result
 
 
@@ -127,14 +127,12 @@ class Generator :
                 elif order == 'desc':
                     order_by_clause.append(self.table.c[column].desc())
         if len(order_by_clause) > 0:
-            print(order_by_clause)
             query = query.order_by(*order_by_clause)
         else :
             col= self.table.c[self.table.c.__dict__['_all_columns'][0].name].asc()
             query = query.order_by(col)
 
         # Define the limit and offset if exist
-
         if limit > 0:
             query = query.limit(limit)
         if offset > 0:
@@ -150,3 +148,42 @@ class Generator :
         if model['patch']!={} :   
             r=update(self.table).where(self.table.c[id_name]==id_).values(model['patch'])
             DBSession.execute(r)
+    
+    def get_geoJSON(self,criteria={},offset=None,per_page=None, order_by=None) :
+
+        query = select(self.table.c)
+        result=[]
+        total=None
+
+        print(criteria)
+        '''
+        for obj in criteria:
+
+            query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
+
+        '''
+        for obj in criteria:
+            print('__________________')
+            print(obj['Value'])
+            if obj['Value'] != None and obj['Value']!='':
+                
+                
+                try:
+                    Col=dictio[key]
+                except: 
+                    Col=obj['Column']
+                
+                query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
+
+        if offset!=None:
+            query, total=self.get_page(query,offset,per_page, order_by)
+
+        data=DBSession.execute(query).fetchall()    
+
+        geoJson=[]
+        for row in data:
+            geoJson.append({'type':'Feature', 'properties':{'name':row['Name']}, 'geometry':{'type':'Point', 'coordinates':[row['LON'],row['LAT']]}})
+
+
+
+        return {'type':'FeatureCollection', 'features': geoJson}

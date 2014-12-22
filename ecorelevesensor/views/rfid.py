@@ -241,6 +241,11 @@ def rfids_update(request):
     data_helper= Generator('V_dataRFID_as_file')
     data=request.json_body
 
+    print('________POST_______')
+    print(data)
+    gene.update_data(data,'PK_id')
+
+
     data_helper.update_data(data,'PK_obj')
 
 @view_config(route_name=prefix + 'validate/getFields', renderer='json', request_method='GET')
