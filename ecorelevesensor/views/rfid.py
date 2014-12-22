@@ -309,7 +309,7 @@ def rfids_update(request):
     data=request.json_body
     print('________POST_______')
     print(data)
-    gene.update_data(data,'PK_obj')
+    gene.update_data(data,'PK_id')
 
 @view_config(route_name=prefix + 'getFields', renderer='json', request_method='GET')
 def rfids_field(request):

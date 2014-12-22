@@ -3,11 +3,16 @@ Created on Mon Sep  1 17:28:02 2014
 
 @author: Natural Solutions (Thomas)
 """
-
+from ecorelevesensor.utils.generator import Generator
 from pyramid.view import view_config
 from sqlalchemy import select, distinct, join, and_, desc
 from ecorelevesensor.models import DBSession, MonitoredSite, MonitoredSitePosition
+import json
+from ecorelevesensor.models import Base, DBSession
 prefix = 'monitoredSite'
+
+
+gene= Generator('V_Qry_MonitoredSites')
 
 @view_config(route_name=prefix, renderer='json', request_method='GET')
 def monitoredSites(request):
@@ -77,3 +82,81 @@ def monitoredSite_byName(request):
 	data = DBSession.execute(query).first()
 
 	return dict([ (key,val) for key,val in data.items()])
+
+
+
+
+
+@view_config(route_name=prefix+'/search', renderer='json')
+def monitoredSite_search(request):
+
+	print('________Search___________')
+
+	try:
+	    criteria = json.loads(request.GET.get('criteria',{}))
+	except:
+	    criteria={}
+	    
+	print(criteria)
+	if(request.GET.get('offset')):
+	    offset = json.loads(request.GET.get('offset',{}))
+	    perPage = json.loads(request.GET.get('per_page',{}))
+	    orderBy = json.loads(request.GET.get('order_by',{}))
+	    content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+	else :
+	    content = gene.get_search(criteria)
+	
+
+	return content
+
+@view_config(route_name=prefix + '/getFilters', renderer='json', request_method='GET')
+def monitoredSite_filters(request):
+    print('____________FIELDS_________________')
+    table=Base.metadata.tables['V_Qry_MonitoredSites']
+    print(table.c)
+    columns=table.c
+    
+    final={}
+    for col in columns :
+        name=col.name
+        Ctype=str(col.type)
+        if 'VARCHAR' in Ctype:
+            Ctype='String'
+        final[name]=Ctype
+
+    return final
+
+
+@view_config(route_name=prefix + '/search_geoJSON', renderer='json', request_method='GET')
+def monitoredSite_geoJSON(request):
+
+    table=Base.metadata.tables['V_Qry_MonitoredSites']
+
+
+    print(request.GET)
+
+    try:
+        criteria = json.loads(request.GET.get('criteria',{}))
+    except:
+        criteria={}
+        
+    if(request.GET.get('offset')):
+        offset = json.loads(request.GET.get('offset',{}))
+        print('_________________')
+        print(offset)
+        perPage = json.loads(request.GET.get('per_page',{}))
+        orderBy = json.loads(request.GET.get('order_by',{}))
+        content = gene.get_geoJSON(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+    else :
+    	content = gene.get_geoJSON(criteria)
+
+    return content
+
+@view_config(route_name=prefix + '/detail', renderer='json', request_method='GET')
+def monitoredSite_detail(request):	
+	id_ = request.matchdict['id']
+	print('____________________')
+	print(id_)
+	data = DBSession.query(MonitoredSite).filter(MonitoredSite.id==id_).one()
+
+	return data
