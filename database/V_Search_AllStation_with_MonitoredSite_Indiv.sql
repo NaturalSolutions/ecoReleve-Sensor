@@ -17,17 +17,6 @@ GO
 CREATE VIEW V_Search_AllStation_with_MonitoredSite_Indiv
 AS
 
-with toto as
- (  select TSta_PK_ID
-	  , FieldWorker1 as fw from TStations
-union all
-select TSta_PK_ID
-	  , FieldWorker2 as fw from TStations
-union all
-select TSta_PK_ID
-	  , FieldWorker3 as fw from TStations)
-
-
 SELECT  
 sta.[TSta_PK_ID] as id
 ,sta.[NbFieldWorker] as nbFieldWorker
@@ -53,7 +42,7 @@ sta.[TSta_PK_ID] as id
 ,(u1.lastname+' '+u1.firstname) as FieldWorker1
 ,(u2.lastname+' '+u2.firstname) as FieldWorker2
 ,(u3.lastname+' '+u3.firstname) as FieldWorker3
-,j.fw as id_FieldWorker
+, sta.FieldWorker1 FieldWorker1_ID, sta.FieldWorker2 FieldWorker2_ID, sta.FieldWorker3 FieldWorker3_ID
 ,m.name_Type as site_type
 ,m.Name as site_name
 
@@ -63,6 +52,5 @@ left outer join [dbo].[TMonitoredStations] m on sta.[TSta_FK_TGeo_ID]=m.TGeo_pk_
 left outer join T_User u1 on sta.FieldWorker1=u1.PK_id
 left outer join T_User u2 on sta.FieldWorker2=u2.PK_id
 left outer join T_User u3 on sta.FieldWorker3=u3.PK_id
-join  toto j on sta.TSta_PK_ID=j.TSta_PK_ID
 
 GO

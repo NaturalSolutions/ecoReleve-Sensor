@@ -243,7 +243,8 @@ def indiv_details(request):
         Individual.status.label('status'),
         Individual.monitoring_status.label('monitoring_status'),
         Individual.birth_date.label('birth_date'),
-        Individual.ptt.label('ptt')
+        Individual.ptt.label('ptt'),
+        Individual.species.label('species')
     ]).where(Individual.id==ind_id)
 
     data=DBSession.execute(q_indiv).fetchone()
@@ -273,7 +274,7 @@ def indiv_details(request):
                 )
             )
         )
-    ).where(and_(pie.ind_id==ind_id,unchecked.c.platform_==ptt)
+    ).where(and_(pie.ind_id==ind_id,unchecked.c.platform_== ptt)
     ).group_by(unchecked.c.platform_, pie.ind_id, pie.begin_date,pie.end_date)
     
     nb = DBSession.execute(unchecked_with_ind).fetchone()
@@ -283,21 +284,21 @@ def indiv_details(request):
         end_date=datetime.datetime.now()
     else :
         end_date=nb['end_date'] 
-    result['duration']=(end_date.month-nb['begin_date'].month)+(end_date.year-nb['begin_date'].year)*12
+    result['duration'] = (end_date.month-nb['begin_date'].month)+(end_date.year-nb['begin_date'].year)*12
     
 
-    result['indivNbObs']=nb['nb']
-
+    result['indivNbObs'] = nb['nb']
+    result['ptt'] = ptt
 
     ##### Retrieve Last Observation recorded #####
     q_lastObs = select([V_Individuals_LatLonDate.c.date]
                      ).where(V_Individuals_LatLonDate.c.ind_id == ind_id
                      ).order_by(desc(V_Individuals_LatLonDate.c.date)).limit(1)
-    lastObs=DBSession.execute(q_lastObs).fetchone()
+    lastObs = DBSession.execute(q_lastObs).fetchone()
 
-    result['last_observation']=lastObs['date'].strftime('%d/%m/%Y')
-    if result['birth_date']!= None:
-        result['birth_date']=result['birth_date'].strftime('%d/%m/%Y')
+    result['last_observation'] = lastObs['date'].strftime('%d/%m/%Y')
+    if result['birth_date'] != None:
+        result['birth_date'] = result['birth_date'].strftime('%d/%m/%Y')
 
     print (result)
     return result

@@ -158,5 +158,5 @@ def monitoredSite_detail(request):
 	print('____________________')
 	print(id_)
 	data = DBSession.query(MonitoredSite).filter(MonitoredSite.id==id_).one()
-
+	print(data)
 	return data
