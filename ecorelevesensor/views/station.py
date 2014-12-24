@@ -413,7 +413,7 @@ def station_byDate (request) :
 @view_config(route_name=prefix+'/search', renderer='json', request_method='POST')
 def station_search (request) :
 	start=time.time()
-	table=Base.metadata.tables['V_Search_AllStation_with_MonitoredSite_Indiv']
+	table=Base.metadata.tables['V_Search_AllStation_with_MonitoredSite_Indiv2']
 	
 	criteria = json.loads(request.POST.get('criteria', '{}'))
 	
@@ -448,14 +448,14 @@ def station_search (request) :
 			try:
 				Col=dictio[key.lower()]
 			except: 
-				Col=key					
-			else :
-				if key == 'fieldworker' :
-					query=query.where(or_(table.c['FieldWorker1_ID']==obj['Value'],
-						table.c['FieldWorker2_ID']==obj['Value'],
-						table.c['FieldWorker3_ID']==obj['Value']))
-				else:
-					query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
+				Col=key	
+			
+			if key.lower() == 'fieldworker' :
+				query=query.where(or_(table.c['FieldWorker1_ID']==obj['Value'],
+					table.c['FieldWorker2_ID']==obj['Value'],
+					table.c['FieldWorker3_ID']==obj['Value']))
+			else:
+				query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 
 	print(query)
 

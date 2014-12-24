@@ -28,10 +28,14 @@ from ecorelevesensor.models import (TProtocolCaptureIndividual,TProtocolReleaseI
 ReleaseSta = select([
     Station.area.label('release_area'),
     func.year(Station.date).label('release_year'),
-    TProtocolReleaseIndividual.FK_TInd_ID.label('ind_id')
+    TProtocolReleaseIndividual.FK_TInd_ID.label('ind_id'),
+    TProtocolCaptureIndividual.Id_Observer.label('Id_Observer'),
+    TProtocolReleaseIndividual.Comments.label('comments_Release'),
+    TProtocolCaptureIndividual.Comments.label('comments_Capture')
     ]).select_from(join(Station, TProtocolReleaseIndividual,
         TProtocolReleaseIndividual.FK_TSta_ID == Station.id
-    )).alias()
+    ).outerjoin(TProtocolCaptureIndividual, 
+    TProtocolCaptureIndividual.FK_TInd_ID == TProtocolReleaseIndividual.FK_TInd_ID )).alias()
 
 V_SearchIndiv = select([
     Individual.id.label('id'),
@@ -50,10 +54,13 @@ V_SearchIndiv = select([
     Individual.status.label('status'),
     Individual.survey_type.label('survey_type'),
     ReleaseSta.c['release_area'],
-    ReleaseSta.c['release_year']
+    ReleaseSta.c['release_year'],
+    ReleaseSta.c['Id_Observer'],
+    ReleaseSta.c['comments_Release'],
+    ReleaseSta.c['comments_Capture'],
+
 ]).select_from(
-    outerjoin(Individual, ReleaseSta, ReleaseSta.c['ind_id']==Individual.id)
-).alias()
+    outerjoin(Individual, ReleaseSta, ReleaseSta.c['ind_id']==Individual.id)).alias()
 """
 id5@TCarac_Transmitter_Frequency as frequency,
 id8@TCaracThes_Release_Ring_Color_Precision as releaseRingColor,
@@ -77,3 +84,25 @@ YEAR(capt.Date) as captureYear
 
 GO
 """
+
+# V_SearchIndiv_export = select([
+#     Individual.id.label('id'),
+#     Individual.chip_code.label('chip_code'),
+#     Individual.breeding_ring.label('breeding_ring'),
+#     Individual.release_ring.label('release_ring'),
+#     Individual.age.label('age'),
+#     Individual.birth_date('birth_date'),
+#     Individual.mark1.label('mark1'),
+#     Individual.mark2.label('mark2'),
+#     Individual.monitoring_status.label('monitoring_status'),
+#     Individual.origin.label('origin'),
+#     Individual.ptt.label('ptt'),
+#     Individual.frequency.label('frequency'),
+#     Individual.sex.label('sex'),
+#     Individual.species.label('species'),
+#     Individual.status.label('status'),
+#     Individual.survey_type.label('survey_type'),
+#     ReleaseSta.c['release_area'],
+#     ReleaseSta.c['release_year']
+# ]).select_from(
+#     outerjoin(Individual, ReleaseSta, ReleaseSta.c['ind_id']==Individual.id)).alias()
