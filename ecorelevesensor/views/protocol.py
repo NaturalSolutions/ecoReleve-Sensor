@@ -140,7 +140,7 @@ def list_protocol (request):
 		query = select([table.c['proto_name'], table.c['proto_id']]).where(and_(table.c['proto_active'] == 1, table.c['theme_name'] == fieldActivity))
 		data = DBSession.execute(query.distinct()).fetchall()
 
-	elif id_station != None :
+	elif id_sta != None :
 
 		query = select([table.c['proto_name'], table.c['proto_id'],table.c['proto_relation']]
 		).where(table.c['proto_active'] == 1)
