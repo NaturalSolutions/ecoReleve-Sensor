@@ -376,8 +376,8 @@ def insertMultStation(request):
 		query=select([Station]).where(and_(Station.creator==request.authenticated_userid,Station.creationDate==creation_date))
 		stationList=DBSession.execute(query).fetchall()
 		result=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
-		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':data[0]['fieldWorker1']
-		,'FieldWorker2':data[0]['fieldWorker2'],'FieldWorker3':data[0]['fieldWorker3']
+		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':int(data[0]['fieldWorker1'])
+		,'FieldWorker2':int(data[0]['fieldWorker2']),'FieldWorker3':int(data[0]['fieldWorker3'])
 		,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
 		, 'FieldWorker4':'','FieldWorker5':'' } for sta in stationList]
 		transaction.commit()
