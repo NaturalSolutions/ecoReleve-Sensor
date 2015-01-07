@@ -117,7 +117,7 @@ def get_protocol (request):
 			
 			model_proto = json.load(json_data)
 
-		if  id_proto !=None :
+		if  id_proto != '' :
 			id_proto=int(id_proto)
 			Tproto = Base.metadata.tables['TProtocol_'+str(proto_relation[0])]
 			query = select([Tproto]).where(Tproto.c['PK'] == id_proto)
@@ -133,14 +133,30 @@ def list_protocol (request):
 
 	data=dict(request.GET)
 	fieldActivity=data.get('fieldActivity',None)
+	id_sta=data.get('id_sta', None)
 	table=Base.metadata.tables['V_TThem_Proto']
 
-	if fieldActivity == None :
-		query = select([table.c['proto_name'], table.c['proto_id']]).where(table.c['proto_active'] == 1)
-
-	else :
+	if id_station == None and fieldActivity != None :
 		query = select([table.c['proto_name'], table.c['proto_id']]).where(and_(table.c['proto_active'] == 1, table.c['theme_name'] == fieldActivity))
+		data = DBSession.execute(query.distinct()).fetchall()
 
-	data = DBSession.execute(query.distinct()).fetchall()
+	elif id_station != None :
+
+		query = select([table.c['proto_name'], table.c['proto_id'],table.c['proto_relation']]
+		).where(table.c['proto_active'] == 1)
+
+		proto_list = DBSession.execute(query.distinct()).fetchall()
+		protoOnSta={}
+		for name, Id, relation in proto_list :
+			Tproto = Base.metadata.tables['TProtocol_'+relation]
+			query = select([Tproto.c['PK']]).where(Tproto.c['FK_TSta_ID']==id_sta)
+			PK_data = [row[0] for row in DBSession.execute(query).fetchall()]
+			if len(PK_data) > 0 : 
+				protoOnSta[name] = {'id': Id, 'PK_data': PK_data }
+		data = protoOnSta
+	
+	else :
+		query = select([table.c['proto_name'], table.c['proto_id']]).where(table.c['proto_active'] == 1)
+		data = DBSession.execute(query.distinct()).fetchall()
+
 	return [OrderedDict(row) for row in data]
-
