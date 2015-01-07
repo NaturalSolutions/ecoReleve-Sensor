@@ -110,6 +110,8 @@ def add_routes(config):
     config.add_route('station/getProtocol', 'ecoReleve-Core/station/getProtocol')
     config.add_route('station/search', 'ecoReleve-Core/station/search')
 
+    config.add_route('protocols/list', 'ecoReleve-Core/protocols/list')
+    
 
      ##### Monitored sites equipment #####
     config.add_route('monitoredSiteEquipment/pose', 'ecoReleve-Core/monitoredSiteEquipment/pose')

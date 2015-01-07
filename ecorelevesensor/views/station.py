@@ -196,12 +196,12 @@ def insertNewStation(request):
 				data['LON'] = None
 
 			#get userID with fieldWorker_Name
-			users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
-			users_ID = DBSession.execute(users_ID_query).fetchall()
-			users_ID=[row[0] for row in users_ID]
+			# users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
+			# users_ID = DBSession.execute(users_ID_query).fetchall()
+			# users_ID=[row[0] for row in users_ID]
 			
-			if len(users_ID) <3 :
-				users_ID.extend([None,None])
+			# if len(users_ID) <3 :
+			# 	users_ID.extend([None,None])
 
 			if data['id_site']=='':
 				data['id_site']=None
@@ -214,7 +214,7 @@ def insertNewStation(request):
 			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
 				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
 				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
-				fieldWorker1=users_ID[0],fieldWorker2=users_ID[1],fieldWorker3=users_ID[2],id_siteMonitored=data['id_site'])
+				fieldWorker1=data['FieldWorker1'],fieldWorker2=data['FieldWorker2'],fieldWorker3=data['FieldWorker3'],id_siteMonitored=data['id_site'])
 
 			DBSession.add(station)
 			DBSession.flush()

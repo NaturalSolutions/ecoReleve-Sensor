@@ -4,7 +4,9 @@ from ecorelevesensor.models import *
 import numpy as np
 import sys, datetime, transaction
 from sqlalchemy.sql import func
-import json
+import json, os
+from collections import OrderedDict
+
 prefix = 'station'
 dict_proto={
 	'Bird Biometry': TProtocolBirdBiometry,
@@ -68,17 +70,77 @@ def insert_protocol (request):
 
 		return id_proto
 
-@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='POST')
+@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
 def get_protocol (request):
 
-	data=dict(request.POST)
+	data=dict(request.GET)
 	print(data)
-	id_sta=data.get('id_sta')
+	id_sta=data.get('id_sta', None)
+	id_proto=data.get('id_proto',None)
+	proto_name = data.get('proto_name',None)
+	table=Base.metadata.tables['V_TThem_Proto']
 	print(id_sta)
-	protoOnSta={}
+	print(id_proto)
+	print(proto_name)
+	
 
-	for protoName, Tproto in dict_proto.items() :
-			query=select([Tproto]).where(Tproto.FK_TSta_ID==id_sta)
-			protoOnSta.update({protoName: [dict(row) for row in DBSession.execute(query).fetchall()]})
-	print(protoOnSta)
-	return protoOnSta
+	# for protoName, Tproto in dict_proto.items() :
+	# 		query=select([Tproto]).where(Tproto.FK_TSta_ID==id_sta)
+	# 		protoOnSta.update({protoName: [dict(row) for row in DBSession.execute(query).fetchall()]})
+	# print(protoOnSta)
+	# return protoOnSta
+
+	query = select([table.c['proto_name'], table.c['proto_id'],table.c['proto_relation']]
+		).where(table.c['proto_active'] == 1)
+	
+
+	if proto_name == None :
+		proto_list = DBSession.execute(query.distinct()).fetchall()
+		protoOnSta={}
+		for name, Id, relation in proto_list :
+			Tproto = Base.metadata.tables['TProtocol_'+relation]
+			query = select([Tproto.c['PK']]).where(Tproto.c['FK_TSta_ID']==id_sta)
+			PK_data = [row[0] for row in DBSession.execute(query).fetchall()]
+			if len(PK_data) > 0 : 
+				protoOnSta[name] = {'id': Id, 'PK_data': PK_data }
+
+
+	elif proto_name != None : 
+		
+		proto_relation = DBSession.execute(select([table.c['proto_relation']]
+			).where(table.c['proto_name'] == proto_name)).fetchone()
+		print (proto_relation)
+		transaction.commit()
+
+		path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+		with open(path+'/models/protocols/'+str(proto_relation[0]).lower()+'.json') as json_data:
+			
+			model_proto = json.load(json_data)
+
+		if  id_proto !=None :
+			id_proto=int(id_proto)
+			Tproto = Base.metadata.tables['TProtocol_'+str(proto_relation[0])]
+			query = select([Tproto]).where(Tproto.c['PK'] == id_proto)
+			data = DBSession.execute(query).fetchall()
+			print (data)
+			model_proto['data']=[OrderedDict(row) for row in data]
+
+		return model_proto
+
+
+@view_config(route_name='protocols/list', renderer='json', request_method='GET')
+def list_protocol (request):
+
+	data=dict(request.GET)
+	fieldActivity=data.get('fieldActivity',None)
+	table=Base.metadata.tables['V_TThem_Proto']
+
+	if fieldActivity == None :
+		query = select([table.c['proto_name'], table.c['proto_id']]).where(table.c['proto_active'] == 1)
+
+	else :
+		query = select([table.c['proto_name'], table.c['proto_id']]).where(and_(table.c['proto_active'] == 1, table.c['theme_name'] == fieldActivity))
+
+	data = DBSession.execute(query.distinct()).fetchall()
+	return [OrderedDict(row) for row in data]
+
