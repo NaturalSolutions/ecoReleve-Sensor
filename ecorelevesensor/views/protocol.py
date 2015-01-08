@@ -136,7 +136,7 @@ def list_protocol (request):
 	id_sta=data.get('id_sta', None)
 	table=Base.metadata.tables['V_TThem_Proto']
 
-	if id_station == None and fieldActivity != None :
+	if id_sta == None and fieldActivity != None :
 		query = select([table.c['proto_name'], table.c['proto_id']]).where(and_(table.c['proto_active'] == 1, table.c['theme_name'] == fieldActivity))
 		data = DBSession.execute(query.distinct()).fetchall()
 
