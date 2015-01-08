@@ -107,7 +107,9 @@ def add_routes(config):
     config.add_route('station/addMultStation', 'ecoReleve-Core/station/addMultStation/insert')
     config.add_route('station/station_byDate', 'ecoReleve-Core/station/search_byDate')
     config.add_route('station/addProtocol', 'ecoReleve-Core/station/addStation/addProtocol')
-    config.add_route('station/getProtocol', 'ecoReleve-Core/station/getProtocol')
+    config.add_route('station/protocol', 'ecoReleve-Core/station/{id}/protocol')
+    config.add_route('station/protocol/data', 'ecoReleve-Core/station/{id}/protocol/{name}/{PK_data}')
+
     config.add_route('station/search', 'ecoReleve-Core/station/search')
 
     config.add_route('protocols/list', 'ecoReleve-Core/protocols/list')

@@ -70,92 +70,89 @@ def insert_protocol (request):
 
 		return id_proto
 
-@view_config(route_name=prefix+'/getProtocol', renderer='json', request_method='GET')
-def get_protocol (request):
+@view_config(route_name=prefix+'/protocol', renderer='json', request_method='GET')
+def get_protocol_on_station (request):
 
-	data=dict(request.GET)
-	print(data)
-	id_sta=data.get('id_sta', None)
-	id_proto=data.get('id_proto',None)
-	proto_name = data.get('proto_name',None)
+	id_station = request.matchdict['id']
 	table=Base.metadata.tables['V_TThem_Proto']
-	print(id_sta)
-	print(id_proto)
-	print(proto_name)
-	
-
-	# for protoName, Tproto in dict_proto.items() :
-	# 		query=select([Tproto]).where(Tproto.FK_TSta_ID==id_sta)
-	# 		protoOnSta.update({protoName: [dict(row) for row in DBSession.execute(query).fetchall()]})
-	# print(protoOnSta)
-	# return protoOnSta
+	print(id_station)
 
 	query = select([table.c['proto_name'], table.c['proto_id'],table.c['proto_relation']]
 		).where(table.c['proto_active'] == 1)
+	proto_list = DBSession.execute(query.distinct()).fetchall()
+	proto_on_sta = {}
+
+	for name, Id, relation in proto_list :
+
+		Tproto = Base.metadata.tables['TProtocol_'+relation]
+		query_proto = select([Tproto.c['PK']]).where(Tproto.c['FK_TSta_ID']==id_station)
+		PK_data = [row[0] for row in DBSession.execute(query_proto).fetchall()]
+		
+		print(len(PK_data))
+
+		if len(PK_data) > 0 : 	
+			proto_on_sta[name] = {'id': Id, 'PK_data': PK_data }
+
+	if proto_on_sta != {} :
+		print('\n\n____________protocol exists for station _____________\n\n')
+		data=proto_on_sta
+
+	else :
+
+		station = DBSession.query(Station).get(id_station)
+		print('\n\n____________NO NO NO protocol exists for station _____________\n\n')
+		print (station.fieldActivityName)
+
+		query = query.where(table.c['theme_name'] == station.fieldActivityName)
+		proto_list = DBSession.execute(query.distinct()).fetchall()
+
+		for name, Id, relation in proto_list : 
+			proto_on_sta[name] = {'id' : Id, 'PK_data': [0] }
+
+	return proto_on_sta
+		
+
+@view_config(route_name=prefix+'/protocol/data', renderer='json', request_method='GET')
+def get_data_on_protocol (request):
 	
 
-	if proto_name == None :
-		proto_list = DBSession.execute(query.distinct()).fetchall()
-		protoOnSta={}
-		for name, Id, relation in proto_list :
-			Tproto = Base.metadata.tables['TProtocol_'+relation]
-			query = select([Tproto.c['PK']]).where(Tproto.c['FK_TSta_ID']==id_sta)
-			PK_data = [row[0] for row in DBSession.execute(query).fetchall()]
-			if len(PK_data) > 0 : 
-				protoOnSta[name] = {'id': Id, 'PK_data': PK_data }
+	id_station = request.matchdict['id']
+	proto_name = request.matchdict['name']
+	pk_data = request.matchdict['PK_data']
 
+	print ('\n\n________protocol/DATA____________\n')
+	print(id_station)
+	print(proto_name)
+	print(pk_data)
 
-	elif proto_name != None : 
-		
-		proto_relation = DBSession.execute(select([table.c['proto_relation']]
+	table=Base.metadata.tables['V_TThem_Proto']
+
+	proto_relation = DBSession.execute(select([table.c['proto_relation']]
 			).where(table.c['proto_name'] == proto_name)).fetchone()
-		print (proto_relation)
-		transaction.commit()
+	print (proto_relation)
+	transaction.commit()
 
-		path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-		with open(path+'/models/protocols/'+str(proto_relation[0]).lower()+'.json', 'r') as json_data:
-			model_proto = json.load(json_data)
+	path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	with open(path+'/models/protocols/'+str(proto_relation[0]).lower()+'.json', 'r') as json_data:
+		model_proto = json.load(json_data)
 
-		if  id_proto != '' :
-			id_proto=int(id_proto)
-			Tproto = Base.metadata.tables['TProtocol_'+str(proto_relation[0])]
-			query = select([Tproto]).where(Tproto.c['PK'] == id_proto)
-			data = DBSession.execute(query).fetchall()
-			print (data)
-			model_proto['data']=[OrderedDict(row) for row in data]
+	if  pk_data != 0 :
+	
+		Tproto = Base.metadata.tables['TProtocol_'+str(proto_relation[0])]
+		query = select([Tproto]).where(Tproto.c['PK'] == pk_data)
+		data = DBSession.execute(query).fetchall()
+		print (data)
+		model_proto['data']=[OrderedDict(row) for row in data]
 
-		return model_proto
+	return model_proto
 
 
 @view_config(route_name='protocols/list', renderer='json', request_method='GET')
 def list_protocol (request):
 
-	data=dict(request.GET)
-	fieldActivity=data.get('fieldActivity',None)
-	id_sta=data.get('id_sta', None)
 	table=Base.metadata.tables['V_TThem_Proto']
 
-	if id_sta == None and fieldActivity != None :
-		query = select([table.c['proto_name'], table.c['proto_id']]).where(and_(table.c['proto_active'] == 1, table.c['theme_name'] == fieldActivity))
-		data = DBSession.execute(query.distinct()).fetchall()
-
-	elif id_sta != None :
-
-		query = select([table.c['proto_name'], table.c['proto_id'],table.c['proto_relation']]
-		).where(table.c['proto_active'] == 1)
-
-		proto_list = DBSession.execute(query.distinct()).fetchall()
-		protoOnSta={}
-		for name, Id, relation in proto_list :
-			Tproto = Base.metadata.tables['TProtocol_'+relation]
-			query = select([Tproto.c['PK']]).where(Tproto.c['FK_TSta_ID']==id_sta)
-			PK_data = [row[0] for row in DBSession.execute(query).fetchall()]
-			if len(PK_data) > 0 : 
-				protoOnSta[name] = {'id': Id, 'PK_data': PK_data }
-		data = protoOnSta
-	
-	else :
-		query = select([table.c['proto_name'], table.c['proto_id']]).where(table.c['proto_active'] == 1)
-		data = DBSession.execute(query.distinct()).fetchall()
+	query = select([table.c['proto_name'], table.c['proto_id']]).where(table.c['proto_active'] == 1)
+	data = DBSession.execute(query.distinct()).fetchall()
 
 	return [OrderedDict(row) for row in data]
