@@ -160,8 +160,8 @@ def insertNewStation(request):
 
 	if 'PK' not in data or data['PK']=='' :
 		try: 
-			if (data['LON'],data['LAT'])!=('NULL','NULL') :
-
+			if (data['LON'],data['LAT'])!=('','') :
+				print('______________________')
 				if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 :
 
 					# get REGION and UTM by stored procedure
@@ -205,7 +205,33 @@ def insertNewStation(request):
 
 			if data['id_site']=='':
 				data['id_site']=None
-			#get ID fieldActivity:
+			else :
+				data['id_site']='PDU1 Bouarfa'
+				print (data['id_site'])
+				# join_table= select([MonitoredSitePosition, MonitoredSite]).join(MonitoredSite, MonitoredSitePosition.site == MonitoredSite.id)
+				# q= select([MonitoredSitePosition.id,MonitoredSitePosition.lat
+				# 	, MonitoredSitePosition.lon, MonitoredSitePosition.ele
+				# 	, MonitoredSitePosition.precision]).select_from(join_table).filter(and_(MonitoredSitePosition.begin_date< data['Date_']
+				# 		, or_(MonitoredSitePosition.end_date>data['Date_'], MonitoredSitePosition.end_date == None)))
+				
+
+				dt = DBSession.query(MonitoredSitePosition.id,MonitoredSitePosition.lat
+					, MonitoredSitePosition.lon, MonitoredSitePosition.ele
+					, MonitoredSitePosition.precision
+					).join(MonitoredSite, MonitoredSitePosition.site == MonitoredSite.id
+					).filter(MonitoredSite.name == data['id_site']
+					).filter(and_(MonitoredSitePosition.begin_date< data['Date_']
+						, or_(MonitoredSitePosition.end_date>data['Date_'], MonitoredSitePosition.end_date == None))).one()
+					
+				data['id_site']=dt[0]
+				data['LAT']=dt[1]
+				data['LON']=dt[2]
+
+			for i in range(1,3):
+				if data['FieldWorker'+str(i)] != '' :
+					data['FieldWorker'+str(i)] = int(data['FieldWorker'+str(i)])
+				else :
+					data['FieldWorker'+str(i)] = None
 
 			id_field_query=select([ThemeEtude.id], ThemeEtude.Caption == data['FieldActivity_Name'])
 			id_field=DBSession.execute(id_field_query).scalar()
@@ -224,7 +250,7 @@ def insertNewStation(request):
 			return {'PK':id_sta,'Region':geoRegion,'UTM20':geoUTM}
 
 		except Exception as err: 
-			
+			print(err)
 			msg = err.args[0] if err.args else ""
 			response=Response('Problem occurs on station insert : '+str(type(err))+' = '+msg)
 			response.status_int = 500

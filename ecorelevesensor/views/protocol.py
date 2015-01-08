@@ -113,8 +113,7 @@ def get_protocol (request):
 		transaction.commit()
 
 		path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-		with open(path+'/models/protocols/'+str(proto_relation[0]).lower()+'.json') as json_data:
-			
+		with open(path+'/models/protocols/'+str(proto_relation[0]).lower()+'.json', 'r') as json_data:
 			model_proto = json.load(json_data)
 
 		if  id_proto != '' :
