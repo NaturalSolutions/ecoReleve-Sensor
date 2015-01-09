@@ -163,7 +163,7 @@ def get_data_on_protocol (request):
 		query = select([Tproto]).where(Tproto.c['PK'] == pk_data)
 		data = DBSession.execute(query).fetchall()
 		print (data)
-		model_proto['data']=[OrderedDict(row) for row in data]
+		model_proto['data']= [OrderedDict(row) for row in data][0]
 
 	return model_proto
 
