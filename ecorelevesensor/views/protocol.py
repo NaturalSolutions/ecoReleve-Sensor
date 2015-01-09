@@ -64,10 +64,10 @@ def insert_protocol (request):
 def update_protocol (request):
 
 	
-	data=request.json_body
+	data = request.json_body
 	print(request.json_body)
 	proto_name = request.matchdict['name']
-	pk_data = request.matchdict['PK_data']
+	pk_data = int(request.matchdict['PK_data'])
 	print(pk_data)
 	# insert new row in the protocol
 	if int(pk_data) == 0 :
@@ -94,7 +94,7 @@ def update_protocol (request):
 @view_config(route_name=prefix+'/protocol', renderer='json', request_method='GET')
 def get_protocol_on_station (request):
 
-	id_station = request.matchdict['id']
+	id_station = int(request.matchdict['id'])
 	table=Base.metadata.tables['V_TThem_Proto']
 	print(id_station)
 
@@ -137,9 +137,9 @@ def get_protocol_on_station (request):
 def get_data_on_protocol (request):
 	
 
-	id_station = request.matchdict['id']
+	id_station = int(request.matchdict['id'])
 	proto_name = request.matchdict['name']
-	pk_data = request.matchdict['PK_data']
+	pk_data = int(request.matchdict['PK_data'])
 
 	print ('\n\n________protocol/DATA____________\n')
 	print(id_station)
