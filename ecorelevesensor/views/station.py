@@ -464,7 +464,7 @@ def station_search (request) :
 		,table.c['LAT'], table.c['LON'],table.c['FieldWorker1']
 		,table.c['FieldWorker2'],table.c['FieldWorker3']
 		,table.c['FieldActivity_Name'], table.c['Region']
-		, table.c['UTM20']])
+		, table.c['UTM20']]).distinct()
 
 	for key, obj in criteria.items():
 		print(key)
@@ -485,7 +485,7 @@ def station_search (request) :
 
 	print(query)
 
-	total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
+	total = DBSession.execute(select([func.count()]).distinct().select_from(query.alias())).scalar()
 	result = [{'total_entries':total}]
 
 

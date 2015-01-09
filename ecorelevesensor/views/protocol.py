@@ -9,13 +9,13 @@ from collections import OrderedDict
 
 prefix = 'station'
 dict_proto={
-	'Bird Biometry': TProtocolBirdBiometry,
-	'Chiroptera capture':TProtocolChiropteraCapture,
-	'Simplified Habitat':TProtocolSimplifiedHabitat,
-	'Chiroptera detection':TProtocolChiropteraDetection,
+	'Biometry': TProtocolBirdBiometry,
+	'Chiro capture':TProtocolChiropteraCapture,
+	'Simplified habitat':TProtocolSimplifiedHabitat,
+	'Chiro detection':TProtocolChiropteraDetection,
 	'Building and Activities':TProtocolBuildingAndActivity,
-	'station description':TProtocolStationDescription,
-	'Vertebrate individual death':TProtocolVertebrateIndividualDeath,
+	'Station description':TProtocolStationDescription,
+	'Vertebrate Individual Death':TProtocolVertebrateIndividualDeath,
 	'Phytosociology habitat': TProtocolPhytosociologyHabitat,
 	'Phytosociology releve': TProtocolPhytosociologyReleve,
 	'Sighting conditions': TProtocolSightingCondition,
@@ -44,14 +44,31 @@ def getWorkerID(workerList) :
 		users_ID.extend([None,None])
 	return users_ID
 
-@view_config(route_name=prefix+'/addProtocol', renderer='json', request_method='POST')
+@view_config(route_name=prefix+'/protocol/data', renderer='json', request_method='PUT')
 def insert_protocol (request):
+
 	data=dict(request.params)
-	protocolName=data['name']
+	proto_name = request.matchdict['name']
 	# insert new row in the protocol
 	if request.params.has_key('PK')!=True :
 		
-		new_proto=dict_proto[protocolName]()
+		new_proto=dict_proto[proto_name]()
+		new_proto.InitFromFields(data)
+		DBSession.add(new_proto)
+		DBSession.flush()
+		id_proto= new_proto.PK
+		print(id_proto)
+		return id_proto
+
+@view_config(route_name=prefix+'/protocol/data', renderer='json', request_method='POST')
+def update_protocol (request):
+
+	data=dict(request.params)
+	proto_name = request.matchdict['name']
+	# insert new row in the protocol
+	if request.params.has_key('PK')!=True :
+		
+		new_proto=dict_proto[proto_name]()
 		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
 		DBSession.flush()
