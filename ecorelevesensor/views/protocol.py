@@ -47,45 +47,49 @@ def getWorkerID(workerList) :
 @view_config(route_name=prefix+'/protocol/data', renderer='json', request_method='PUT')
 def insert_protocol (request):
 
+
 	data=dict(request.params)
 	proto_name = request.matchdict['name']
 	# insert new row in the protocol
-	if request.params.has_key('PK')!=True :
-		
-		new_proto=dict_proto[proto_name]()
-		new_proto.InitFromFields(data)
-		DBSession.add(new_proto)
-		DBSession.flush()
-		id_proto= new_proto.PK
-		print(id_proto)
-		return id_proto
+	
+	new_proto=dict_proto[proto_name]()
+	new_proto.InitFromFields(data)
+	DBSession.add(new_proto)
+	DBSession.flush()
+	id_proto= new_proto.PK
+	print(id_proto)
+	return id_proto
 
 @view_config(route_name=prefix+'/protocol/data', renderer='json', request_method='POST')
 def update_protocol (request):
 
-	data=dict(request.params)
+	
+	data=request.json_body
+	print(request.json_body)
 	proto_name = request.matchdict['name']
+	pk_data = request.matchdict['PK_data']
+	print(pk_data)
 	# insert new row in the protocol
-	if request.params.has_key('PK')!=True :
-		
+	if int(pk_data) == 0 :
+		print('____________INSERT PROTOCOL DATA_______________')
 		new_proto=dict_proto[proto_name]()
 		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
 		DBSession.flush()
 		id_proto= new_proto.PK
 		print(id_proto)
-		return id_proto
+		
 
 	else :
-
-		up_proto=DBSession.query(dict_proto[protocolName]).get(data['PK'])
-		del data['name'],data['PK'],data['FK_TSta_ID']
+		print('____________UPDATE PROTOCOL DATA_______________')
+		up_proto=DBSession.query(dict_proto[proto_name]).get(pk_data)
+		
 		print(up_proto)
 		up_proto.InitFromFields(data)
 		id_proto=up_proto.PK
 		transaction.commit()
 
-		return id_proto
+	return id_proto
 
 @view_config(route_name=prefix+'/protocol', renderer='json', request_method='GET')
 def get_protocol_on_station (request):
