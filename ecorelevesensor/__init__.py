@@ -101,7 +101,11 @@ def add_routes(config):
     config.add_route('station/area', 'ecoReleve-Core/station/area')
     config.add_route('station/locality', 'ecoReleve-Core/station/locality')
     config.add_route('station/get', 'ecoReleve-Core/station/get')
-    config.add_route('station/id', 'ecoReleve-Core/station/id')
+    config.add_route('station/id', 'ecoReleve-Core/station/{id}')
+    config.add_route('station/id/next', 'ecoReleve-Core/station/{id}/next')
+    config.add_route('station/id/prev', 'ecoReleve-Core/station/{id}/prev')
+
+
     config.add_route('station', 'ecoReleve-Core/station')
     config.add_route('station/addStation', 'ecoReleve-Core/station/addStation/insert')
     config.add_route('station/addMultStation', 'ecoReleve-Core/station/addMultStation/insert')
@@ -110,7 +114,7 @@ def add_routes(config):
     config.add_route('station/protocol', 'ecoReleve-Core/station/{id}/protocol')
     config.add_route('station/protocol/data', 'ecoReleve-Core/station/{id}/protocol/{name}/{PK_data}')
 
-    config.add_route('station/search', 'ecoReleve-Core/station/search')
+    config.add_route('station/search', 'ecoReleve-Core/search/station')
 
     config.add_route('protocols/list', 'ecoReleve-Core/protocols/list')
     

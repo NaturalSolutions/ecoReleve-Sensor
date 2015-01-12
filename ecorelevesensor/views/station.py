@@ -80,14 +80,52 @@ def monitoredSites(request):
 	return data
 
 @view_config(route_name=prefix+'/id', renderer='json', request_method='GET')
-def monitoredSite(request):
+def station_by_id(request):
    
 	id_ = request.matchdict['id']
-	print(id_)
-	print(Station)
-	data = DBSession.query(Station).filter(Station.id == id_).one()
-	return data
+	data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
+	print(data)
+	if data != None : 
+		res = {key:val for key, val in data.items()}
+	else : 
+		res=data
+	return res
 
+@view_config(route_name=prefix+'/id/next', renderer='json', request_method='GET')
+def next_station(request):
+   
+	id_ = int(request.matchdict['id'])
+	data = None
+	last_id = DBSession.execute(select([Station.id]).order_by(Station.id.desc())).first()
+	last_id = last_id[0]
+	print (last_id)
+	while data == None :
+		id_+=1
+		print(id_)
+		if id_ > last_id :
+			id_ = 1
+		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
+	
+	res = {key:val for key, val in data.items()}
+	return res
+
+@view_config(route_name=prefix+'/id/prev', renderer='json', request_method='GET')
+def prev_station(request):
+   
+	id_ = int(request.matchdict['id'])
+	data = None
+	last_id = DBSession.execute(select([Station.id]).order_by(Station.id.desc())).first()
+	last_id = last_id[0]
+	
+	while data == None :
+		id_-=1
+		print(id_)
+		if id_ < 1 :
+			id_ = last_id
+		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
+	
+	res = {key:val for key, val in data.items()}
+	return res
 	
 @view_config(route_name=prefix+'/area', renderer='json', request_method='POST')
 def monitoredSitesArea(request):

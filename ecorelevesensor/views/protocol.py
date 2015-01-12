@@ -1,5 +1,5 @@
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, alias
+from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, alias, cast, Time
 from ecorelevesensor.models import *
 import numpy as np
 import sys, datetime, transaction
@@ -158,8 +158,21 @@ def get_data_on_protocol (request):
 		model_proto = json.load(json_data)
 
 	if  pk_data != 0 :
-	
+		Tproto = dict_proto[proto_name]
 		Tproto = Base.metadata.tables['TProtocol_'+str(proto_relation[0])]
+		query_cols = []
+		
+		for col in Tproto.c : 
+			print (col.name)
+			if ('time' in col.name.lower() and 'DATETIME' in col.type.upper()
+				) or ('hour' in col.name.lower() and 'DATETIME' in col.type.upper()) :
+				query_cols.append(cast(Tproto.c[col.name],Time ))
+
+			else : 
+				query_cols.append(Tproto.c[col.name])
+
+
+		
 		query = select([Tproto]).where(Tproto.c['PK'] == pk_data)
 		data = DBSession.execute(query).fetchall()
 		print (data)

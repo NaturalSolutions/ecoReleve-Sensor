@@ -75,4 +75,5 @@ class GenProtocole ():
 	def GetAttributeNameFromColumn(self,ColumnName):
 		return ColumnName
 
+	
 
