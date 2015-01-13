@@ -164,8 +164,8 @@ def get_data_on_protocol (request):
 		
 		for col in Tproto.c : 
 			print (col.name)
-			if ('time' in col.name.lower() and 'DATETIME' in col.type.upper()
-				) or ('hour' in col.name.lower() and 'DATETIME' in col.type.upper()) :
+			if ('time' in col.name.lower() and 'DATETIME' in str(col.type).upper()
+				) or ('hour' in col.name.lower() and 'DATETIME' in str(col.type).upper()) :
 				query_cols.append(cast(Tproto.c[col.name],Time ))
 
 			else : 
