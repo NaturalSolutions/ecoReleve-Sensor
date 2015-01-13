@@ -1,5 +1,5 @@
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, alias, cast, Time
+from sqlalchemy import select, distinct, join, text,Table, and_, bindparam, update, alias, cast, Time, String, Integer
 from ecorelevesensor.models import *
 import numpy as np
 import sys, datetime, transaction
@@ -163,21 +163,27 @@ def get_data_on_protocol (request):
 		query_cols = []
 		
 		for col in Tproto.c : 
-			print (col.name)
+			print(str(col.type))
 			if ('time' in col.name.lower() and 'DATETIME' in str(col.type).upper()
 				) or ('hour' in col.name.lower() and 'DATETIME' in str(col.type).upper()) :
-				query_cols.append(cast(Tproto.c[col.name],Time ))
+				print('________CAST______')
+				query_cols.append(cast(cast(Tproto.c[col.name],Time ),String).label(col.name))
+			elif str(col.type) == 'BIT':
+				print('_______BOOOL________')
+				query_cols.append(cast(Tproto.c[col.name],Integer).label(col.name))
 
-			else : 
+			else :
+				print('-------NON CAST------')
+				print (col.name)
 				query_cols.append(Tproto.c[col.name])
 
 
-		
-		query = select([Tproto]).where(Tproto.c['PK'] == pk_data)
+	
+		query = select(query_cols).where(Tproto.c['PK'] == pk_data)
+		print(query)
 		data = DBSession.execute(query).fetchall()
 		print (data)
 		model_proto['data']= [OrderedDict(row) for row in data][0]
-
 	return model_proto
 
 
