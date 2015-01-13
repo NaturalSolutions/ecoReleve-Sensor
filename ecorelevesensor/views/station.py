@@ -86,7 +86,9 @@ def station_by_id(request):
 	data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
 	print(data)
 	if data != None : 
-		res = {key:val for key, val in data.items()}
+		res = {key:val for key, val in data.items() }
+		res['PK'] = res['TSta_PK_ID'] 
+		del res['TSta_PK_ID']
 	else : 
 		res=data
 	return res
@@ -107,6 +109,9 @@ def next_station(request):
 		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
 	
 	res = {key:val for key, val in data.items()}
+	res['PK'] = res['TSta_PK_ID'] 
+	del res['TSta_PK_ID']
+
 	return res
 
 @view_config(route_name=prefix+'/id/prev', renderer='json', request_method='GET')
@@ -124,7 +129,9 @@ def prev_station(request):
 			id_ = last_id
 		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
 	
-	res = {key:val for key, val in data.items()}
+	res = {key:val for key, val in data.items() }
+	res['PK'] = res['TSta_PK_ID'] 
+	del res['TSta_PK_ID']
 	return res
 	
 @view_config(route_name=prefix+'/area', renderer='json', request_method='POST')
