@@ -24,7 +24,7 @@
     "Id_Observer": {
       "validators": [],
       "type": "Select",
-      "options": [''],
+      "options": [""],
       "title": "Observer",
       "editorAttrs": { "user_list": "username_list" },
       "editorClass": "required"
@@ -33,7 +33,7 @@
       "validators": [
       ],
       "type": "Select",
-      "options": [''],
+      "options": [""],
       "title": "Assistant",
       "editorAttrs": { "user_list": "username_list" }
     },
