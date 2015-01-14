@@ -109,9 +109,19 @@ def next_station(request):
 		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
 	
 	res = {key:val for key, val in data.items()}
-	res['PK'] = res['TSta_PK_ID'] 
+	res['PK'] = res['TSta_PK_ID']
+
 	del res['TSta_PK_ID']
 
+	workerList = [res['FieldWorker1'],res['FieldWorker2'],res['FieldWorker3']]
+	users_ID_query = select([User.fullname], User.id.in_((workerList)))
+	users_ID = DBSession.execute(users_ID_query).fetchall()
+	users_ID=[row[0] for row in users_ID]
+	if len(users_ID) <= 1 :
+		users_ID.extend([None,None])
+	res['FieldWorker1'] = users_ID[0]
+	res['FieldWorker2'] = users_ID[1]
+	res['FieldWorker3'] = users_ID[2]
 	return res
 
 @view_config(route_name=prefix+'/id/prev', renderer='json', request_method='GET')
@@ -447,8 +457,8 @@ def insertMultStation(request):
 		query=select([Station]).where(and_(Station.creator==request.authenticated_userid,Station.creationDate==creation_date))
 		stationList=DBSession.execute(query).fetchall()
 		result=[{'PK':sta['TSta_PK_ID'], 'Name':sta['Name'], 'Date_': sta.date.strftime('%d/%m/%Y %H:%M:%S')
-		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':int(data[0]['fieldWorker1'])
-		,'FieldWorker2':int(data[0]['fieldWorker2']),'FieldWorker3':int(data[0]['fieldWorker3'])
+		,'LAT':sta['LAT'], 'LON':sta['LON'],'FieldWorker1':data[0]['fieldWorker1']
+		,'FieldWorker2':data[0]['fieldWorker2'],'FieldWorker3':data[0]['fieldWorker3']
 		,'FieldActivity_Name':sta['FieldActivity_Name'], 'Region':sta['Region'], 'UTM20':sta['UTM20']
 		, 'FieldWorker4':'','FieldWorker5':'' } for sta in stationList]
 		transaction.commit()

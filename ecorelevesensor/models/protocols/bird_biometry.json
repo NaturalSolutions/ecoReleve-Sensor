@@ -23,17 +23,19 @@
     },
     "Id_Observer": {
       "validators": [],
-      "type": "Text",
+      "type": "Select",
+      "options": [''],
       "title": "Observer",
-      "editorAttrs": { "list": "username_list" },
+      "editorAttrs": { "user_list": "username_list" },
       "editorClass": "required"
     },
     "Id_Assistant": {
       "validators": [
       ],
-      "type": "Text",
+      "type": "Select",
+      "options": [''],
       "title": "Assistant",
-      "editorAttrs": { "list": "username_list" }
+      "editorAttrs": { "user_list": "username_list" }
     },
     "Id_Sex": {
       "validators": [
