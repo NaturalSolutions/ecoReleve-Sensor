@@ -43,14 +43,14 @@ class GenProtocole ():
 					setattr(self,self.GetAttributeNameFromColumn('id_age'),age_value[Value])
 					continue
 
-			if (Key=='Id_Observer' or Key=='Id_Assistant') :
-				users_ID_query = select([User.id], User.fullname.in_(([Value])))
-				users_ID = DBSession.execute(users_ID_query).fetchone()
-				try:
-					setattr(self,self.GetAttributeNameFromColumn(Key),users_ID[0])
-				except :
-					setattr(self,self.GetAttributeNameFromColumn(Key),None)
-					continue
+			# if (Key=='Id_Observer' or Key=='Id_Assistant') :
+			# 	users_ID_query = select([User.id], User.fullname.in_(([Value])))
+			# 	users_ID = DBSession.execute(users_ID_query).fetchone()
+			# 	try:
+			# 		setattr(self,self.GetAttributeNameFromColumn(Key),users_ID[0])
+			# 	except :
+			# 		setattr(self,self.GetAttributeNameFromColumn(Key),None)
+			# 		continue
 
 			if (Key=='Name_Taxon' or Key=='name_taxon') :
 				taxName=Value.split('>')[-1]

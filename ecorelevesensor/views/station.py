@@ -117,11 +117,13 @@ def next_station(request):
 	users_ID_query = select([User.fullname], User.id.in_((workerList)))
 	users_ID = DBSession.execute(users_ID_query).fetchall()
 	users_ID=[row[0] for row in users_ID]
+	
+	for i in range(len(users_ID)) :
+		res['FieldWorker'+str(i+1)] = users_ID[i]
+	
 	if len(users_ID) <= 1 :
 		users_ID.extend([None,None])
-	res['FieldWorker1'] = users_ID[0]
-	res['FieldWorker2'] = users_ID[1]
-	res['FieldWorker3'] = users_ID[2]
+	
 	return res
 
 @view_config(route_name=prefix+'/id/prev', renderer='json', request_method='GET')
@@ -295,7 +297,8 @@ def insertNewStation(request):
 			station=Station(name=data['Name'],lat=data['LAT'], lon= data['LON'], 
 				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
 				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
-				fieldWorker1=data['FieldWorker1'],fieldWorker2=data['FieldWorker2'],fieldWorker3=data['FieldWorker3'],id_siteMonitored=data['id_site'])
+				fieldWorker1=data['FieldWorker1'],fieldWorker2=data['FieldWorker2'],fieldWorker3=data['FieldWorker3']
+				,id_siteMonitored=data['id_site'], nbFielWorker= data['FieldWorkersNumber'], precision= data['precision'])
 
 			DBSession.add(station)
 			DBSession.flush()

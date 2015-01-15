@@ -31,6 +31,7 @@ class Station(Base):
     fieldWorker1= Column('FieldWorker1', Integer)
     fieldWorker2= Column('FieldWorker2', Integer)
     fieldWorker3= Column('FieldWorker3', Integer)
+    nbFielWorker= Column('NbFieldWorker', Integer)
     lat = Column('LAT',Numeric(9,5))
     lon = Column('LON',Numeric(9,5))
     ele = Column(Integer)

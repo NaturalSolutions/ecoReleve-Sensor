@@ -129,7 +129,7 @@ def get_protocol_on_station (request):
 
 		for name, Id, relation in proto_list : 
 			proto_on_sta[name] = {'id' : Id, 'PK_data': [0] }
-
+	print (len(proto_on_sta))
 	return proto_on_sta
 		
 
