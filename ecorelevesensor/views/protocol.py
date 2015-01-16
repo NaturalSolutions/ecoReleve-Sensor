@@ -68,11 +68,13 @@ def update_protocol (request):
 	print(request.json_body)
 	proto_name = request.matchdict['name']
 	pk_data = int(request.matchdict['PK_data'])
+	id_station = int(request.matchdict['id'])
 	print(pk_data)
 	# insert new row in the protocol
 	if int(pk_data) == 0 :
 		print('____________INSERT PROTOCOL DATA_______________')
 		new_proto=dict_proto[proto_name]()
+		data['FK_TSta_ID'] = id_station
 		new_proto.InitFromFields(data)
 		DBSession.add(new_proto)
 		DBSession.flush()
