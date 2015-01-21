@@ -130,6 +130,7 @@ def monitoredSite_filters(request):
 @view_config(route_name=prefix + '/search_geoJSON', renderer='json', request_method='GET')
 def monitoredSite_geoJSON(request):
 
+
     table=Base.metadata.tables['V_Qry_MonitoredSites']
 
 

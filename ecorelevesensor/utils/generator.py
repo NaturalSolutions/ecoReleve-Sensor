@@ -175,8 +175,10 @@ class Generator :
                 
                 query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
 
+        '''
         if offset!=None:
             query, total=self.get_page(query,offset,per_page, order_by)
+        '''
 
         data=DBSession.execute(query).fetchall()    
 
