@@ -338,3 +338,33 @@ def rfid_update(request):
     '''
 
     
+@view_config(route_name=prefix + 'pose/getFields', renderer='json', request_method='GET')
+def rfid_pose_filters(request):
+    
+    print('____________FIELDS_________________')
+    data_helper= Generator('RFID_MonitoredSite')
+
+    colist=[
+    {'name':'PK_obj','label':'ID_Obj','display':False,'edit':False},
+    {'name':'identifier','label':'Identifier','display':True, 'edit':False},
+    {'name':'begin_date','label':'Begin Date','display':True, 'edit':False},
+    {'name':'end_date','label':'End Date','display':True, 'edit':False},
+    {'name':'Name','label':'Site Name','display':True, 'edit':False},
+    {'name':'name_Type','label':'Site Type','display':True, 'edit':False},
+    ]
+
+    check = request.GET.get('checked') == 'true'
+    cols = data_helper.get_col(colist, checked=check)
+
+    return cols
+
+@view_config(route_name=prefix + 'pose/search', renderer='json', request_method='GET')
+def rfids_update(request):
+
+    data_helper= Generator('RFID_MonitoredSite')
+    criteria=json.loads(request.params.get('criteria',{}))
+
+    print('________search_______')
+    print(criteria)
+    result = data_helper.get_search(criteria)
+    return result

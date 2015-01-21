@@ -308,7 +308,7 @@ def insertNewStation(request):
 			return {'PK':id_sta,'Region':geoRegion,'UTM20':geoUTM}
 
 		except Exception as err: 
-			print(err)
+			
 			msg = err.args[0] if err.args else ""
 			response=Response('Problem occurs on station insert : '+str(type(err))+' = '+msg)
 			response.status_int = 500
