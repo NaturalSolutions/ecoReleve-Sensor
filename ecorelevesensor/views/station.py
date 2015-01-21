@@ -467,7 +467,7 @@ def insertMultStation(request):
 		transaction.commit()
 		
 		return {
-		'response':str(len(stationList))+' stations was added with succes, '
+		'response':str(len(stationList))+' stations were added with succes, '
 		+str(len(final)-len(stationList))+' are already existing'
 		,'data': result }
 
