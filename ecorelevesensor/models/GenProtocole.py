@@ -24,7 +24,7 @@ class GenProtocole ():
 				setattr(self,self.GetAttributeNameFromColumn(Key),Value)
 				print(' Set Attribute ' + Key + ':' + str(Value) )
 
-			if (Key =='Name_Sex' or Key=='name_sex') :
+			if (Key =='Name_Sex' or Key=='name_sex' and Val!=None) :
 				
 				print(' Set Attribute Id_Sex:' + str(sex_value[Value]) )
 				try :
@@ -33,7 +33,7 @@ class GenProtocole ():
 					setattr(self,self.GetAttributeNameFromColumn('id_sex'),sex_value[Value])
 					continue
 
-			if (Key =='Name_Age' or Key=='name_age') :
+			if (Key =='Name_Age' or Key=='name_age' and Val!=None) :
 				
 				print(' Set Attribute Id_Age:' + str(age_value[Value]) )
 

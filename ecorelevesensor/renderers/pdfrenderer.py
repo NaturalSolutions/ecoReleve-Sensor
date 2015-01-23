@@ -2,16 +2,16 @@
 import io
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageTemplate, Frame
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus.flowables import PageBreak
 from reportlab.lib import colors
 from ecorelevesensor.utils.spreadsheettable import SpreadsheetTable
-
+from reportlab.lib.pagesizes import letter, landscape
 
 class PDFrenderer(object):
-	def __init__(selfo):
+	def __init__(self):
 		pass
 
 	def addPageNumber(self,canvas, doc):
@@ -38,7 +38,7 @@ class PDFrenderer(object):
 		for obj in rows:
 			row = []
 			for item in obj:
-				row.append(item)				
+				row.append(item)                
 			data.append(row)
 
 
@@ -78,7 +78,7 @@ class PDFrenderer(object):
 		if name_vue=="V_Qry_VIndiv_MonitoredLostPostReleaseIndividuals_LastStations":
 			Story.append(Paragraph("Nom de l\'observateur:_____________________________",styleSheet['BodyText']))
 			Story.append(Paragraph("Secteur de suivi: _____________________ Date de Saisie: _________________",styleSheet['BodyText']))
-			Story.append(Spacer(0, 10 * mm))
+			Story.append(Spacer(0, 5 * mm))
 
 		table_style=[('GRID', (0,0), (-1,-1), 1, colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER'),
 		('LEFTPADDING', (0,0), (-1,-1), 3),
@@ -86,7 +86,13 @@ class PDFrenderer(object):
 		('FONTSIZE', (0,0), (-1,-1), table_font_size),
 		('FONTNAME', (0,0), (-1,0), 'Times-Bold')
 		]
-
+		frame1 = Frame(doc.leftMargin, doc.height-5*25.4*mm,
+                doc.width, 5*25.4*mm,
+                leftPadding = 0, rightPadding = 0,
+                topPadding = 0, bottomPadding = 0,
+                id='frame1')
+		# ltemplate = PageTemplate(id='landscape',frames =[frame1], onPage=self.make_landscape)
+		# doc.addPageTemplates([ltemplate])
 		spreadsheet_table = SpreadsheetTable(data, repeatRows = 1)
 		spreadsheet_table.setStyle(table_style)
 		Story.append(spreadsheet_table)
@@ -98,3 +104,5 @@ class PDFrenderer(object):
 		return pdf
 
 
+	def make_landscape(self,canvas,doc):
+		canvas.setPageSize(landscape(letter))
