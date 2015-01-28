@@ -3,7 +3,7 @@ Created on Thu Aug 28 16:45:25 2014
 @author: Natural Solutions (Thomas)
 """
 
-import re, operator
+import re, operator, transaction
 
 
 from datetime import datetime
@@ -59,6 +59,7 @@ def rfid_add(request):
         DBSession.add(obj)
         rfid = DBSession.query(ObjectRfid.id
             ).filter(ObjectRfid.identifier==obj.identifier).scalar()
+        transaction.commit()
     except IntegrityError:
         request.response.status_code = 500
         return 'Error: An object with the same identifier already exists.'
@@ -91,7 +92,10 @@ def rfid_active_byDate(request):
 @view_config(route_name=prefix+'identifier', renderer='json')
 def rfid_get_identifier(request):
     query = select([ObjectRfid.identifier]).where(ObjectRfid.type_=='rfid')
-    return [row[0] for row in DBSession.execute(query).fetchall()]
+    data =  DBSession.execute(query).fetchall()
+    transaction.commit()
+
+    return [row[0] for row in data]
 
 @view_config(route_name=prefix+'import', renderer='string')
 def rfid_import(request):
