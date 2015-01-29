@@ -14,7 +14,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE VIEW V_Search_AllStation_with_MonitoredSite_Indiv
+ALTER VIEW V_Search_AllStation_with_MonitoredSite_Indiv2
 AS
 
 SELECT  
@@ -49,8 +49,8 @@ sta.[TSta_PK_ID] as id
 FROM TStations sta 
 left outer join [dbo].[V_Individuals_Stations] ind ON sta.TSta_PK_ID= ind.sta_id
 left outer join [dbo].[TMonitoredStations] m on sta.[TSta_FK_TGeo_ID]=m.TGeo_pk_id 
-left outer join T_User u1 on sta.FieldWorker1=u1.PK_id
-left outer join T_User u2 on sta.FieldWorker2=u2.PK_id
-left outer join T_User u3 on sta.FieldWorker3=u3.PK_id
+left outer join T_User_Full u1 on sta.FieldWorker1=u1.PK_id
+left outer join T_User_Full u2 on sta.FieldWorker2=u2.PK_id
+left outer join T_User_Full u3 on sta.FieldWorker3=u3.PK_id
 
 GO
