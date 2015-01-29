@@ -124,22 +124,24 @@
     "Measured_Distance": {
       "validators": [],
       "type": "Number",
-      "title": "measured distance"
+      "title": "measured distance(m)"
     },
     "Estimated_Distance": {
       "validators": [],
       "type": "Number",
-      "title": "estimated distance"
+      "title": "estimated distance(m)"
     },
     "AngleNorth": {
       "validators": [],
       "type": "Number",
-      "title": "angle from north"
+      "title": "angle from north(°)",
+      "editorAttrs": { "min": 0, "max" : 360 }
     },
     "AngleTrack": {
       "validators": [],
       "type": "Number",
-      "title": "angle from track"
+      "title": "angle from track(°)",
+      "editorAttrs": { "min": 0, "max" : 360 }
     },
     "timestamp": {
       "validators": [],
