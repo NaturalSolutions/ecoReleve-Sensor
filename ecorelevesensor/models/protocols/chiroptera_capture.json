@@ -35,47 +35,20 @@
     },
     "Dead": {
       "validators": [],
-      "options": [
-        {
-          "val": "0",
-          "label": "false"
-        },
-        {
-          "val": "1",
-          "label": "true"
-        }
-      ],
-      "type": "Radio",
+      "options" : ["true"],
+      "type": "Checkboxes",
       "title": "Dead"
     },
     "Recorded": {
       "validators": [],
-      "options": [
-        {
-          "val": "0",
-          "label": "false"
-        },
-        {
-          "val": "1",
-          "label": "true"
-        }
-      ],
-      "type": "Radio",
+      "options" : ["true"],
+      "type": "Checkboxes",
       "title": "Recorded"
     },
     "Sampled": {
       "validators": [],
-      "options": [
-        {
-          "val": "0",
-          "label": "false"
-        },
-        {
-          "val": "1",
-          "label": "true"
-        }
-      ],
-      "type": "Radio",
+      "options" : ["true"],
+      "type": "Checkboxes",
       "title": "Sampled"
     },
     "Hour": {
@@ -87,168 +60,149 @@
     },
     "Picture": {
       "validators": [],
-      "options": [
-        {
-          "val": "0",
-          "label": "false"
-        },
-        {
-          "val": "1",
-          "label": "true"
-        }
-      ],
-      "type": "Radio",
+      "options" : ["true"],
+      "type": "Checkboxes",
       "title": "Picture"
     },
     "Recatch": {
       "validators": [],
-      "options": [
-        {
-          "val": "0",
-          "label": "false"
-        },
-        {
-          "val": "1",
-          "label": "true"
-        }
-      ],
-      "type": "Radio",
+      "options" : ["true"],
+      "type": "Checkboxes",
       "title": "Recapture"
     },
-
     "FA": {
       "validators": [
-    {"type":"min", "value":20},
+		{"type":"min", "value":20},
         {"type":"max", "value":100}
-    ],
+	  ],
       "type": "Number",
       "title": "FA+(mm)"
     },
     "Tib": {
       "validators": [
-    {"type":"min", "value":5},
+		{"type":"min", "value":5},
         {"type":"max", "value":40}
-    ],
+	  ],
       "type": "Number",
       "title": "Tib(mm)"
     },
     "CM3": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":15}
-    ],
+	  ],
       "type": "Number",
       "title": "CM3(mm)"
     },
     "D3": {
       "validators": [
-    {"type":"min", "value":40},
+		{"type":"min", "value":40},
         {"type":"max", "value":140}
-    ],
+	  ],
       "type": "Number",
       "title": "D3(mm)"
     },
     "D3_1": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D3_1(mm)"
     },
     "D3_2": {
       "validators": [
-      {"type":"min", "value":2},
+	    {"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D3_2(mm)"
     },
     "D3_3": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D3_3(mm)"
     },
     "D4": {
       "validators": [
-      {"type":"min", "value":40},
+	    {"type":"min", "value":40},
         {"type":"max", "value":140}
-    ],
+	  ],
       "type": "Number",
       "title": "D4(mm)"
     },
     "D4_1": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D4_1(mm)"
     },
     "D4_2": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D4_2(mm)"
     },
     "D5": {
       "validators": [
-     {"type":"min", "value":30},
+		 {"type":"min", "value":30},
          {"type":"max", "value":140}
-    ],
+	  ],
       "type": "Number",
       "title": "D5(mm)"
     },
     "D5_1": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D5_1(mm)"
     },
     "D5_2": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":50}
-    ],
+	  ],
       "type": "Number",
       "title": "D5_2(mm)"
     },
     "D1": {
       "validators": [
-    {"type":"min", "value":2},
+		{"type":"min", "value":2},
         {"type":"max", "value":20}
-    ],
+	  ],
       "type": "Number",
       "title": "D1(mm)"
     },
     "Claw_D1": {
       "validators": [
-    {"type":"min", "value":0.2},
+		{"type":"min", "value":0.2},
         {"type":"max", "value":5}
-    ],
+	  ],
       "type": "Number",
       "title": "Claw_D1(mm)"
     },
     "tragus_Lenght": {
       "validators": [
-    {"type":"min", "value":5},
+		{"type":"min", "value":5},
         {"type":"max", "value":40}
-    ],
+	  ],
       "type": "Number",
       "title": "Tragus lenght(mm)"
     },
     "tragus_Width" :{
       "validators": [
-    {"type":"min", "value":1},
+		{"type":"min", "value":1},
         {"type":"max", "value":10}
-    ],
+	  ],
       "type": "Number",
       "title": "Tragus width(mm)"
     },
@@ -296,11 +250,6 @@
       "type": "TextArea",
       "title": "Comments"
     },
-    "Number": {
-      "validators": [],
-      "type": "Number",
-      "title": "Number"
-    },
     "Comments": {
       "validators": [
 
@@ -327,7 +276,7 @@
       "legend": "Reproductive state"
     },
     {
-      "fields": ["Comments","Number"],
+      "fields": ["Comments"],
       "legend": "Other"
     }
   ]

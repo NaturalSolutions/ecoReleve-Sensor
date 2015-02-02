@@ -11,123 +11,60 @@
 			"type": "Hidden",
 			"title":" Station id"
 		},
-		"Id_Taxon":{
-			"validators":[
-				"required"
-			],
-			"type": "Picker",
-			"title":"Id taxon",
-			"editorClass": "required"
-		},
 		"Name_Taxon":{
 			"validators":[
 			],
 			"type": "Text",
-			"title":"Name taxon"
+			"title":"Taxon",
+			"editorAttrs": { "startId": "2" },
+      		"editorClass": "autocompTree"
 		},
 		"Identity_sure":{
-			"validators":[
-			],
-			"options": [
-			{
-			"val": "1",
-			"label": "true"
-			},
-			{
-			"val": "0",
-			"label": "false"
-			}
-			],
-			"type": "Radio",
-			"title":"Identity sure"
+		"validators":[
+		],
+		"options" : ["true"],
+		"type": "Checkboxes",
+		"title":"Identity sure"
 		},
 		"Sampled":{
-			"validators":[
-			],
-			"options": [
-				{
-				"val": "1",
-				"label": "true"
-				},
-				{
-				"val": "0",
-				"label": "false"
-				}
-			],
-			"type": "Radio",
-			"title":"Sampled"
+		"validators":[
+		],
+		"options" : ["true"],
+		"type": "Checkboxes",
+		"title":"Sampled"
 		},
 		"Picture":{
-			"validators":[
-			],
-			"options": [
-			{
-			"val": "1",
-			"label": "true"
-			},
-			{
-			"val": "0",
-			"label": "false"
-			}
-			],
-			"type": "Radio",
-			"title":"Picture"
-		},
-		"Id_Global_Abondance_Dom":{
-			"validators":[
-			],
-			"type": "Hidden",
-			"title":"Id global abondance dom"
+		"validators":[
+		],
+		"options" : ["true"],
+		"type": "Checkboxes",
+		"title":"Picture"
 		},
 		"Name_Global_Abondance_Dom":{
 			"validators":[
 			],
 			"type": "Text",
-			"title":"Name global abondance dom",
+			"title":"Global abondance dom",
 			"editorAttrs": { "startId": "18" },
       		"editorClass": "autocompTree"
-		},
-		"Id_Global_Sociability":{
-			"validators":[
-			],
-			"type": "Number",
-			"title":"Id global sociability"
 		},
 		"Name_Global_Sociability":{
 			"validators":[
 			],
 			"type": "Text",
-			"title":"Name global sociability"
-		},
-		"Id_Phenology_BBCH1":{
-			"validators":[
-			],
-			"type": "Number",
-			"title":"Id phenology BBCH1"
+			"title":"Global sociability"
 		},
 		"Name_Phenology_BBCH1":{
 			"validators":[
 			],
 			"type": "Text",
-			"title":"Name phenology BBCH1"
-		},
-		"Id_Phenology_BBCH2":{
-			"validators":[
-			],
-			"type": "Number",
-			"title":"Id phenology BBCH2"
+			"title":"Phenology BBCH1"
 		},
 		"Name_Phenology_BBCH2":{
 			"validators":[
 			],
 			"type": "Text",
-			"title":"Name phenology BBCH2"
-		},
-		"Id_Nb_Individuals":{
-			"validators":[
-			],
-			"type": "Number",
-			"title":"Id nb individuals"
+			"title":"Phenology BBCH2"
 		},
 		"Name_Nb_Individuals":{
 			"validators":[
@@ -148,34 +85,17 @@
 			"title":"Comments"
 		},
 		"Cultivated":{
-			"validators":[
-			],
-			"options": [
-			{
-			"val": "1",
-			"label": "true"
-			},
-			{
-			"val": "0",
-			"label": "false"
-			}
-			],
-			"type": "Radio",
-			"title":"Cultivated"
+		"validators":[
+		],
+		"options" : ["true"],
+		"type": "Checkboxes",
+		"title":"Cultivated"
 		}
 	},
     "defaults":{
-		"Identity_sure":"1",
-		"Sampled":"0",
-		"Picture": "0",
-		"Cultivated":"0",
+		"Identity_sure":"true",
 		"Validator" : "",
-		"Id_Taxon":"",
-		"Id_Global_Abondance_Dom": "",
-		"Id_Global_Sociability": "",
-		"Id_Phenology_BBCH1" : "",
-		"Id_Phenology_BBCH2" : "",
-		"Id_Nb_Individuals":""
+		"Id_Taxon":""
    },
   "fieldsets": []
 }
