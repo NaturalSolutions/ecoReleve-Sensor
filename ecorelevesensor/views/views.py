@@ -110,25 +110,25 @@ def station_graph(request):
 
 @view_config(route_name = 'theme/list', renderer = 'json')
 def theme_list(request):
-	 data = []
-	 try:
-			j = join(ThemeEtude, MapSelectionManager, ThemeEtude.id == MapSelectionManager.TSMan_FK_Theme)
-			query = select([ThemeEtude.id, ThemeEtude.Caption]).where(ThemeEtude.Actif == 1).group_by(ThemeEtude.id, ThemeEtude.Caption).order_by(ThemeEtude.Caption)
-			try:
-				 if(request.GET['export'] is not None):
-						query = query.select_from(j)
-			except:
-				 pass
-			for id, caption in DBSession.execute(query).fetchall():
-				 data.append({'id':id, 'caption': caption})
-			try:
-				 if(request.GET['export'] is not None):
-						data.append({'id':'null', 'caption': 'Others'})
-			except:
-				 pass
-	 except Exception as e:
-			print(e)
-	 return data
+	data = []
+	 # try:
+	j = join(ThemeEtude, MapSelectionManager, ThemeEtude.id == MapSelectionManager.TSMan_FK_Theme)
+	query = select([ThemeEtude.id, ThemeEtude.Caption]).where(ThemeEtude.Actif == 1).group_by(ThemeEtude.id, ThemeEtude.Caption).order_by(ThemeEtude.Caption)
+	try:
+		 if(request.GET['export'] is not None):
+				query = query.select_from(j)
+	except:
+		 pass
+	for id, caption in DBSession.execute(query).fetchall():
+		 data.append({'id':id, 'caption': caption})
+	try:
+		 if(request.GET['export'] is not None):
+				data.append({'id':'null', 'caption': 'Others'})
+	except:
+		 pass
+	 # except Exception as e:
+		# 	print(e)
+	return data
 
 @view_config(route_name = 'core/protocoles/list', renderer = 'string')
 def protocoles_list(request):
@@ -148,104 +148,104 @@ def protocoles_list(request):
 
 @view_config(route_name = 'core/views/list', renderer = 'string')
 def views_list(request):
-	 xml = "<views>"
-	 try:
-			query = select([MapSelectionManager.id, MapSelectionManager.TSMan_sp_name, MapSelectionManager.TSMan_Layer_Name, MapSelectionManager.TSMan_Description, MapSelectionManager.TSMan_FK_Theme]).order_by(MapSelectionManager.TSMan_Layer_Name)
-			try:
-				 if request.GET['id_theme'] is not None:
-						query = query.where(MapSelectionManager.TSMan_FK_Theme == request.GET['id_theme'])
-			except Exception as e:
-				 print(e)
-			for id, sp_name, layer_name, description, fk_theme in DBSession.execute(query).fetchall():
-				 xml = xml + "<view id='"+sp_name+"'>"+layer_name.replace("_", " ")+"</view>"
-			xml = xml + "</views>"
-	 except Exception as e:
-			print(e)
-	 request.response.content_type = "text/xml"
-	 return xml
+	xml = "<views>"
+	 # try:
+	query = select([MapSelectionManager.id, MapSelectionManager.TSMan_sp_name, MapSelectionManager.TSMan_Layer_Name, MapSelectionManager.TSMan_Description, MapSelectionManager.TSMan_FK_Theme]).order_by(MapSelectionManager.TSMan_Layer_Name)
+	try:
+		 if request.GET['id_theme'] is not None:
+				query = query.where(MapSelectionManager.TSMan_FK_Theme == request.GET['id_theme'])
+	except Exception as e:
+		 print(e)
+	for id, sp_name, layer_name, description, fk_theme in DBSession.execute(query).fetchall():
+		 xml = xml + "<view id='"+sp_name+"'>"+description+"</view>"
+	xml = xml + "</views>"
+	 # except Exception as e:
+		# 	print(e)
+	request.response.content_type = "text/xml"
+	return xml
 
 @view_config(route_name = 'core/views/export/details', renderer = 'json')
 def views_details(request):
-	 data = []
-	 try:
-			name_vue = request.matchdict['name']
-			table = Base.metadata.tables[name_vue]
-			for column in table.c:
-				 name_c = str(column.name)
-				 type_c = str(column.type)
-				 if re.compile('VARCHAR').search(type_c):
-						type_c = 'string'
-				 data.append({'name':name_c, 'type':type_c})
-			return data
-	 except Exception as e:
-	 	print(e)
+	data = []
+ # try:
+	name_vue = request.matchdict['name']
+	table = Base.metadata.tables[name_vue]
+	for column in table.c:
+		 name_c = str(column.name)
+		 type_c = str(column.type)
+		 if re.compile('VARCHAR').search(type_c):
+				type_c = 'string'
+		 data.append({'name':name_c, 'type':type_c})
+	return data
+	 # except Exception as e:
+	 # 	print(e)
 
 @view_config(route_name = 'core/views/export/count', renderer = 'json')
 def views_count(request):
-	 try:
+	 # try:
 	 		
-			name_vue = request.matchdict['name']
-			table = Base.metadata.tables[name_vue]
-			count = DBSession.execute(table.count()).scalar()
-			return count
-	 except Exception as e:
-			print(e)
+	name_vue = request.matchdict['name']
+	table = Base.metadata.tables[name_vue]
+	count = DBSession.execute(table.count()).scalar()
+	return count
+	 # except Exception as e:
+		# 	print(e)
 
 
 @view_config(route_name = 'core/views/export/filter/count', renderer = 'json')
 def views_filter_count(request):
    print('_________'+'core/views/export/filter/count'+'_________')
-   try:
-      criteria = request.json_body.get('criteria', {})
+   # try:
+   criteria = request.json_body.get('criteria', {})
 
 
-      viewName = criteria['viewName']
-      table = Base.metadata.tables[viewName]
+   viewName = criteria['viewName']
+   table = Base.metadata.tables[viewName]
       #No Model?
-      query = select([func.count(table.c.values()[0])])
+   query = select([func.count(table.c.values()[0])])
 
-      filterList=criteria['filters']
-      for fltr in filterList:
-      	column=fltr['Column']
-      	query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+   filterList=criteria['filters']
+   for fltr in filterList:
+   	column=fltr['Column']
+   	query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 
-      count = DBSession.execute(query).scalar()
+   count = DBSession.execute(query).scalar()
 
-      return count
+   return count
 
-   except Exception as e:
-      print(e)
+   # except Exception as e:
+   #    print(e)
 
 @view_config(route_name = 'core/views/export/filter/geo', renderer = 'json')
 def views_filter(request):
-	 try:
+	 # try:
 			#name_vue = request.matchdict['name']
 			#table = Base.metadata.tables[name_vue]
-			criteria = request.json_body.get('criteria', {})
+	criteria = request.json_body.get('criteria', {})
 
-			viewName = criteria['viewName']
+	viewName = criteria['viewName']
 
-			table = Base.metadata.tables[viewName]
+	table = Base.metadata.tables[viewName]
 
+
+
+	result = {'type':'FeatureCollection', 'features':[]}
+
+	query = select([cast(table.c['LAT'].label('lat'), Float), cast(table.c['LON'].label('lon'), Float), func.count(table.c.values()[0])]).group_by(table.c['LAT'].label('lat'), table.c['LON'])
 	
 
-			result = {'type':'FeatureCollection', 'features':[]}
-
-			query = select([cast(table.c['LAT'].label('lat'), Float), cast(table.c['LON'].label('lon'), Float), func.count(table.c.values()[0])]).group_by(table.c['LAT'].label('lat'), table.c['LON'])
-			
-
-			filterList=criteria['filters']
-			for fltr in filterList:
-				column=fltr['Column']
-				query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+	filterList=criteria['filters']
+	for fltr in filterList:
+		column=fltr['Column']
+		query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 
-			for lat, lon, nb in  DBSession.execute(query).fetchall():
-				 result['features'].append({'type':'Feature', 'properties':{'count': nb}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
-			return result
-	 except Exception as e:
-			print(e)
+	for lat, lon, nb in  DBSession.execute(query).fetchall():
+		 result['features'].append({'type':'Feature', 'properties':{'count': nb}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
+	return result
+	 # except Exception as e:
+		# 	print(e)
 
 @view_config(route_name = 'core/views/export/filter/result', renderer = 'json')
 def views_filter_result(request):

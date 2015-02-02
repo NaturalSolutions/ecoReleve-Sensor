@@ -1,4 +1,4 @@
-import operator
+import operator, transaction
 from sqlalchemy import *
 import json,transaction
 from ecorelevesensor.models import Base, DBSession
@@ -100,13 +100,13 @@ class Generator :
             query, total=self.get_page(query,offset,per_page, order_by)
 
         data = DBSession.execute(query).fetchall()
-
+        
         if(total or total == 0):
             result = [{'total_entries':total}]
             result.append([OrderedDict(row) for row in data])
         else :
             result = [OrderedDict(row) for row in data]
-
+        transaction.commit()
         return result
 
 
@@ -187,5 +187,5 @@ class Generator :
             geoJson.append({'type':'Feature', 'properties':{'TGeo_pk_id':row['TGeo_pk_id']}, 'geometry':{'type':'Point', 'coordinates':[row['LON'],row['LAT']]}})
 
 
-
+        transaction.commit()
         return {'type':'FeatureCollection', 'features': geoJson}

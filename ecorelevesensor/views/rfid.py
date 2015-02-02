@@ -3,7 +3,7 @@ Created on Thu Aug 28 16:45:25 2014
 @author: Natural Solutions (Thomas)
 """
 
-import re, operator
+import re, operator, transaction
 
 
 from datetime import datetime
@@ -11,7 +11,7 @@ from datetime import datetime
 from ecorelevesensor.utils.generator import Generator
 
 from pyramid.view import view_config
-from sqlalchemy import select, insert, text, desc, bindparam, or_, outerjoin, func
+from sqlalchemy import select, insert, text, desc, bindparam, or_, outerjoin, func, and_
 from sqlalchemy.exc import IntegrityError
 import json
 from ecorelevesensor.models import (
@@ -59,6 +59,7 @@ def rfid_add(request):
         DBSession.add(obj)
         rfid = DBSession.query(ObjectRfid.id
             ).filter(ObjectRfid.identifier==obj.identifier).scalar()
+        transaction.commit()
     except IntegrityError:
         request.response.status_code = 500
         return 'Error: An object with the same identifier already exists.'
@@ -91,7 +92,10 @@ def rfid_active_byDate(request):
 @view_config(route_name=prefix+'identifier', renderer='json')
 def rfid_get_identifier(request):
     query = select([ObjectRfid.identifier]).where(ObjectRfid.type_=='rfid')
-    return [row[0] for row in DBSession.execute(query).fetchall()]
+    data =  DBSession.execute(query).fetchall()
+    transaction.commit()
+
+    return [row[0] for row in data]
 
 @view_config(route_name=prefix+'import', renderer='string')
 def rfid_import(request):
@@ -105,7 +109,7 @@ def rfid_import(request):
         content = request.POST['data']
         module = request.POST['module']
         idModule = DBSession.execute(select([ObjectRfid.id]).where(ObjectRfid.identifier==module)).scalar();
-
+     
         if re.compile('\r\n').search(content):
             data = content.split('\r\n')
         elif re.compile('\n').search(content):
@@ -153,6 +157,7 @@ def rfid_import(request):
         if (isHead):
             j=1
         #parsing data
+        allDate = []
         while j < len(data):
             i = 0
             if data[j] != "":
@@ -173,11 +178,25 @@ def rfid_import(request):
                             dt = datetime.strptime(dt, format_dt)
                         except :
                             dt = datetime.strptime(dt, format_dtBis)
+                        allDate.append(dt)
 
                     i=i+1
                 Rfids.add((creator, idModule, code, dt))
                 chip_codes.add(code)
             j=j+1
+
+        ## check if Date corresponds with pose remove module ##
+        table = Base.metadata.tables['RFID_MonitoredSite']
+        q_check_date = select([func.count('*')]).where(
+            and_(table.c['begin_date'] < allDate[0], table.c['end_date'] > allDate[-1])
+            ).where(table.c['identifier'] == module)
+        check = DBSession.execute(q_check_date).scalar() 
+        if check == 0 :
+            request.response.status_code = 510
+            message = "Dates of this uploded file (first date : "+str(allDate[0])+" , last date : "+str(allDate[-1])+") don't correspond with the Pose/remove dates of the selected module"
+            return message
+
+
         Rfids = [{DataRfid.creator.name: crea, DataRfid.obj.name: idMod, DataRfid.checked.name: '0',
                 DataRfid.chip_code.name: c, DataRfid.date.name: d, DataRfid.creation_date.name: now} for crea, idMod, c, d  in Rfids]
         # Insert data.
@@ -191,7 +210,7 @@ def rfid_import(request):
             message += '\n\nWarning : chip codes ' + str(unknown_chips) + ' are unknown.'
     except IntegrityError as e:
         request.response.status_code = 500
-        message = 'Error : data already exist.\n\nDetail :\n' + str(e.orig)
+        message = 'Data already exist.'
     except Exception as e:
         print(e)
         request.response.status_code = 520
@@ -338,3 +357,37 @@ def rfid_update(request):
     '''
 
     
+@view_config(route_name=prefix + 'pose/getFields', renderer='json', request_method='GET')
+def rfid_pose_filters(request):
+    
+    print('____________FIELDS_________________')
+    data_helper= Generator('RFID_MonitoredSite')
+
+    colist=[
+    {'name':'PK_obj','label':'ID_Obj','display':False,'edit':False},
+    {'name':'identifier','label':'Identifier','display':True, 'edit':False},
+    {'name':'begin_date','label':'Begin Date','display':True, 'edit':False},
+    {'name':'end_date','label':'End Date','display':True, 'edit':False},
+    {'name':'Name','label':'Site Name','display':True, 'edit':False},
+    {'name':'name_Type','label':'Site Type','display':True, 'edit':False},
+    ]
+
+    check = request.GET.get('checked') == 'true'
+    cols = data_helper.get_col(colist, checked=check)
+
+    return cols
+
+@view_config(route_name=prefix + 'pose/search', renderer='json', request_method='GET')
+def rfids_update(request):
+
+    data_helper= Generator('RFID_MonitoredSite')
+    criteria=json.loads(request.params.get('criteria',{}))
+
+  
+    print('________search_______')
+    print(criteria)
+    result = data_helper.get_search(criteria,offset=0,per_page=0, order_by={'begin_date:desc'})
+    return result
+
+# @view_config(route_name=prefix + 'import/checkData', renderer='json', request_method='GET')
+# def rfids_update(request):
