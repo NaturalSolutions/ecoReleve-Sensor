@@ -66,3 +66,29 @@ def core_individuals_search(request):
         query = query.order_by(*order_by_clause)
     # Run query
     return [OrderedDict(row) for row in DBSession.execute(query).fetchall()]
+
+
+
+@view_config(route_name=route_prefix + 'export', renderer='csv', request_method='POST')
+def core_individuals_export(request):
+
+    query = select(ObjectGsm.__table__.c)
+    # Look over the criteria list
+    criteria = request.json_body.get('criteria', {})
+    for column, value in criteria.items():
+        if column in ObjectGsm.__table__.c and value != '':
+            query = query.where(ObjectGsm.__table__.c[column] == value)
+
+    # Run query
+    data = DBSession.execute(query).fetchall()
+    header = [col.name for col in ObjectGsm.__table__.c]
+    rows = [[val for val in row] for row in data]
+    
+    # override attributes of response
+    filename = 'object_search_export.csv'
+    request.response.content_disposition = 'attachment;filename=' + filename
+    
+    return {
+        'header': header,
+        'rows': rows,
+    }

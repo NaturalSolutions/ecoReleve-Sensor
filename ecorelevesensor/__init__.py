@@ -84,6 +84,7 @@ def add_routes(config):
      ##### Transmitter #####
     config.add_route('transmitter/search/values', 'ecoReleve-Core/transmitter/search/values')
     config.add_route('transmitter/search', 'ecoReleve-Core/transmitter/search')
+    config.add_route('transmitter/export', 'ecoReleve-Core/transmitter/export')
     
     ##### Monitored sites #####
     config.add_route('monitoredSite/name', 'ecoReleve-Core/monitoredSite/name')

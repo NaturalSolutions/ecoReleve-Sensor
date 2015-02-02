@@ -5,7 +5,7 @@ from ecorelevesensor.models.data import (
    V_Individuals_History
 )
 
-from ecorelevesensor.models.views import V_SearchIndiv
+from ecorelevesensor.models.views import V_SearchIndiv, V_ExportIndiv
 
 from pyramid.security import NO_PERMISSION_REQUIRED
 from pyramid.view import view_config
@@ -125,7 +125,7 @@ def core_individuals_search_export(request):
     
     # Run query
     data = DBSession.execute(query).fetchall()
-    header = [col.name for col in V_SearchIndiv.c]
+    header = [col.name for col in V_ExportIndiv.c]
     rows = [[val for val in row] for row in data]
     
     # override attributes of response

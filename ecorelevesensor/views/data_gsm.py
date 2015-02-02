@@ -33,7 +33,9 @@ def data_gsm_unchecked_list(request):
     unchecked_with_ind = select([
         pie.ind_id.label('ind_id'),
         unchecked.c.platform_,
-        func.count().label('nb')
+        func.count().label('nb'),
+        pie.begin_date.label('begin_date'),
+        pie.end_date.label('end_date'),
     ]).select_from(
         unchecked.join(SatTrx, SatTrx.ptt == unchecked.c.platform_)
         .outerjoin(
@@ -46,7 +48,7 @@ def data_gsm_unchecked_list(request):
                 )
             )
         )
-    ).group_by(unchecked.c.platform_, pie.ind_id).order_by(unchecked.c.platform_)
+    ).group_by(unchecked.c.platform_, pie.ind_id, pie.begin_date, pie.end_date).order_by(unchecked.c.platform_)
     # Populate Json array
     data = DBSession.execute(unchecked_with_ind).fetchall()
     return [dict(row) for row in data]
@@ -82,7 +84,7 @@ def data_gsm_unchecked(request):
                 unchecked.c.date >= pie.begin_date,
                 or_(unchecked.c.date < pie.end_date,
                     pie.end_date == None)))).where(and_(pie.ind_id==ind_id,unchecked.c.platform_==platform)
-        ).order_by(desc(unchecked.c.date)).limit(1000)
+        ).order_by(desc(unchecked.c.date))
 
     data = DBSession.execute(query).fetchall()
 

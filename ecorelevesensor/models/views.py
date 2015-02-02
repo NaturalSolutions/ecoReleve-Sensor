@@ -61,6 +61,33 @@ V_SearchIndiv = select([
 
 ]).select_from(
     outerjoin(Individual, ReleaseSta, ReleaseSta.c['ind_id']==Individual.id)).alias()
+
+
+V_ExportIndiv = select([
+    Individual.id.label('id'),
+    Individual.chip_code.label('chip_code'),
+    Individual.breeding_ring.label('breeding_ring'),
+    Individual.release_ring.label('release_ring'),
+    Individual.age.label('age'),
+    Individual.mark1.label('mark1'),
+    Individual.mark2.label('mark2'),
+    Individual.monitoring_status.label('monitoring_status'),
+    Individual.origin.label('origin'),
+    Individual.ptt.label('ptt'),
+    Individual.frequency.label('frequency'),
+    Individual.sex.label('sex'),
+    Individual.species.label('species'),
+    Individual.status.label('status'),
+    Individual.survey_type.label('survey_type'),
+    ReleaseSta.c['release_area'],
+    ReleaseSta.c['release_year'],
+    ReleaseSta.c['Id_Observer'],
+    ReleaseSta.c['comments_Release'],
+    ReleaseSta.c['comments_Capture'],
+
+]).select_from(
+    outerjoin(Individual, ReleaseSta, ReleaseSta.c['ind_id']==Individual.id)).alias()
+
 """
 id5@TCarac_Transmitter_Frequency as frequency,
 id8@TCaracThes_Release_Ring_Color_Precision as releaseRingColor,
