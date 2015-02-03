@@ -15,6 +15,8 @@ import numpy as np
 import re
 import datetime,transaction,json
 
+
+
 prefix = 'dataGsm/'
 
 @view_config(route_name=prefix + 'unchecked/list', renderer='json')

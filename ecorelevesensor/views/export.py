@@ -17,6 +17,7 @@ from sqlalchemy import (
 import datetime, operator
 import re, csv
 
+from ecorelevesensor.utils.eval import Eval
 
 from ..models import DBSession, Base
 from pyramid.response import Response
@@ -26,7 +27,6 @@ from ecorelevesensor.renderers.csvrenderer import CSVRenderer
 from ecorelevesensor.renderers.pdfrenderer import PDFrenderer
 from ecorelevesensor.renderers.gpxrenderer import GPXRenderer
 from ecorelevesensor.views.views import query_criteria
-from ecorelevesensor.views.views import eval_binary_expr
 
 
 
@@ -59,7 +59,7 @@ def views_filter_export(request):
 		filterList=criteria['filters']['filters']
 		for fltr in filterList:
 			column=fltr['Column']
-			query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+			query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 		bbox=criteria['bbox']
 

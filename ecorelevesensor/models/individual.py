@@ -41,6 +41,9 @@ class Individual(Base):
     monitoring_status = Column('id60@TCaracThes_Monitoring_Status_Precision',
                                String)
     survey_type = Column('id61@TCaracThes_Survey_type_Precision', String)
+    
+
+    
     history = []
     
     def __json__(self, request):

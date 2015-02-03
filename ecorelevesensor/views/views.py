@@ -18,6 +18,8 @@ import datetime, operator
 import re, csv
 import json
 
+from ecorelevesensor.utils.eval import Eval
+
 from reportlab.lib.enums import TA_JUSTIFY
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
@@ -207,7 +209,7 @@ def views_filter_count(request):
    filterList=criteria['filters']
    for fltr in filterList:
    	column=fltr['Column']
-   	query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+   	query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 
    count = DBSession.execute(query).scalar()
@@ -238,7 +240,7 @@ def views_filter(request):
 	filterList=criteria['filters']
 	for fltr in filterList:
 		column=fltr['Column']
-		query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+		query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 
 	for lat, lon, nb in  DBSession.execute(query).fetchall():
@@ -328,7 +330,7 @@ def views_filter_result(request):
 	 	filterList=criteria['filters']['filters']
 	 	for fltr in filterList:
 	 		column=fltr['Column']
-	 		query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+	 		query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 	 	
 	 	#bbox selection
@@ -358,20 +360,6 @@ def views_filter_result(request):
 
 
 
-def get_operator_fn(op):
-    return {
-        '<' : operator.lt,
-        '>' : operator.gt,
-        '=' : operator.eq,
-        '<>': operator.ne,
-        '<=': operator.le,
-        '>=': operator.ge,
-        'Like': operator.eq,
-        'Not Like': operator.ne,
-        }[op]
-def eval_binary_expr(op1, operator, op2):
-    op1,op2 = op1, op2
-    return get_operator_fn(operator)(op1, op2)
 
 
 
