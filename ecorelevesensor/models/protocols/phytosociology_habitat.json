@@ -66,6 +66,7 @@
 		},
 		"Vegetation_cover":{
 		"validators":[
+        	{"type":"max", "value":100}
 		],
 		"type": "Number",
 		"title":"Vegetation cover(%)",
@@ -119,6 +120,7 @@
 		},
 		"stratum_MossLichen_cover":{
 		"validators":[
+        	{"type":"max", "value":100}
 		],
 		"type": "Number",
 		"title":"MossLichen cover(%)",
@@ -126,6 +128,7 @@
 		},
 		"stratum_Herbaceous_cover":{
 		"validators":[
+        	{"type":"max", "value":100}
 		],
 		"type": "Number",
 		"title":"Herbaceous cover(%)",
@@ -133,6 +136,7 @@
 		},
 		"stratum_Shrubby_cover":{
 		"validators":[
+        	{"type":"max", "value":100}
 		],
 		"type": "Number",
 		"title":"Shrubby cover (%)",
@@ -140,6 +144,7 @@
 		},
 		"stratum_Arboreal_cover":{
 		"validators":[
+        	{"type":"max", "value":100}
 		],
 		"type": "Number",
 		"title":"Arboreal cover (%)",
@@ -191,8 +196,7 @@
 		}
 	},
     "defaults":{
-		"VegSeries_Sure" : "true",
-		"Habitat_Picture": "0"
+		"VegSeries_Sure" : "true"
     },
   "fieldsets": [
   	{

@@ -8,50 +8,33 @@
     "Camera - trapping"
   ],
   "schema": {
-    "id_action_type":{
-"validators":[
-],
-"type": "Hidden",
-"title":"id_action_type"
-},
+	"name_action_type":{
+	"validators":[
+	],
+	"type": "Text",
+	"title":"Action type",
+	"editorAttrs": { "startId": "1000465" },
+	"editorClass": "autocompTree"
+	},
+	"name_sensor_type":{
+	"validators":[
+	],
+	"type": "Text",
+	"title":"Sensor type",
+	"editorAttrs": { "startId": "1000464" },
+	"editorClass": "autocompTree"
+	},
+	"Comments":{
+	"validators":[
+	],
+	"type": "TextArea",
+	"title":"Comments"
+	}
+    },
+	  "defaults": {
 
-"name_action_type":{
-"validators":[
-],
-"type": "Text",
-"title":"action type",
-"editorAttrs": { "startId": "1000465" },
-"editorClass": "autocompTree"
-},
-
-"id_sensor_type":{
-"validators":[
-],
-"type": "Hidden",
-"title":"id_sensor_type"
-},
-
-"name_sensor_type":{
-"validators":[
-],
-"type": "Text",
-"title":"sensor type",
-"editorAttrs": { "startId": "1000464" },
-"editorClass": "autocompTree"
-},
-
-"Comments":{
-"validators":[
-],
-"type": "TextArea",
-"title":"Comments"
-}
-  },
-  "defaults": {
-    "tested": "1",
-    "Name_Impact" : "2"
-  },
-  "fieldsets": [
-  ]
+	},
+	  "fieldsets": [
+	]
 }
 
