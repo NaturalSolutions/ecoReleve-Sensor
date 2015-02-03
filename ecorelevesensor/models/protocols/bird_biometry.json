@@ -133,9 +133,8 @@
     }
   },
   "defaults":{
-    "Adiposity_note" : 2,
     "Sampled" : "true",
-    "Comments" : "test",
+    "Comments" : "",
     "Wings" : ""
 
   },
