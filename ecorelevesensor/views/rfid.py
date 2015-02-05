@@ -220,11 +220,14 @@ def rfid_import(request):
 @view_config(route_name=prefix+'validate', renderer='string')
 def rfid_validate(request):
     #TODO: SQL SERVER specific code removal
+    checked = request.GET['checked']
+    frequency_hour = request.GET['frequency_hour']
+    print (frequency_hour)
     stmt = text("""
         DECLARE @error int, @nb int;
         EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT, @error OUTPUT;
         SELECT @error, @nb;"""
-    ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', 0.5),bindparam('checked', 0))
+    ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', frequency_hour),bindparam('checked', 0))
     error_code, nb = DBSession.execute(stmt).fetchone()
     if error_code == 0:
         if nb > 0:
@@ -275,15 +278,14 @@ def rfids_field(request):
     data_helper= Generator('V_dataRFID_as_file')
 
     colist=[
-    {'name':'id_obj','label':'ID_OBJ','display':False,'edit':False},
-    {'name':'id_creator','label':'ID_Creator','display':False, 'edit':False},
+    {'name':'identifier','label':'Identifier','display':False,'edit':False},
     {'name':'checked','label':'CHECKED','display':False, 'edit':False},
     {'name':'nb_chip_code','label':'NB DIFFERENT CHIP CODE','display':True, 'edit':False},
     {'name':'total_scan','label':'TOTAL SCAN','display':True, 'edit':False},
     {'name':'creation_date','label':'CREATION DATE','display':True, 'edit':False},
     {'name':'frequency_hour','label':'FREQUENCY','display':False, 'edit':False},
-    {'name':'begin_date','label':'Begin Date','display':True, 'edit':False},
-    {'name':'end_date','label':'End Date','display':True, 'edit':False},
+    {'name':'first_scan','label':'First scan','display':True, 'edit':False},
+    {'name':'last_scan','label':'Last scan','display':True, 'edit':False},
     {'name':'site_name','label':'Site Name','display':True, 'edit':False},
     {'name':'site_type','label':'Site Type','display':True, 'edit':False},
     ]
