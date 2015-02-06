@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 class Generator :
     def __init__(self,table):
-        print('-------------------columnGENERATOR-------------------')
+        print('------------------- Generator '+ table +'-------------------')
 
         self.dictCell={
             'VARCHAR':'string',
@@ -20,7 +20,7 @@ class Generator :
         self.table=Base.metadata.tables[table]
         self.cols=[]
 
-    def get_operator_fn(self,op):
+    def get_operator_fn(op):
         return {
             '<' : operator.lt,
             '>' : operator.gt,
@@ -31,13 +31,13 @@ class Generator :
             'Like': operator.eq,
             'Not Like': operator.ne,
             }[op]
-
-    def eval_binary_expr(self,op1, operator, op2):
+    def eval_binary_expr(op1, operator, op2):
         op1,op2 = op1, op2
-        if 'date' in str(op1.type).lower() :
-            op1=cast(op1,Date)
-        return self.get_operator_fn(operator)(op1, op2)
-    
+        if(operator == 'Contains') :
+            return op1.like('%'+op2+'%')
+        return get_operator_fn(operator)(op1, op2)
+
+
     def get_col(self,columnsList=False, checked=False):
         
         ###### model of columnsList #####

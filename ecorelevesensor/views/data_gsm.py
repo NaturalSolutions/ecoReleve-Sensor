@@ -8,6 +8,9 @@ from sqlalchemy import desc, select, func, insert, join, Integer, cast, and_, Fl
 from ecorelevesensor.models import (AnimalLocation,ProtocolIndividualEquipment,
     DBSession, DataGsm, SatTrx,
     ObjectsCaracValues, Individual,V_Individuals_LatLonDate)
+
+from ecorelevesensor.utils.generator import Generator
+
 from ecorelevesensor.utils.distance import haversine
 
 import pandas as pd
@@ -15,7 +18,7 @@ import numpy as np
 import re
 import datetime,transaction,json
 
-
+gene= Generator('T_DataGsm')
 
 prefix = 'dataGsm/'
 
