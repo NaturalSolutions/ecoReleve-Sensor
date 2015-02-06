@@ -123,8 +123,7 @@
     },
     "Sampled": {
       "validators": [],
-      "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sampled"
     },
     "Comments": {
@@ -133,7 +132,7 @@
     }
   },
   "defaults":{
-    "Sampled" : "true",
+    "Sampled" : 1,
     "Comments" : "",
     "Wings" : ""
 

@@ -178,14 +178,14 @@
 		"validators":[
 		],
 		"options" : ["true"],
-		"type": "Checkboxes",
+		"type": "Checkbox",
 		"title":"Picture"
 		},
 		"VegSeries_Sure":{
 		"validators":[
 		],
 		"options" : ["true"],
-		"type": "Checkboxes",
+		"type": "Checkbox",
 		"title":"VegSeries Sure"
 		},
 		"Comments":{
@@ -196,7 +196,7 @@
 		}
 	},
     "defaults":{
-		"VegSeries_Sure" : "true"
+		"VegSeries_Sure" : 1
     },
   "fieldsets": [
   	{

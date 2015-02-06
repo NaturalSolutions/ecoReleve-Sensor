@@ -17,7 +17,7 @@
     "Identity_sure": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sure"
     },
     "Nb_Adult_Male": {
@@ -95,7 +95,7 @@
     "Disturbed": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Disturbed"
     },
     "Comments": {
@@ -115,20 +115,18 @@
     },
     "AngleNorth": {
       "validators": [
-        {"type":"min", "value":0},
         {"type":"max", "value":360}
       ],
       "type": "Number",
-      "title": "Angle from north(degre)",
+      "title": "Angle from north(&ordm;)",
       "editorAttrs": { "min": 0, "max" : 360 }
     },
     "AngleTrack": {
       "validators": [
-        {"type":"min", "value":0},
         {"type":"max", "value":360}
       ],
       "type": "Number",
-      "title": "Angle from track(degre)",
+      "title": "Angle from track(&ordm;)",
       "editorAttrs": { "min": 0, "max" : 360 }
     },
     "timestamp": {
@@ -138,7 +136,7 @@
     }
   },
    "defaults":{
-    "Identity_sure" : "true"
+    "Identity_sure" : 1
   },
   "fieldsets": [
     {

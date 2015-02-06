@@ -42,7 +42,7 @@
     "Sampled": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sampled"
     },
     "Name_Posture": {

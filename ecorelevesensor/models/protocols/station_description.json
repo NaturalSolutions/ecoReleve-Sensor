@@ -107,7 +107,7 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology vegetative herbs"
     },
 
@@ -115,14 +115,14 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology flowering herbs"
     },
     "Phenology_Seeding_herbs":{
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology seeding herbs"
     },
 
@@ -130,7 +130,7 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology vegetative bushes"
     },
 
@@ -138,7 +138,7 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology flowering bushes"
     },
 
@@ -146,14 +146,14 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology seeding bushes"
     },
     "Phenology_Vegetative_trees":{
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology vegetative trees"
     },
 
@@ -161,14 +161,14 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology flowering trees"
     },
     "Phenology_Seeding_trees":{
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Phenology seeding trees"
     },
 
@@ -181,7 +181,7 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Houbara suitable"
     },
     "Comments": {
