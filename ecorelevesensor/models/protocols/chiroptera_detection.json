@@ -61,7 +61,7 @@
     "Recorded": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Recorded"
     },
     "Name_Record_type": {

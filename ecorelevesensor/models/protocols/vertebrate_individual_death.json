@@ -63,7 +63,7 @@
     "Sure_reason": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sure reason"
     },
 
@@ -94,7 +94,7 @@
     "Sampled": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sampled"
     },
     

@@ -101,21 +101,21 @@
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Cultivated 1"
   },
   "Cultivated_2":{
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Cultivated 2"
   },
   "Cultivated_3":{
     "validators":[
     ],
     "options" : ["true"],
-    "type": "Checkboxes",
+    "type": "Checkbox",
     "title":"Cultivated 3"
   },
 

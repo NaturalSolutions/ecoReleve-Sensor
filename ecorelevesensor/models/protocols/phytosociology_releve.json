@@ -23,28 +23,28 @@
 			"validators":[
 			],
 			"options" : ["true"],
-			"type": "Checkboxes",
+			"type": "Checkbox",
 			"title":"PI"
 		},
 		"Identity_sure":{
 			"validators":[
 			],
 			"options" : ["true"],
-			"type": "Checkboxes",
+			"type": "Checkbox",
 			"title":"Sure"
 		},
 		"Sampled":{
 			"validators":[
 			],
 			"options" : ["true"],
-			"type": "Checkboxes",
+			"type": "Checkbox",
 			"title":"Herb"
 		},
 		"Picture":{
 			"validators":[
 			],
 			"options" : ["true"],
-			"type": "Checkboxes",
+			"type": "Checkbox",
 			"title":"Pict"
 		},
 		"Name_Global_Abondance_Dom":{
@@ -101,7 +101,7 @@
 		}
 	},
     "defaults":{
-		"Identity_sure":"true",
+		"Identity_sure":1,
 		"Validator" : "",
 		"Id_Taxon":""
    },

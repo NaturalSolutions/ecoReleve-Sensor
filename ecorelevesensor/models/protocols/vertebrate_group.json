@@ -17,7 +17,7 @@
     "Identity_sure": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sure"
     },
     "Nb_Adult_Male": {
@@ -95,7 +95,7 @@
     "Disturbed": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Disturbed"
     },
     "Comments": {
@@ -136,7 +136,7 @@
     }
   },
    "defaults":{
-    "Identity_sure" : "true"
+    "Identity_sure" : 1
   },
   "fieldsets": [
     {

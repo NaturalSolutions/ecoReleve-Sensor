@@ -35,19 +35,19 @@
       "Identity_sure": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Identity sure"
      },
       "Number_Track_clue": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Number track clue"
     },
     "Sampled": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkboxes",
+      "type": "Checkbox",
       "title": "Sampled"
     },
     "Comments":{
@@ -58,7 +58,7 @@
       }
   },
   "defaults": {
-    "Identity_sure" :"true",
+    "Identity_sure" :1,
      "Number_Track_clue" : "" 
   },
   "fieldsets": [
