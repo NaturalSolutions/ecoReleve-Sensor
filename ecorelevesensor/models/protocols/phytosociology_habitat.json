@@ -196,7 +196,7 @@
 		}
 	},
     "defaults":{
-		"VegSeries_Sure" : "true"
+		"VegSeries_Sure" : true
     },
   "fieldsets": [
   	{

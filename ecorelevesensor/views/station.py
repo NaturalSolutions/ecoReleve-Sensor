@@ -298,7 +298,7 @@ def insertNewStation(request):
 				date=data['Date_'], fieldActivityName = data['FieldActivity_Name'],
 				creator=request.authenticated_userid, area=geoRegion, utm=geoUTM, fieldActivityId=id_field,
 				fieldWorker1=data['FieldWorker1'],fieldWorker2=data['FieldWorker2'],fieldWorker3=data['FieldWorker3']
-				,id_siteMonitored=data['id_site'], nbFielWorker= data['FieldWorkersNumber'], precision= data['Precision'])
+				,id_siteMonitored=data['id_site'], nbFielWorker= data['NbFieldWorker'], precision= data['Precision'])
 
 			DBSession.add(station)
 			DBSession.flush()
@@ -322,7 +322,7 @@ def insertNewStation(request):
 			up_station=DBSession.query(Station).get(data['PK'])
 			
 			data['date']=data['Date_']
-			del data['Date_'],data['PK'],data['FieldWorker4'],data['FieldWorker5'],data['FieldWorkersNumber']
+			del data['Date_'],data['PK'],data['FieldWorker4'],data['FieldWorker5'],data['NbFieldWorker']
 			if data['LAT']=='NULL':
 				data['LAT']=None
 				data['LON']=None

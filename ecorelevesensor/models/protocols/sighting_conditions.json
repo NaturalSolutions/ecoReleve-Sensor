@@ -63,13 +63,13 @@
 
 		"Temperature":{
 		"validators":[
-			{"type":"min", "value":0},
         	{"type":"max", "value":100}
 		],
 		"type": "Number",
 		"title":"Temperature",
 		"editorAttrs": { "min": 0, "max" : 100 }
 		},
+
 		"Visibility":{
 		"validators":[
 		],
