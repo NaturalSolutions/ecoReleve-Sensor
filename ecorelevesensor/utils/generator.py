@@ -184,7 +184,7 @@ class Generator :
 
         geoJson=[]
         for row in data:
-            geoJson.append({'type':'Feature', 'properties':{'TGeo_pk_id':row['TGeo_pk_id']}, 'geometry':{'type':'Point', 'coordinates':[row['LON'],row['LAT']]}})
+            geoJson.append({'type':'Feature', 'properties':{'id':row['id']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
 
 
         transaction.commit()

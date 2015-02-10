@@ -12,7 +12,7 @@ from ecorelevesensor.models import Base, DBSession
 prefix = 'monitoredSite'
 
 
-gene= Generator('V_Qry_MonitoredSites')
+gene= Generator('V_Qry_MonitoredSites_V2')
 
 @view_config(route_name=prefix, renderer='json', request_method='GET')
 def monitoredSites(request):
@@ -93,71 +93,94 @@ def monitoredSite_search(request):
 	print('________Search___________')
 
 	try:
-	    criteria = json.loads(request.GET.get('criteria',{}))
+		criteria = json.loads(request.GET.get('criteria',{}))
 	except:
-	    criteria={}
-	    
+		criteria={}
+		
 	print(criteria)
 	if(request.GET.get('offset')):
-	    offset = json.loads(request.GET.get('offset',{}))
-	    perPage = json.loads(request.GET.get('per_page',{}))
-	    orderBy = json.loads(request.GET.get('order_by',{}))
-	    content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+		offset = json.loads(request.GET.get('offset',{}))
+		perPage = json.loads(request.GET.get('per_page',{}))
+		orderBy = json.loads(request.GET.get('order_by',{}))
+		content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
 	else :
-	    content = gene.get_search(criteria)
+		content = gene.get_search(criteria)
 	
 
 	return content
 
 @view_config(route_name=prefix + '/getFilters', renderer='json', request_method='GET')
 def monitoredSite_filters(request):
-    print('____________FIELDS_________________')
-    table=Base.metadata.tables['V_Qry_MonitoredSites']
-    print(table.c)
-    columns=table.c
-    
-    final={}
-    for col in columns :
-        name=col.name
-        Ctype=str(col.type)
-        if 'VARCHAR' in Ctype:
-            Ctype='String'
-        final[name]=Ctype
+	print('____________FIELDS_________________')
+	table=Base.metadata.tables['V_Qry_MonitoredSites_V2']
+	
+	columns=table.c
+	
+	final={}
+	for col in columns :
+		name=col.name
+		Ctype=str(col.type)
+		if 'VARCHAR' in Ctype:
+			Ctype='String'
+		final[name]=Ctype
 
-    return final
+	return final
 
 
 @view_config(route_name=prefix + '/search_geoJSON', renderer='json', request_method='GET')
 def monitoredSite_geoJSON(request):
 
 
-    table=Base.metadata.tables['V_Qry_MonitoredSites']
+	table=Base.metadata.tables['V_Qry_MonitoredSites_V2']
 
 
-    print(request.GET)
+	print(request.GET)
 
-    try:
-        criteria = json.loads(request.GET.get('criteria',{}))
-    except:
-        criteria={}
-        
-    if(request.GET.get('offset')):
-        offset = json.loads(request.GET.get('offset',{}))
-        print('_________________')
-        print(offset)
-        perPage = json.loads(request.GET.get('per_page',{}))
-        orderBy = json.loads(request.GET.get('order_by',{}))
-        content = gene.get_geoJSON(criteria, offset=offset, per_page=perPage, order_by=orderBy)
-    else :
-    	content = gene.get_geoJSON(criteria)
+	try:
+		criteria = json.loads(request.GET.get('criteria',{}))
+	except:
+		criteria={}
+	print (criteria)			
+	if(request.GET.get('offset')):
+		offset = json.loads(request.GET.get('offset',{}))
+		print('_________________')
+		print(offset)
+		perPage = json.loads(request.GET.get('per_page',{}))
+		orderBy = json.loads(request.GET.get('order_by',{}))
+		content = gene.get_geoJSON(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+	else :
+		content = gene.get_geoJSON(criteria)
 
-    return content
+	return content
 
 @view_config(route_name=prefix + '/detail', renderer='json', request_method='GET')
 def monitoredSite_detail(request):	
 	id_ = request.matchdict['id']
+	table = Base.metadata.tables['V_fullMonitoredSites']
 	print('____________________')
 	print(id_)
-	data = DBSession.query(MonitoredSite).filter(MonitoredSite.id==id_).one()
+	data = DBSession.query(table).filter(table.c['id']==id_).all()
 	print(data)
 	return data
+
+@view_config(route_name=prefix + '/detail_geoJSON', renderer='json', request_method='GET')
+def monitoredSite_detailGeoJSON(request):	
+	id_ = request.matchdict['id']
+	table = Base.metadata.tables['V_fullMonitoredSites']
+	print('____________________')
+	print(id_)
+	data = DBSession.execute(select([table]).where(table.c.id==id_)).fetchall()
+	print (data)
+	geoJson=[]
+	for row in data:
+            geoJson.append({'type':'Feature', 'properties':{'id':row['id']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
+	return geoJson
+
+
+@view_config(route_name=prefix + '/newSite', renderer='json', request_method='GET')
+def monitoredSite_newSite(request):	
+
+	
+
+@view_config(route_name=prefix + '/newLocation', renderer='json', request_method='GET')
+def monitoredSite_newLocation(request):	

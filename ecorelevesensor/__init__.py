@@ -100,6 +100,10 @@ def add_routes(config):
     config.add_route('monitoredSite/getFilters', 'ecoReleve-Core/monitoredSite/getFilters')
     config.add_route('monitoredSite/search_geoJSON', 'ecoReleve-Core/monitoredSite/search_geoJSON')
     config.add_route('monitoredSite/detail', 'ecoReleve-Core/monitoredSite/detail/{id}')
+    config.add_route('monitoredSite/detail_geoJSON', 'ecoReleve-Core/monitoredSite/detail/{id}/geoJSON')
+    config.add_route('monitoredSite/newSite', 'ecoReleve-Core/monitoredSite/newSite')
+    config.add_route('monitoredSite/newLocation', 'ecoReleve-Core/monitoredSite/newLocation')
+
     
     ##### Stations #####
     config.add_route('station/area', 'ecoReleve-Core/station/area')
