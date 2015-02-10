@@ -178,9 +178,9 @@ def monitoredSite_detailGeoJSON(request):
 
 
 @view_config(route_name=prefix + '/newSite', renderer='json', request_method='GET')
-def monitoredSite_newSite(request):	
-
-	
+def monitoredSite_newSite(request):
+	return
 
 @view_config(route_name=prefix + '/newLocation', renderer='json', request_method='GET')
 def monitoredSite_newLocation(request):	
+	return
