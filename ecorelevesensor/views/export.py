@@ -59,7 +59,7 @@ def views_filter_export(request):
 		filterList=criteria['filters']['filters']
 		for fltr in filterList:
 			column=fltr['Column']
-			query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+			query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 		bbox=criteria['bbox']
 
@@ -75,6 +75,24 @@ def views_filter_export(request):
 		return Response(io_export)
 
 	except: raise
+
+
+def get_operator_fn(op):
+    return {
+        '<' : operator.lt,
+        '>' : operator.gt,
+        '=' : operator.eq,
+        '<>': operator.ne,
+        '<=': operator.le,
+        '>=': operator.ge,
+        'Like': operator.eq,
+        'Not Like': operator.ne,
+        }[op]
+def eval_binary_expr(op1, operator, op2):
+    op1,op2 = op1, op2
+    if(operator == 'Contains') :
+    	return op1.like('%'+op2+'%')
+    return get_operator_fn(operator)(op1, op2)
 
 def export_csv (value,request,name_vue) :
 	csvRender=CSVRenderer()
