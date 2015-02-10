@@ -184,10 +184,10 @@ def monitoredSite_detailGeoJSON(request):
 def monitoredSite_newSite(request):
 
 	print ('new Site')
-	data = request.params
-	print(type(data))
-	print (data['active'])
-	location = request.params.get('location')
+	data = request.json_body
+	location = data['location']
+	print(location)
+
 	type_id = DBSession.execute(select([distinct(MonitoredSite.id_type
 		)]).where(MonitoredSite.type_ == data['type'])).scalar()
 
@@ -196,24 +196,33 @@ def monitoredSite_newSite(request):
 
 	DBSession.add(new_site)
 	DBSession.flush()
-	if (location) :
-		monitoredSite_newLocation(request, new_site.id)
+	data['id'] = new_site.id
+	if (location != None) :
+		data['location']['site'] = new_site.id
+		return monitoredSite_newLocation(data, new_site.id)
 	else :
-		return new_site.id
+		return data
 
-@view_config(route_name=prefix + '/newLocation', renderer='json', request_method='GET')
+@view_config(route_name=prefix + '/newLocation', renderer='json', request_method='POST')
 def monitoredSite_newLocation(request, _id = None):
 
 	print ('new Location')	
-	location = json.loads(request.params.get('location'))
+	
+	if (_id != None) :
+		location = request['location']
+	else :
+		location = request.json_body
 
-	if (_id == None) :
-		_id = location['id']
 	print(_id)
-	new_location = MonitoredSitePosition(site = _id, lat = location['lat'], lon = location['lon'], ele = location['ele']
+	new_location = MonitoredSitePosition(site = location['site'], lat = location['lat'], lon = location['lon'], ele = location['ele']
 		, precision= location['precision'], date = func.now() , begin_date = location['begin_date'] 
 		, end_date = location['end_date'], comments = location['comments'])
 	DBSession.add(new_location)
 	DBSession.flush()
 
-	return new_location.id
+	location['id'] = new_location.id
+	if (_id != None) :
+		request['location'] = location
+		return request
+	else :
+		return location
