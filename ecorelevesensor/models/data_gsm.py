@@ -36,6 +36,7 @@ class DataGsm(Base):
     sat_count = Column('SatelliteCount', Integer)
     checked = Column(Boolean, nullable=False, server_default='0')
     imported = Column(Boolean, nullable=False, server_default='0')
+    validated = Column(Boolean, nullable=False, server_default='0')
     if dialect == 'mssql':
         __table_args__ = (
             Index('idx_Tdatagsm_platform_checked_with_date_lat_lon_ele', platform_, checked, desc(date), mssql_include=[lat, lon, ele]),

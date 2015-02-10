@@ -16,12 +16,12 @@ class GPXRenderer(object):
 		fout = io.StringIO()
 		rows=value.get('rows', [])
 		
-		print(rows)
+		# print(rows)
 		gpx='<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n<gpx xmlns="http://www.topografix.com/GPX/1/1" creator="byHand" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">\n'
 		gpx_data = [dict(row) for row in rows]
 		date, sitename = "", ""
 		for obj in gpx_data:
-			print (obj)
+			# print (obj)
 			for key, item in obj.items():
 				if key == "LAT":
 					lat = str(item)
