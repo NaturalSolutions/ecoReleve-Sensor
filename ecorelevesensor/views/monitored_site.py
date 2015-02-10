@@ -5,10 +5,11 @@ Created on Mon Sep  1 17:28:02 2014
 """
 from ecorelevesensor.utils.generator import Generator
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, and_, desc
+from sqlalchemy import select, distinct, join, and_, desc, func
 from ecorelevesensor.models import DBSession, MonitoredSite, MonitoredSitePosition
 import json
 from ecorelevesensor.models import Base, DBSession
+import datetime
 prefix = 'monitoredSite'
 
 
@@ -98,6 +99,8 @@ def monitoredSite_search(request):
 		criteria={}
 		
 	print(criteria)
+
+
 	if(request.GET.get('offset')):
 		offset = json.loads(request.GET.get('offset',{}))
 		perPage = json.loads(request.GET.get('per_page',{}))
@@ -177,10 +180,40 @@ def monitoredSite_detailGeoJSON(request):
 	return geoJson
 
 
-@view_config(route_name=prefix + '/newSite', renderer='json', request_method='GET')
+@view_config(route_name=prefix + '/newSite', renderer='json', request_method='POST')
 def monitoredSite_newSite(request):
-	return
+
+	print ('new Site')
+	data = request.params
+	print(type(data))
+	print (data['active'])
+	location = request.params.get('location')
+	type_id = DBSession.execute(select([distinct(MonitoredSite.id_type
+		)]).where(MonitoredSite.type_ == data['type'])).scalar()
+
+	new_site = MonitoredSite(creator = request.authenticated_userid, type_ = data['type'], id_type = type_id
+		, name = data['name'], active = data['active'])
+
+	DBSession.add(new_site)
+	DBSession.flush()
+	if (location) :
+		monitoredSite_newLocation(request, new_site.id)
+	else :
+		return new_site.id
 
 @view_config(route_name=prefix + '/newLocation', renderer='json', request_method='GET')
-def monitoredSite_newLocation(request):	
-	return
+def monitoredSite_newLocation(request, _id = None):
+
+	print ('new Location')	
+	location = json.loads(request.params.get('location'))
+
+	if (_id == None) :
+		_id = location['id']
+	print(_id)
+	new_location = MonitoredSitePosition(site = _id, lat = location['lat'], lon = location['lon'], ele = location['ele']
+		, precision= location['precision'], date = func.now() , begin_date = location['begin_date'] 
+		, end_date = location['end_date'], comments = location['comments'])
+	DBSession.add(new_location)
+	DBSession.flush()
+
+	return new_location.id
