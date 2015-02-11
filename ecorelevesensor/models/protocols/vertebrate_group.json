@@ -118,7 +118,7 @@
         {"type":"max", "value":360}
       ],
       "type": "Number",
-      "title": "Angle from north(&ordm;)",
+      "title": "Angle from north(degree)",
       "editorAttrs": { "min": 0, "max" : 360 }
     },
     "AngleTrack": {
@@ -126,7 +126,7 @@
         {"type":"max", "value":360}
       ],
       "type": "Number",
-      "title": "Angle from track(&ordm;)",
+      "title": "Angle from track(degree)",
       "editorAttrs": { "min": 0, "max" : 360 }
     },
     "timestamp": {
