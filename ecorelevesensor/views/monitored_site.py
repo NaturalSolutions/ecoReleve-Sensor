@@ -101,15 +101,12 @@ def monitoredSite_search(request):
 	except:
 		criteria={}
 		
-<<<<<<< HEAD
 	for obj in criteria :
 		if obj['Column'] == 'Status' :
 			obj['Column'] = 'Active'
 			if(obj['Value'] == 'Active'): obj['Value'] = True
 			else: obj['Value'] = False
-=======
-	print(criteria)
->>>>>>> 84875a88f0acdd616a16ec2644ca62078208fc06
+
 
 
 	if(request.GET.get('offset')):
