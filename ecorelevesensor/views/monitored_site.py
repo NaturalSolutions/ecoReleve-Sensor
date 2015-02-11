@@ -5,11 +5,13 @@ Created on Mon Sep  1 17:28:02 2014
 """
 from ecorelevesensor.utils.generator import Generator
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, and_, desc
+from sqlalchemy import select, distinct, join, and_, desc, func
 from ecorelevesensor.models import DBSession, MonitoredSite, MonitoredSitePosition
 import json
 from ecorelevesensor.models import Base, DBSession
+
 from collections import OrderedDict
+
 prefix = 'monitoredSite'
 
 
@@ -99,11 +101,15 @@ def monitoredSite_search(request):
 	except:
 		criteria={}
 		
+<<<<<<< HEAD
 	for obj in criteria :
 		if obj['Column'] == 'Status' :
 			obj['Column'] = 'Active'
 			if(obj['Value'] == 'Active'): obj['Value'] = True
 			else: obj['Value'] = False
+=======
+	print(criteria)
+>>>>>>> 84875a88f0acdd616a16ec2644ca62078208fc06
 
 
 	if(request.GET.get('offset')):
@@ -203,10 +209,49 @@ def monitoredSite_detailGeoJSON(request):
 	return geoJson
 
 
-@view_config(route_name=prefix + '/newSite', renderer='json', request_method='GET')
+@view_config(route_name=prefix + '/newSite', renderer='json', request_method='POST')
 def monitoredSite_newSite(request):
-	return
 
-@view_config(route_name=prefix + '/newLocation', renderer='json', request_method='GET')
-def monitoredSite_newLocation(request):	
-	return
+	print ('new Site')
+	data = request.json_body
+	location = data['location']
+	print(location)
+
+	type_id = DBSession.execute(select([distinct(MonitoredSite.id_type
+		)]).where(MonitoredSite.type_ == data['type'])).scalar()
+
+	new_site = MonitoredSite(creator = request.authenticated_userid, type_ = data['type'], id_type = type_id
+		, name = data['name'], active = data['active'])
+
+	DBSession.add(new_site)
+	DBSession.flush()
+	data['id'] = new_site.id
+	if (location != None) :
+		data['location']['site'] = new_site.id
+		return monitoredSite_newLocation(data, new_site.id)
+	else :
+		return data
+
+@view_config(route_name=prefix + '/newLocation', renderer='json', request_method='POST')
+def monitoredSite_newLocation(request, _id = None):
+
+	print ('new Location')	
+	
+	if (_id != None) :
+		location = request['location']
+	else :
+		location = request.json_body
+
+	print(_id)
+	new_location = MonitoredSitePosition(site = location['site'], lat = location['lat'], lon = location['lon'], ele = location['ele']
+		, precision= location['precision'], date = func.now() , begin_date = location['begin_date'] 
+		, end_date = location['end_date'], comments = location['comments'])
+	DBSession.add(new_location)
+	DBSession.flush()
+
+	location['id'] = new_location.id
+	if (_id != None) :
+		request['location'] = location
+		return request
+	else :
+		return location
