@@ -9,6 +9,7 @@ from sqlalchemy import select, distinct, join, and_, desc
 from ecorelevesensor.models import DBSession, MonitoredSite, MonitoredSitePosition
 import json
 from ecorelevesensor.models import Base, DBSession
+from collections import OrderedDict
 prefix = 'monitoredSite'
 
 
@@ -60,7 +61,7 @@ def monitoredSite_name(request):
 		return [row['name'] for row in data]
 	else :
 		data = DBSession.execute(query).fetchall()
-		return [dict(site) for site in data]
+		return [site['name'] for site in data]
 
 
 @view_config(route_name=prefix+'/type', renderer='json')
@@ -92,12 +93,19 @@ def monitoredSite_search(request):
 
 	print('________Search___________')
 
+
 	try:
 		criteria = json.loads(request.GET.get('criteria',{}))
 	except:
 		criteria={}
 		
-	print(criteria)
+	for obj in criteria :
+		if obj['Column'] == 'Status' :
+			obj['Column'] = 'Active'
+			if(obj['Value'] == 'Active'): obj['Value'] = True
+			else: obj['Value'] = False
+
+
 	if(request.GET.get('offset')):
 		offset = json.loads(request.GET.get('offset',{}))
 		perPage = json.loads(request.GET.get('per_page',{}))
@@ -140,7 +148,13 @@ def monitoredSite_geoJSON(request):
 		criteria = json.loads(request.GET.get('criteria',{}))
 	except:
 		criteria={}
-	print (criteria)			
+
+	for obj in criteria :
+		if obj['Column'] == 'Status' :
+			obj['Column'] = 'Active'
+			if(obj['Value'] == 'Active'): obj['Value'] = True
+			else: obj['Value'] = False
+
 	if(request.GET.get('offset')):
 		offset = json.loads(request.GET.get('offset',{}))
 		print('_________________')
@@ -157,23 +171,35 @@ def monitoredSite_geoJSON(request):
 def monitoredSite_detail(request):	
 	id_ = request.matchdict['id']
 	table = Base.metadata.tables['V_fullMonitoredSites']
-	print('____________________')
-	print(id_)
-	data = DBSession.query(table).filter(table.c['id']==id_).all()
+	print('____________________fds')
+	print(table.c)
+
+
+
+	data = DBSession.execute(select([table]).where(table.c['id']==id_)).fetchall()
 	print(data)
-	return data
+	#print(data['end_date'])
+	print(type(data))
+	print(data)
+	result= []
+	result.append([OrderedDict(row) for row in data])
+	print(result)
+	#result['end_date'] = data['end_date'].strftime('%m/%d/%Y')
+	#result['begin_date'] = data['begin_date'].strftime('%m/%d/%Y')
+
+	return result
 
 @view_config(route_name=prefix + '/detail_geoJSON', renderer='json', request_method='GET')
 def monitoredSite_detailGeoJSON(request):	
 	id_ = request.matchdict['id']
 	table = Base.metadata.tables['V_fullMonitoredSites']
-	print('____________________')
+	print('____________________test')
 	print(id_)
-	data = DBSession.execute(select([table]).where(table.c.id==id_)).fetchall()
+	data = DBSession.execute(select([table]).where(table.c['id']==id_)).fetchall()
 	print (data)
 	geoJson=[]
 	for row in data:
-            geoJson.append({'type':'Feature', 'properties':{'id':row['id']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
+            geoJson.append({'type':'Feature', 'properties':{'id':row['id'], 'end': row['end_date'], 'begin': row['begin_date']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
 	return geoJson
 
 

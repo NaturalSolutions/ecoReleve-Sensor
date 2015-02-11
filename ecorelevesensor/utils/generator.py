@@ -20,7 +20,7 @@ class Generator :
         self.table=Base.metadata.tables[table]
         self.cols=[]
 
-    def get_operator_fn(op):
+    def get_operator_fn(self, op):
         return {
             '<' : operator.lt,
             '>' : operator.gt,
@@ -28,14 +28,14 @@ class Generator :
             '<>': operator.ne,
             '<=': operator.le,
             '>=': operator.ge,
-            'Like': operator.eq,
-            'Not Like': operator.ne,
+            'Is': operator.eq,
+            'Is not': operator.ne,
             }[op]
-    def eval_binary_expr(op1, operator, op2):
+    def eval_binary_expr(self, op1, operator, op2):
         op1,op2 = op1, op2
         if(operator == 'Contains') :
             return op1.like('%'+op2+'%')
-        return get_operator_fn(operator)(op1, op2)
+        return self.get_operator_fn(operator)(op1, op2)
 
 
     def get_col(self,columnsList=False, checked=False):
@@ -95,6 +95,8 @@ class Generator :
                     Col=obj['Column']
                 
                 query=self.where(query,Col, obj['Operator'], obj['Value'])
+
+            
 
         if offset!=None:
             query, total=self.get_page(query,offset,per_page, order_by)
@@ -158,9 +160,7 @@ class Generator :
         print(criteria)
         '''
         for obj in criteria:
-
             query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
-
         '''
         for obj in criteria:
             print('__________________')
