@@ -350,13 +350,15 @@ def insertNewStation(request):
 def insertMultStation(request):
 
 	data=list(request.params)
-	data=json.loads(data[0])
 
+	data=json.loads(data[0])
+	print(type(data))
 	start=time.time()
 	creation_date=datetime.datetime.now()
-	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
+	userID=[data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']]
 	col=tuple(['name','date','LAT','LON','FieldWorker1','FieldWorker2','FieldWorker3','FieldActivity_Name','Creator','Creation_date'])
 
+	print(userID)
 	# ----------------------------------------------
 	#### TODO ==> Add elevation field ####
 	final=[dict(zip(col,[
@@ -371,6 +373,8 @@ def insertMultStation(request):
 		,request.authenticated_userid
 		,creation_date
 		])) for row in data ]
+
+	
 	
 	# ----------------------------------------------
 	# Create temporary Table and insert all waypoints
