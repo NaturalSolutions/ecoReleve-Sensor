@@ -131,8 +131,10 @@
     },
     "timestamp": {
       "validators": [],
-      "type": "Time",
-      "title": "Obs time"
+      "type": "Text",
+      "title": "Obs time",
+	  "editorAttrs": { "placeholder":"HH:MM" },
+      "editorClass": "required timePicker"
     }
   },
    "defaults":{
