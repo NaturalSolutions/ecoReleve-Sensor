@@ -329,7 +329,8 @@ def insertNewStation(request):
 				if field in data :
 					del data[field]
 
-			if data['LAT']=='NULL':
+			if 'LAT' in data and data['LAT']=='NULL':
+
 				data['LAT']=None
 				data['LON']=None
 
