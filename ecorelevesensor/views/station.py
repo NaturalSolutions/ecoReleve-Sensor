@@ -587,12 +587,13 @@ def station_search (request) :
 	data=DBSession.execute(query).fetchall()
 
 	print('_____DATA______')
-
+	list_sta = []
 	for row in data :
 		row = OrderedDict(row)
 		row['Date_'] = row['Date_'].strftime('%d/%m/%Y %H:%M')
-		result.append(OrderedDict(row))
-	# result.append([OrderedDict(row) for row in data])
+		
+		list_sta.append(OrderedDict(row))
+	result.append(list_sta)
 	stop=time.time()
 	print ('____ time '+str(stop-start))
 	return result
