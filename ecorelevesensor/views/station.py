@@ -5,7 +5,7 @@ Created on Fri Sep 19 17:24:09 2014
 from pyramid.response import Response
 import pyramid.httpexceptions as exc
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_,or_,cast, String, bindparam, update, func, Date
+from sqlalchemy import select, distinct, join, text,Table, and_,or_,cast, String, bindparam, update, func, Date, DateTime
 from ecorelevesensor.models import * 
 import sys, datetime, transaction, time
 from sqlalchemy.sql import func
@@ -31,10 +31,10 @@ def get_operator_fn(op):
 def eval_binary_expr(op1, operator, op2):
 	op1,op2 = op1, op2
 	print (op1.type)
-	if 'date' in str(op1.type).lower() :
-		op1=cast(op1,Date)
-		print(op1)
-		print(get_operator_fn(operator)(op1, op2))
+	# if 'date' in str(op1.type).lower() :
+	# 	op1=cast(op1,Date)
+	# 	print(op1)
+	# 	print(get_operator_fn(operator)(op1, op2))
 	return get_operator_fn(operator)(op1, op2)
 
 class Geometry(UserDefinedType):
@@ -344,6 +344,7 @@ def insertNewStation(request):
 				up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
 				
 			transaction.commit()
+			return data
 
 		except Exception as err: 
 
@@ -529,7 +530,7 @@ def station_search (request) :
 	}
 
 	query=select([table.c['id'].label('PK'), table.c['Name']
-		,cast(table.c['date'],String).label('Date_')
+		,cast(table.c['date'],DateTime).label('Date_')
 		,table.c['LAT'], table.c['LON'],table.c['FieldWorker1']
 		,table.c['FieldWorker2'],table.c['FieldWorker3']
 		,table.c['FieldActivity_Name'], table.c['Region']
@@ -587,9 +588,11 @@ def station_search (request) :
 
 	print('_____DATA______')
 
-	result.append([OrderedDict(row) for row in data])
+	for row in data :
+		row = OrderedDict(row)
+		row['Date_'] = row['Date_'].strftime('%d/%m/%Y %H:%M')
+		result.append(OrderedDict(row))
+	# result.append([OrderedDict(row) for row in data])
 	stop=time.time()
 	print ('____ time '+str(stop-start))
 	return result
-	# return [OrderedDict(row) for row in data]
-
