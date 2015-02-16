@@ -263,8 +263,7 @@ def insertNewStation(request):
 			if data['id_site']=='':
 				data['id_site']=None
 			else :
-				data['id_site']='PDU1 Bouarfa'
-				print (data['id_site'])
+				
 				# join_table= select([MonitoredSitePosition, MonitoredSite]).join(MonitoredSite, MonitoredSitePosition.site == MonitoredSite.id)
 				# q= select([MonitoredSitePosition.id,MonitoredSitePosition.lat
 				# 	, MonitoredSitePosition.lon, MonitoredSitePosition.ele
@@ -321,8 +320,15 @@ def insertNewStation(request):
 			print(type(data['PK']))
 			up_station=DBSession.query(Station).get(data['PK'])
 			
-			data['date']=data['Date_']
-			del data['Date_'],data['PK'],data['FieldWorker4'],data['FieldWorker5'],data['NbFieldWorker']
+			if 'Date_' in data : 
+				data['date']=data['Date_']
+			
+			toDel = ['Date_','PK','FieldWorker4','FieldWorker5']
+
+			for field in toDel : 
+				if field in data :
+					del data[field]
+
 			if data['LAT']=='NULL':
 				data['LAT']=None
 				data['LON']=None
@@ -330,10 +336,11 @@ def insertNewStation(request):
 			colToAttr=dict({v.name:k for k,v in up_station.__mapper__.c.items()})
 
 			for k, v in data.items() :
-				if 'FieldWorker' in k :
-					v=getWorkerID([v])[0]
+				# if 'FieldWorker' in k :
+				# 	v=getWorkerID([v])[0]
 				setattr(up_station,colToAttr[k],v)
 				print(k+' : ')
+
 			up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
 			print (up_station.fieldActivityName)
 			transaction.commit()
