@@ -118,6 +118,14 @@ def get_protocol_on_station (request):
 
 	if proto_on_sta != {} :
 		print('\n\n____________protocol exists for station _____________\n\n')
+		station = DBSession.query(Station).get(id_station)
+		query = query.where(table.c['theme_name'] == station.fieldActivityName)
+		proto_list = DBSession.execute(query.distinct()).fetchall()
+
+		for name, Id, relation in proto_list : 
+			if name not in proto_on_sta : 
+				proto_on_sta[name] = {'id' : Id, 'PK_data': [0] }
+
 		data=proto_on_sta
 
 	else :
