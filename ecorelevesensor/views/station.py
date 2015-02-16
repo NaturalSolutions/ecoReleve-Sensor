@@ -330,7 +330,6 @@ def insertNewStation(request):
 					del data[field]
 
 			if 'LAT' in data and data['LAT']=='NULL':
-
 				data['LAT']=None
 				data['LON']=None
 
@@ -341,9 +340,9 @@ def insertNewStation(request):
 				# 	v=getWorkerID([v])[0]
 				setattr(up_station,colToAttr[k],v)
 				print(k+' : ')
-
-			up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
-			print (up_station.fieldActivityName)
+			if 'FieldActivity_Name' in data : 
+				up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
+				
 			transaction.commit()
 
 		except Exception as err: 
