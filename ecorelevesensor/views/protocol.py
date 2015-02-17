@@ -183,19 +183,13 @@ def get_data_on_protocol (request):
 				
 				query_cols.append(cast(Tproto.c[col.name],Integer).label(col.name))
 
-			else :
-			
-				print (col.name)
+			else :	
 				query_cols.append(Tproto.c[col.name])
 
-
-	
 		query = select(query_cols).where(Tproto.c['PK'] == pk_data)
 		data = DBSession.execute(query).fetchall()
-		print (data)
-		datas = {}
 
-	
+		datas = {}
 		for row in data : 
 			row = OrderedDict(row)
 			if 'time' or 'hour' in [x.lower() for x in hour_cols] :
@@ -203,10 +197,9 @@ def get_data_on_protocol (request):
 					print (row[time_field])
 					row[time_field] = row[time_field].strftime('%H:%M')
 			datas.update(row)
-		print (datas)
+
 		model_proto['data']= datas
 	return model_proto
-
 
 @view_config(route_name='protocols/list', renderer='json', request_method='GET')
 def list_protocol (request):

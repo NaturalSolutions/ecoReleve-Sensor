@@ -13,10 +13,10 @@ import json,datetime,math,time,operator
 from sqlalchemy.types import *
 import pandas
 from collections import OrderedDict
-
+from ecorelevesensor.utils.eval import Eval
 
 prefix = 'station'
-
+eval_ = Eval()
 def get_operator_fn(op):
 	return {
 		'<' : operator.lt,
@@ -551,7 +551,7 @@ def station_search (request) :
 					table.c['FieldWorker2_ID']==obj['Value'],
 					table.c['FieldWorker3_ID']==obj['Value']))
 			else:
-				query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
+				query=query.where(eval_.eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 
 	print(query)
 
