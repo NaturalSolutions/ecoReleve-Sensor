@@ -171,29 +171,40 @@ def get_data_on_protocol (request):
 		Tproto = dict_proto[proto_name]
 		Tproto = Base.metadata.tables['TProtocol_'+str(proto_relation[0])]
 		query_cols = []
-		
+		hour_cols =[]
+
 		for col in Tproto.c : 
 			print(str(col.type))
 			if ('time' in col.name.lower() and 'DATETIME' in str(col.type).upper()
 				) or ('hour' in col.name.lower() and 'DATETIME' in str(col.type).upper()) :
-				print('________CAST______')
-				query_cols.append(cast(cast(Tproto.c[col.name],Time ),String).label(col.name))
+				hour_cols.append(col.name)
+				query_cols.append(cast(Tproto.c[col.name],Time).label(col.name))
 			elif str(col.type) == 'BIT':
-				print('_______BOOOL________')
+				
 				query_cols.append(cast(Tproto.c[col.name],Integer).label(col.name))
 
 			else :
-				print('-------NON CAST------')
+			
 				print (col.name)
 				query_cols.append(Tproto.c[col.name])
 
 
 	
 		query = select(query_cols).where(Tproto.c['PK'] == pk_data)
-		print(query)
 		data = DBSession.execute(query).fetchall()
 		print (data)
-		model_proto['data']= [OrderedDict(row) for row in data][0]
+		datas = {}
+
+	
+		for row in data : 
+			row = OrderedDict(row)
+			if 'time' or 'hour' in [x.lower() for x in hour_cols] :
+				for time_field in hour_cols :
+					print (row[time_field])
+					row[time_field] = row[time_field].strftime('%H:%M')
+			datas.update(row)
+		print (datas)
+		model_proto['data']= datas
 	return model_proto
 
 
