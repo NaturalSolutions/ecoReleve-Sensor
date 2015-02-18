@@ -35,6 +35,10 @@
 
 	},
 	  "fieldsets": [
+	  {
+      "fields": ["name_action_type", "name_sensor_type","Comments"],
+      "legend": ""
+    }
 	]
 }
 
