@@ -85,7 +85,7 @@ def rfid_active_byDate(request):
         ).filter(MonitoredSitePosition.begin_date <= date
         ).filter(or_(MonitoredSitePosition.end_date >= date, MonitoredSitePosition.end_date == None )).all()
     siteName_type=[{'id_site':row[0] ,'type':row[2] , 'name':row[1], 'positions': {'lat': row[3], 'lon': row[4] }} for row in data]
-    result = {'siteType': list(set([row[1] for row in data])), 'siteName_type': siteName_type}
+    result = {'siteType': list(set([row[2] for row in data])), 'siteName_type': siteName_type}
     return result
 
 
