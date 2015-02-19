@@ -80,11 +80,11 @@ def rfid_detail(request):
 @view_config(route_name=prefix+'byDate', renderer='json')
 def rfid_active_byDate(request):
     date = datetime.strptime(request.params['date'], '%d/%m/%Y  %H:%M:%S')
-    data = DBSession.query(MonitoredSite.name, MonitoredSite.type_,  MonitoredSitePosition.lat,  MonitoredSitePosition.lon
+    data = DBSession.query(MonitoredSite.id, MonitoredSite.name, MonitoredSite.type_,  MonitoredSitePosition.lat,  MonitoredSitePosition.lon
         ).outerjoin(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
         ).filter(MonitoredSitePosition.begin_date <= date
         ).filter(or_(MonitoredSitePosition.end_date >= date, MonitoredSitePosition.end_date == None )).all()
-    siteName_type=[{'type':row[1] , 'name':row[0], 'positions': {'lat': row[2], 'lon': row[3] }} for row in data]
+    siteName_type=[{'id_site':row[0] ,'type':row[2] , 'name':row[1], 'positions': {'lat': row[3], 'lon': row[4] }} for row in data]
     result = {'siteType': list(set([row[1] for row in data])), 'siteName_type': siteName_type}
     return result
 
