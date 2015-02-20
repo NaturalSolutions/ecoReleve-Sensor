@@ -435,9 +435,6 @@ def insert_ENG(platform, csv_data):
 def indiv_details(request):
 	print('_____DETAILS____')
 	ptt = int(request.matchdict['id'])
-	dfsfdf
-
-
 	ind_id = int(request.matchdict['ind_id'])
 
 	print(ind_id)
