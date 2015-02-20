@@ -275,11 +275,11 @@ def insertNewStation(request):
 					, MonitoredSitePosition.lon, MonitoredSitePosition.ele
 					, MonitoredSitePosition.precision
 					).join(MonitoredSite, MonitoredSitePosition.site == MonitoredSite.id
-					).filter(MonitoredSite.name == data['id_site']
+					).filter(MonitoredSite.id == data['id_site']
 					).filter(and_(MonitoredSitePosition.begin_date< data['Date_']
 						, or_(MonitoredSitePosition.end_date>data['Date_'], MonitoredSitePosition.end_date == None))).one()
 					
-				data['id_site']=dt[0]
+				data['id_site']=data['id_site']
 				data['LAT']=dt[1]
 				data['LON']=dt[2]
 

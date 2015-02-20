@@ -16,7 +16,7 @@ sensor_schema = dbConfig['sensor_schema']
 dialect = dbConfig['dialect']
 
 class Argos(Base):
-    __tablename__ = 'T_argos'
+    __tablename__ = 'Targos'
     pk = Column('PK_id', Integer, Sequence('Targos_pk_id'), primary_key=True)
     ptt = Column('FK_ptt', Integer, nullable=False)
     date = Column('date', DateTime, nullable=False)
@@ -51,7 +51,7 @@ class Argos(Base):
        
 
 class Gps(Base):
-    __tablename__ = 'T_gps'
+    __tablename__ = 'Tgps'
     pk = Column('PK_id', Integer, primary_key=True)
     ptt = Column('FK_ptt', Integer, nullable = False)
     date = Column('date', DateTime, nullable = False)
@@ -116,7 +116,7 @@ class ArgosGps(Base):
         )
         
 class Gsm(Base):
-    __tablename__ = 'T_gsm'
+    __tablename__ = 'Tgsm'
     pk_id = Column('PK_id', Integer, primary_key=True)
     fk_ptt = Column('FK_ptt', Integer, nullable = False)
     date = Column('date_', DateTime, nullable = False)

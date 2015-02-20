@@ -10,29 +10,32 @@ from collections import OrderedDict
 prefix = 'station'
 dict_proto={
 	'Biometry': TProtocolBirdBiometry,
-	'Chiro capture':TProtocolChiropteraCapture,
-	'Simplified habitat':TProtocolSimplifiedHabitat,
-	'Chiro detection':TProtocolChiropteraDetection,
 	'Building and Activities':TProtocolBuildingAndActivity,
-	'Station description':TProtocolStationDescription,
-	'Vertebrate Individual Death':TProtocolVertebrateIndividualDeath,
+	'Capture Individual': TProtocolCaptureIndividual,
+	'Chiro capture':TProtocolChiropteraCapture,
+	'Chiro detection':TProtocolChiropteraDetection,
+	'Clutch Description': TProtocolClutchDescription,
+	# 'Entomo Pop Census': TSubProtocolEntomoPopCensus,
+	'Entomo population': TProtocolEntomoPopulation,
+	'Habitat description':TProtocolPhytosociologyHabitat,
+	'Nest and clutch description': TProtocolNestDescription,
 	'Phytosociology habitat': TProtocolPhytosociologyHabitat,
 	'Phytosociology releve': TProtocolPhytosociologyReleve,
+	'Plant inventory': TProtocolPhytosociologyReleve,
+	'Vertebrate Release': TProtocolReleaseGroup,
+	'Release Individual': TProtocolReleaseIndividual,
+	'Simplified habitat':TProtocolSimplifiedHabitat,
 	'Sighting conditions': TProtocolSightingCondition,
 	'Simplified Habitat': TProtocolSimplifiedHabitat,
+	'Station description':TProtocolStationDescription,
 	'Station equipment': TProtocolStationEquipment,
-	'Track clue': TProtocolTrackClue,
-	'Capture Group': TProtocolCaptureGroup,
-	'Capture Individual': TProtocolCaptureIndividual,
-	'Nest Description': TProtocolNestDescription,
-	'Clutch Description': TProtocolClutchDescription,
-	'Entomo population': TProtocolEntomoPopulation,
-	# 'Entomo Pop Census': TSubProtocolEntomoPopCensus,
-	'Release Group': TProtocolReleaseGroup,
-	'Release Individual': TProtocolReleaseIndividual,
-	'Transects': TProtocolTransect,
 	# 'SubProtocol Transect': TSubProtocolTransect,
+	'Tracks and Clues': TProtocolTrackClue,
+	'Transects': TProtocolTransect,
+	'Vertebrate Aerian Individuals' : TProtocolVertebrateIndividual,
+	'Vertebrate Capture': TProtocolCaptureGroup,
 	'Vertebrate group': TProtocolVertebrateGroup,
+	'Vertebrate Individual Death':TProtocolVertebrateIndividualDeath,
 	'Vertebrate individual': TProtocolVertebrateIndividual
 	}
 
@@ -85,7 +88,7 @@ def update_protocol (request):
 	else :
 		print('____________UPDATE PROTOCOL DATA_______________')
 		up_proto=DBSession.query(dict_proto[proto_name]).get(pk_data)
-		
+		data['FK_TSta_ID'] = id_station
 		print(up_proto)
 		up_proto.InitFromFields(data)
 		id_proto=up_proto.PK

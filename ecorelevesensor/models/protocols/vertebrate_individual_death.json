@@ -22,8 +22,8 @@
     "FK_TInd_ID":{
     "validators":[
     ],
-    "type": "Number",
-    "title":"FK_TInd_ID"
+     "type": "Picker",
+    "title":"Indiv id"
     },
 
     "Name_Remains":{
@@ -53,26 +53,12 @@
     "editorClass": "autocompTree"
     },
 
-    "Identification_criteria":{
-    "validators":[
-    ],
-    "type": "Text",
-    "title":"Identification criteria"
-    },
 
     "Sure_reason": {
       "validators": [],
       "options" : ["true"],
       "type": "Checkbox",
       "title": "Sure reason"
-    },
-
-    "Identification_type":{
-    "validators":[
-    ],
-    "type": "Select", 
-    "options": ["","0/0","0/1","0/N","1/1","1/N"],
-    "title":"Identification type"
     },
 
     "Name_Taxon":{
@@ -82,13 +68,6 @@
     "title":"Taxon",
     "editorAttrs": { "startId": "8" },
     "editorClass": "autocompTree"
-    },
-
-    "Id_Taxon":{
-    "validators":[
-    ],
-    "type": "Number",
-    "title":"Id_Taxon"
     },
 
     "Sampled": {
@@ -108,6 +87,10 @@
   "defaults": {
   },
   "fieldsets": [
+	{
+      "fields": ["Name_Taxon", "Name_Remains","Name_Death_Time","Name_Death_Reason","Sure_reason","Sampled","FK_TInd_ID","Comments"],
+      "legend": ""
+    }
   ]
 }
 

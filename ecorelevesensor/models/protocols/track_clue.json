@@ -20,7 +20,7 @@
       "validators":[
       ],
       "type": "Text",
-      "title":"Track clue",
+      "title":"Track type",
       "editorAttrs": { "startId": "11" },
       "editorClass": "autocompTree"
       },
@@ -36,13 +36,13 @@
       "validators": [],
       "options" : ["true"],
       "type": "Checkbox",
-      "title": "Identity sure"
+      "title": "Sure"
      },
       "Number_Track_clue": {
       "validators": [],
       "options" : ["true"],
-      "type": "Checkbox",
-      "title": "Number track clue"
+      "type": "Number",
+      "title": "Number"
     },
     "Sampled": {
       "validators": [],
@@ -62,6 +62,10 @@
      "Number_Track_clue" : "" 
   },
   "fieldsets": [
+	{
+      "fields": ["Name_Track_clue", "name_taxon","Number_Track_clue","Nb_Individuals","Identity_sure","Sampled","Comments"],
+      "legend": ""
+    }
   ]
 }
 
