@@ -11,7 +11,7 @@ from sqlalchemy import (
 	distinct,
 	select
  )
-
+from sqlalchemy.dialects.mssql.base import BIT
 from ecorelevesensor.models import Base
 from .individual import Individual
 from .station import Station
@@ -23,6 +23,7 @@ class ProtocolIndividualEquipment(Base):
 	ind_id = Column('FK_IND_ID', Integer)
 	begin_date = Column(DateTime)
 	end_date = Column(DateTime)
+
 
 class SatTrx(Base):
 	__tablename__ = 'TViewTrx_Sat'
@@ -89,6 +90,58 @@ V_AllIndivs_Released_YearArea = Table('V_Qry_AllIndivs_Released_YearArea', Base.
 												  Column('FK_TInd_ID', ForeignKey(Individual.id)),
 												  schema=data_schema, autoload=True)
 """
+
+# V_ProtocolIndividualEquipment = Table('V_TProtocol_Individual_Equipment', Base.metadata,
+# 	Column('ptt', Integer),
+# 	Column('FK_SAT_ID', Integer),
+# 	Column('FK_IND_ID', Integer),
+# 	Column('begin_date',DateTime),
+# 	Column('end_date',DateTime))
+
+class V_ProtocolIndividualEquipment (Base) :
+	__table__ = Table('V_TProtocol_Individual_Equipement', Base.metadata,
+		Column('ptt', Integer),
+		Column('FK_SAT_ID', Integer, primary_key= True),
+		Column('FK_IND_ID', Integer),
+		Column('begin_date',DateTime),
+		Column('end_date',DateTime),
+		Column('model_precision', String))
+	ind_id = __table__.c['FK_IND_ID']
+	sat_id = __table__.c['FK_SAT_ID']
+	model_precision = __table__.c['model_precision']
+
+	__mapper_args__ = {
+        'polymorphic_on':model_precision,
+        'polymorphic_identity':'object'
+    }
+
+class V_EquipGSM (V_ProtocolIndividualEquipment) :
+	__mapper_args__ = {
+        'polymorphic_identity':'GSM%'
+    }
+
+class V_dataGSM_withIndivEquip (Base) : 
+	__table__ = Table ('V_dataGSM_with_IndivEquip', Base.metadata,
+		Column('ind_id',Integer)
+      	,Column('ptt',Integer)
+		,Column('begin_date',DateTime)
+		,Column('end_date',DateTime)
+		,Column('lat',Numeric(9,5))
+		,Column('lon',Numeric(9,5))
+		,Column('ele',Integer)
+		,Column('checked',BIT)
+		,Column('imported',BIT)
+		,Column('date_',DateTime)
+		,Column('course',Integer)
+		,Column('HDOP',Numeric(3,1))
+		,Column('speed',Integer)
+		,Column('sat_count',Integer)
+		,Column('VDOP',Numeric(3,1))
+		,Column('validated',BIT)
+		,Column('data_PK_ID',Integer,  primary_key= True)
+
+		)
+
 
 V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
 							 Column('ind_id', Integer),

@@ -1,0 +1,71 @@
+{
+  "name": "Vertebrate capture",
+  "description": "TProtocol_Capture_Individual",
+  "parent" : "Vertebrate capture",
+  "keywords": [
+    "Bird trapping",
+    "Reptile trapping",
+    "Mammal trapping"
+  ],
+  "schema": {
+    "Fk_TInd_ID": {
+      "validators": [],
+      "type": "Picker",
+      "title": "Individual id"
+    },
+	"FK_Group": {
+      "validators": [],
+      "type": "Hidden",
+      "title": "group id"
+    },
+    "Time_Capture": {
+      "validators": [],
+      "type": "Text",
+      "title": "Capture time",
+	  "editorAttrs": { "placeholder":"HH:MM" },
+      "editorClass": "required timePicker"
+    },
+	"Time_Release": {
+      "validators": [],
+      "type": "Text",
+      "title": "Release time",
+	  "editorAttrs": { "placeholder":"HH:MM" },
+      "editorClass": "required timePicker"
+    },
+	"Id_Observer": {               
+      "validators": [],
+      "type": "Select",
+	  "options": [""],
+      "title": "Observer",
+      "editorAttrs": { "user_list": "username_list" }
+    },
+    "Id_Assistant": {
+      "validators": [ ],
+      "type": "Select",
+	  "options": [""],
+      "title": "Assistant",
+      "editorAttrs": { "user_list": "username_list" }
+    },
+	"Release_Ind_Condition": {
+      "validators": [
+      ],
+      "type": "Text",
+      "title": "Release condition"
+    },
+	"Comments": {
+      "validators": [
+      ],
+      "type": "Text",
+      "title": "Comments"
+    }
+  },
+   "defaults":{
+  },
+  "fieldsets": [
+    {
+      "fields": ["Fk_TInd_ID", "FK_Group","Time_Capture","Time_Release","Id_Observer","Id_Assistant","Release_Ind_Condition","Comments"],
+      "legend": ""
+    }
+  ]
+}
+

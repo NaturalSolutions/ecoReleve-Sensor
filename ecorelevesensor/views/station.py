@@ -5,7 +5,7 @@ Created on Fri Sep 19 17:24:09 2014
 from pyramid.response import Response
 import pyramid.httpexceptions as exc
 from pyramid.view import view_config
-from sqlalchemy import select, distinct, join, text,Table, and_,or_,cast, String, bindparam, update, func, Date
+from sqlalchemy import select, distinct, join, text,Table, and_,or_,cast, String, bindparam, update, func, Date, DateTime
 from ecorelevesensor.models import * 
 import sys, datetime, transaction, time
 from sqlalchemy.sql import func
@@ -13,10 +13,10 @@ import json,datetime,math,time,operator
 from sqlalchemy.types import *
 import pandas
 from collections import OrderedDict
-
+from ecorelevesensor.utils.eval import Eval
 
 prefix = 'station'
-
+eval_ = Eval()
 def get_operator_fn(op):
 	return {
 		'<' : operator.lt,
@@ -31,10 +31,10 @@ def get_operator_fn(op):
 def eval_binary_expr(op1, operator, op2):
 	op1,op2 = op1, op2
 	print (op1.type)
-	if 'date' in str(op1.type).lower() :
-		op1=cast(op1,Date)
-		print(op1)
-		print(get_operator_fn(operator)(op1, op2))
+	# if 'date' in str(op1.type).lower() :
+	# 	op1=cast(op1,Date)
+	# 	print(op1)
+	# 	print(get_operator_fn(operator)(op1, op2))
 	return get_operator_fn(operator)(op1, op2)
 
 class Geometry(UserDefinedType):
@@ -263,8 +263,7 @@ def insertNewStation(request):
 			if data['id_site']=='':
 				data['id_site']=None
 			else :
-				data['id_site']='PDU1 Bouarfa'
-				print (data['id_site'])
+				
 				# join_table= select([MonitoredSitePosition, MonitoredSite]).join(MonitoredSite, MonitoredSitePosition.site == MonitoredSite.id)
 				# q= select([MonitoredSitePosition.id,MonitoredSitePosition.lat
 				# 	, MonitoredSitePosition.lon, MonitoredSitePosition.ele
@@ -321,22 +320,31 @@ def insertNewStation(request):
 			print(type(data['PK']))
 			up_station=DBSession.query(Station).get(data['PK'])
 			
-			data['date']=data['Date_']
-			del data['Date_'],data['PK'],data['FieldWorker4'],data['FieldWorker5'],data['NbFieldWorker']
-			if data['LAT']=='NULL':
+			if 'Date_' in data : 
+				data['date']=data['Date_']
+			
+			toDel = ['Date_','PK','FieldWorker4','FieldWorker5']
+
+			for field in toDel : 
+				if field in data :
+					del data[field]
+
+			if 'LAT' in data and data['LAT']=='NULL':
 				data['LAT']=None
 				data['LON']=None
 
 			colToAttr=dict({v.name:k for k,v in up_station.__mapper__.c.items()})
 
 			for k, v in data.items() :
-				if 'FieldWorker' in k :
-					v=getWorkerID([v])[0]
+				# if 'FieldWorker' in k :
+				# 	v=getWorkerID([v])[0]
 				setattr(up_station,colToAttr[k],v)
 				print(k+' : ')
-			up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
-			print (up_station.fieldActivityName)
+			if 'FieldActivity_Name' in data : 
+				up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
+				
 			transaction.commit()
+			return data
 
 		except Exception as err: 
 
@@ -350,13 +358,15 @@ def insertNewStation(request):
 def insertMultStation(request):
 
 	data=list(request.params)
-	data=json.loads(data[0])
 
+	data=json.loads(data[0])
+	print(type(data))
 	start=time.time()
 	creation_date=datetime.datetime.now()
-	userID=getWorkerID([data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']])
+	userID=[data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']]
 	col=tuple(['name','date','LAT','LON','FieldWorker1','FieldWorker2','FieldWorker3','FieldActivity_Name','Creator','Creation_date'])
 
+	print(userID)
 	# ----------------------------------------------
 	#### TODO ==> Add elevation field ####
 	final=[dict(zip(col,[
@@ -371,6 +381,8 @@ def insertMultStation(request):
 		,request.authenticated_userid
 		,creation_date
 		])) for row in data ]
+
+	
 	
 	# ----------------------------------------------
 	# Create temporary Table and insert all waypoints
@@ -518,7 +530,7 @@ def station_search (request) :
 	}
 
 	query=select([table.c['id'].label('PK'), table.c['Name']
-		,cast(table.c['date'],String).label('Date_')
+		,cast(table.c['date'],DateTime).label('Date_')
 		,table.c['LAT'], table.c['LON'],table.c['FieldWorker1']
 		,table.c['FieldWorker2'],table.c['FieldWorker3']
 		,table.c['FieldActivity_Name'], table.c['Region']
@@ -539,7 +551,7 @@ def station_search (request) :
 					table.c['FieldWorker2_ID']==obj['Value'],
 					table.c['FieldWorker3_ID']==obj['Value']))
 			else:
-				query=query.where(eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
+				query=query.where(eval_.eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 
 	print(query)
 
@@ -575,10 +587,13 @@ def station_search (request) :
 	data=DBSession.execute(query).fetchall()
 
 	print('_____DATA______')
-
-	result.append([OrderedDict(row) for row in data])
+	list_sta = []
+	for row in data :
+		row = OrderedDict(row)
+		row['Date_'] = row['Date_'].strftime('%d/%m/%Y %H:%M')
+		
+		list_sta.append(OrderedDict(row))
+	result.append(list_sta)
 	stop=time.time()
 	print ('____ time '+str(stop-start))
 	return result
-	# return [OrderedDict(row) for row in data]
-

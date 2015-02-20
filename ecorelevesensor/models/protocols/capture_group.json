@@ -1,0 +1,73 @@
+{
+  "name": "Vertebrate capture",
+  "description": "TProtocol_Capture_Group",
+  "keywords": [
+    "Bird trapping",
+    "Reptile trapping",
+    "Mammal trapping"
+  ],
+  "schema": {
+    "Name_Taxon": {
+      "validators": [ "required"],
+      "type": "Text",
+      "title": "Taxon",
+      "editorAttrs": { "startId": "8" },
+      "editorClass": "autocompTree"
+    },
+    "Name_Capture_Method": {
+       "validators": [],
+       "type": "Text",
+       "title": "Method",
+	   "editorAttrs": { "startId": "25761" },
+       "editorClass": "autocompTree"
+    },
+    "Nb_Operator": {
+      "validators": [],
+      "type": "Number",
+      "title": "Operator number",
+      "editorClass": "indivNumber"
+    },
+	"Nb_Individuals": {
+      "validators": [],
+      "type": "Number",
+      "title": "Nb individuals",
+      "editorClass": "indivNumber"
+    },
+	"Time_Begin": {
+      "validators": [],
+      "type": "Text",
+      "title": "Begin time",
+	  "editorAttrs": { "placeholder":"HH:MM" },
+      "editorClass": "required timePicker"
+    },
+	"Time_End": {
+      "validators": [],
+      "type": "Text",
+      "title": "End time",
+	  "editorAttrs": { "placeholder":"HH:MM" },
+      "editorClass": "required timePicker"
+    },
+    
+    "Failure_reason": {
+      "validators": [],
+      "type": "Text",
+      "title": "Reasons of failure"
+    },
+	"Comments": {
+      "validators": [
+      ],
+      "type": "Text",
+      "title": "Comments"
+    }
+  },
+   "defaults":{
+
+  },
+  "fieldsets": [
+    {
+      "fields": ["Name_Taxon", "Name_Capture_Method","Nb_Operator","Nb_Individuals","Time_Begin","Time_End","Failure_reason","Comments"],
+      "legend": ""
+    }
+  ]
+}
+

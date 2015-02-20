@@ -27,20 +27,23 @@
 		},
 		"Start_time":{
 		"validators": ["required"],
-		"type": "Time",
-		"title":"Start time"
+		"type": "Text",
+		"title":"Start time",
+		"editorClass": "timePicker"	
 		},
 
 		"End_time":{
 		"validators": ["required"],
-		"type": "Time",
-		"title":"End time"
+		"type": "Text",
+		"title":"End time",
+		"editorClass": "timePicker"	
 		},
 
 		"Observation_Duration":{
 		"validators": ["required"],
-		"type": "Time",
-		"title":"Observation duration"
+		"type": "Text",
+		"title":"Observation duration",
+		"editorClass": "timePicker"	
 		},
 
 		"Name_Weather":{
@@ -75,7 +78,7 @@
 		],
 		"options" : ["true"],
 		"type": "Checkbox",
-		"title":"Visibility"
+		"title":"Bad visibility"
 		},
 
 		"Observation_Incomplete":{
@@ -104,5 +107,18 @@
     "defaults":{
 
    },
-  "fieldsets": []
+  "fieldsets": [
+	  {
+		"fields": ["Start_time","End_time","Observation_Duration","Name_Observation_Tool","Observation_Incomplete"],
+		"legend": ""
+	  },
+	   {
+		"fields": ["Name_Weather","Name_Wind_Force","Temperature","Visibility"],
+		"legend": "Weather"
+	  },
+	  {
+		"fields": ["Comments"],
+		"legend": ""
+	  }
+  ]
 }
