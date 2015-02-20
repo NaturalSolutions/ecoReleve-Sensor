@@ -1,4 +1,9 @@
-/****** Object:  View [dbo].[V_dataGSM_with_IndivEquip]    Script Date: 13/02/2015 15:15:57 ******/
+
+-- =============================================
+-- Author:		Romain FABBRO
+-- Create date: 2015-02-02
+-- Description:	View for DataGSM with Individual equipment date 
+-- =============================================
 SET ANSI_NULLS ON
 GO
 

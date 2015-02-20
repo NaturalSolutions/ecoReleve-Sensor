@@ -39,10 +39,10 @@ def data_gsm_unchecked_list(request):
 
 	print('________________________________________________________\n\n')
 
-	unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb')]).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
+	unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb'), func.max(unchecked.date_).label('max_date'), func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
 	# Populate Json array
-	print(unchecked_with_ind)
 	data = DBSession.execute(unchecked_with_ind).fetchall()
+
 	print(data)
 	return [dict(row) for row in data]
 

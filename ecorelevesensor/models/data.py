@@ -11,7 +11,7 @@ from sqlalchemy import (
 	distinct,
 	select
  )
-from sqlalchemy.dialects.mssql.base import BIT
+from sqlalchemy.dialects.mssql.base import BIT,TINYINT,SMALLINT,FLOAT
 from ecorelevesensor.models import Base
 from .individual import Individual
 from .station import Station
@@ -140,6 +140,34 @@ class V_dataGSM_withIndivEquip (Base) :
 		,Column('validated',BIT)
 		,Column('data_PK_ID',Integer,  primary_key= True)
 
+		)
+class V_dataARGOS_withIndivEquip (Base) : 
+	__table__ = Table ('V_dataARGOS_with_IndivEquip', Base.metadata,
+
+		Column('data_PK_ID',Integer,  primary_key= True)
+		,Column('ind_id',Integer)
+      	,Column('ptt',Integer)
+		,Column('begin_date',DateTime)
+		,Column('end_date',DateTime)
+		,Column('lat',Numeric(9,5))
+		,Column('lon',Numeric(9,5))
+		,Column('date_',DateTime)
+		,Column('lc' ,String)
+		,Column('iq' ,TINYINT)
+		,Column('ele',Integer)
+		,Column('nbMsg' ,TINYINT)
+		,Column('nbMsg>-120dB' ,TINYINT)
+		,Column('bestLevel' ,SMALLINT)
+		,Column('passDuration' ,SMALLINT)
+		,Column('nopc' ,TINYINT)
+		,Column('freq' , FLOAT )
+		,Column('errorRadius' ,Integer)
+		,Column('semiMajor'  ,Integer)
+		,Column('semiMinor'  ,Integer)
+		,Column('orientation',TINYINT)
+		,Column('hdop' ,Integer)
+		,Column('checked' ,BIT)
+		,Column('imported',BIT) 
 		)
 
 
