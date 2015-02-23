@@ -44,6 +44,8 @@ from ecorelevesensor.models import (
 from ecorelevesensor.models.sensor import Argos, Gps
 from ecorelevesensor.utils.spreadsheettable import SpreadsheetTable
 
+eval = Eval()
+
 # Data imported from the CLS WS during the last week.
 @view_config(route_name='weekData', renderer='json')
 def weekData(request):
@@ -209,7 +211,7 @@ def views_filter_count(request):
    filterList=criteria['filters']
    for fltr in filterList:
    	column=fltr['Column']
-   	query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+   	query = query.where(eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 
    count = DBSession.execute(query).scalar()
@@ -240,7 +242,7 @@ def views_filter(request):
 	filterList=criteria['filters']
 	for fltr in filterList:
 		column=fltr['Column']
-		query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+		query = query.where(eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 
 	for lat, lon, nb in  DBSession.execute(query).fetchall():
@@ -330,7 +332,7 @@ def views_filter_result(request):
 	 	filterList=criteria['filters']['filters']
 	 	for fltr in filterList:
 	 		column=fltr['Column']
-	 		query = query.where(Eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
+	 		query = query.where(eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 	 	
 	 	#bbox selection

@@ -100,7 +100,6 @@ def monitoredSite_search(request):
 		criteria = json.loads(request.GET.get('criteria',{}))
 	except:
 		criteria={}
-		
 	for obj in criteria :
 		if obj['Column'] == 'Status' :
 			obj['Column'] = 'Active'
