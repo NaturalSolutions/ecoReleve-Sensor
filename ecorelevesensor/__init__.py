@@ -49,10 +49,16 @@ def add_routes(config):
     config.add_route('core/currentUser', 'ecoReleve-Core/currentUser')
     
     ##### Argos #####
+    config.add_route('argos/unchecked/geo', 'ecoReleve-Sensor/argos/{id}/unchecked/{ind_id}/geo')
+    config.add_route('argos/unchecked/json', 'ecoReleve-Sensor/argos/{id}/unchecked/{ind_id}/json')
+
+    config.add_route('argos/details', 'ecoReleve-Sensor/argos/{id}/details/{ind_id}')
+    # config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')
+
     config.add_route('sensor/unchecked', 'ecoReleve-Sensor/sensor/unchecked')
     config.add_route('argos/unchecked/list', 'ecoReleve-Sensor/argos/unchecked/list')
     config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
-    config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')
+    
     config.add_route('argos/check', 'ecoReleve-Sensor/argos/check')
     config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
 
@@ -108,6 +114,8 @@ def add_routes(config):
     
     ##### Stations #####
     config.add_route('station/area', 'ecoReleve-Core/station/area')
+    config.add_route('station/area_coord', 'ecoReleve-Core/station/area_coord')
+
     config.add_route('station/locality', 'ecoReleve-Core/station/locality')
     config.add_route('station/get', 'ecoReleve-Core/station/get')
     config.add_route('station/id', 'ecoReleve-Core/station/{id}')

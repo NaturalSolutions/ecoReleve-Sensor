@@ -174,6 +174,21 @@ def monitoredSitesArea(request):
 		data =  DBSession.execute(slct).fetchall()
 		return [row[0] for row in data]
 
+@view_config(route_name=prefix+'/area_coord', renderer='json', request_method='GET')
+def listArea_with_coord(request):
+
+	table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
+	slct = select([table.c['Place'],table.c['minLat'],table.c['maxLat'],table.c['minLon'],table.c['maxLon']]).distinct()
+	data =  DBSession.execute(slct).fetchall()
+	areaList={}
+	# calcul of the Region/Area center 
+	data = [ OrderedDict(row) for row in data]
+	for row in data :
+		lat_c = row['maxLat'] - (row['maxLat']-row['minLat'])/2
+		lon_c = row['maxLon'] - (row['maxLon']-row['minLon'])/2
+		areaList[row['Place']] = {'lat': lat_c, 'lon' : lon_c}
+
+	return OrderedDict(areaList)
 
 
 @view_config(route_name=prefix+'/locality', renderer='json', request_method='POST')
@@ -196,10 +211,8 @@ def monitoredSitesLocality(request):
 		data = DBSession.execute(slct).fetchall()
 		return [row['Place' or 'Locality'] for row in data]
 	else :
-		if 'Region' in req :
-			query=select([Station.locality]).distinct().where(Station.area==req.get('Region'))
-		else :
-			query=select([Station.locality]).distinct()
+		table = Base.metadata.tables['Tthesaurus']
+		query = select([table.c['topic_en']]).where(and_(table.c['Id_Type'] == 1000254 ,table.c['Id_Parent'] != 1 )).order_by(table.c['topic_en'])
 		data=DBSession.execute(query).fetchall()
 		return [row[0] for row in data]
 

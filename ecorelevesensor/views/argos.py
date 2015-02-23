@@ -8,7 +8,7 @@ from pyramid.httpexceptions import HTTPBadRequest
 
 import pandas as pd
 import numpy as np
-
+import transaction
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.sensor import Argos, Gps
 from ecorelevesensor.models import Individual
@@ -36,7 +36,7 @@ def argos_unchecked_list(request):
 		unchecked = V_dataARGOS_withIndivEquip
 		print('________________________________________________________\n\n')
 
-		unchecked_with_ind = select([unchecked.ptt.label('ptt'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb')]).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
+		unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb'), func.max(unchecked.date_).label('max_date'), func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
 		# Populate Json array
 		print(unchecked_with_ind)
 		data = DBSession.execute(unchecked_with_ind).fetchall()
@@ -159,101 +159,208 @@ def argos_check(request):
 			raise
 
 # Unchecked data for one PTT.
-@view_config(route_name='argos/unchecked', renderer='json')
-def argos_unchecked(request):
-		"""Returns list of unchecked locations for a given ptt."""
-		# ptt is a mandatory parameter.
-		try:
-				ptt = int(request.GET['ptt'])
-		except:
-				raise HTTPBadRequest()
+@view_config(route_name='argos/unchecked/geo', renderer='json')
+def argos_unchecked_geo(request):
+	"""Returns list of unchecked locations for a given ptt."""
 
-		# Get all unchecked data for this ptt and this individual
-		# Type 0 = Argos data, type 1 = GPS data
-		argos_data = select([
-				Argos.pk.label('pk'), 
-				Argos.date,
-				Argos.lat,
-				Argos.lon,
-				Argos.lc,
-				literal_column('0').label('type')
-		]).where(Argos.checked == False).where(Argos.ptt == ptt)
-		gps_data = select([
-				Gps.pk.label('pk'),
-				Gps.date,
-				Gps.lat,
-				Gps.lon,
-				literal_column('NULL').label('lc'),
-				literal_column('1').label('type')
-		]).where(Gps.checked == False).where(Gps.ptt == ptt)
-		unchecked = union(argos_data, gps_data).alias('unchecked')
-		
-		# ind_id is a facultative parameter
-		try:
-				ind_id = int(request.GET['ind_id'])
-				all_data = select([
-						unchecked.c.pk,
-						unchecked.c.date,
-						unchecked.c.lat,
-						unchecked.c.lon,
-						unchecked.c.lc,
-						unchecked.c.type
-				]).select_from(unchecked
-						.join(SatTrx, SatTrx.ptt == ptt)
-						.join(ProtocolIndividualEquipment,
-								and_(
-										SatTrx.id == ProtocolIndividualEquipment.sat_id,
-										unchecked.c.date >= ProtocolIndividualEquipment.begin_date,
-										or_(
-												unchecked.c.date < ProtocolIndividualEquipment.end_date,
-												ProtocolIndividualEquipment.end_date == None
-										)
-								)
-						)
-				).where(ProtocolIndividualEquipment.ind_id == ind_id)
-		except KeyError or TypeError:
-				all_data = select([
-						unchecked.c.pk,
-						unchecked.c.date,
-						unchecked.c.lat,
-						unchecked.c.lon,
-						unchecked.c.lc,
-						unchecked.c.type
-				])
-				ind_id = None
+	platform = int(request.matchdict['id'])
 
-		# Initialize json object
-		result = {'ptt':{}, 'locations':[], 'indiv':{}}
-	 
+	if (request.matchdict['ind_id'] != 'null') :
+		ind_id = int(request.matchdict['ind_id'])
+	else :
+		ind_id = None
+
+	# unchecked = select([
+	# 		DataGsm.platform_,
+	# 		DataGsm.date.label('date'),
+	# 		DataGsm.id.label('id'),
+	# 		DataGsm.lat.label('lat'),
+	# 		DataGsm.lon.label('lon'),
+	# 		DataGsm.ele.label('ele'),
+	# 	]).alias()
+
+	unchecked = V_dataARGOS_withIndivEquip
+	query = select([unchecked.data_PK_ID.label('id'),
+		unchecked.lat,
+		unchecked.lon,
+		unchecked.date_.label('date'),
+		unchecked.ele]).where(and_(unchecked.ptt == platform,unchecked.ind_id == ind_id)).order_by(desc(unchecked.date_))
+
+	data = DBSession.execute(query).fetchall()
+
+	
+		# Query
+		# query = select([
+		#     DataGsm.id.label('id'),
+		#     DataGsm.lat,
+		#     DataGsm.lon,
+		#     DataGsm.date
+		# ]).where(DataGsm.platform_ == platform).where(DataGsm.checked == False
+		# ).order_by(desc(DataGsm.date)).limit(1000)
+		# # Create list of features from query result
+
+	features = [
+		{
+			'type':'Feature',
+			'properties':{'date':str(date)},
+			'geometry':{'type':'Point', 'coordinates':[float(lon),float(lat)]},
+			'id':id_
+		}
+	for id_, lat, lon, date, ele in data]
+	transaction.commit()
+	result = {'type':'FeatureCollection', 'features':features}
+	return result
+
+@view_config(route_name='argos/unchecked/json', renderer='json')
+def argos_unchecked_json(request):	
+		platform = int(request.matchdict['id'])
+
+		if (request.matchdict['ind_id'] != 'null') :
+			ind_id = int(request.matchdict['ind_id'])
+		else :
+			ind_id = None
+
+	# unchecked = select([
+	# 		DataGsm.platform_,
+	# 		DataGsm.date.label('date'),
+	# 		DataGsm.id.label('id'),
+	# 		DataGsm.lat.label('lat'),
+	# 		DataGsm.lon.label('lon'),
+	# 		DataGsm.ele.label('ele'),
+	# 	]).alias()
+
+		unchecked = V_dataARGOS_withIndivEquip
+		query = select([unchecked.data_PK_ID.label('id'),
+		unchecked.lat,
+		unchecked.lon,
+		unchecked.date_.label('date'),
+		unchecked.ele]).where(and_(unchecked.ptt == platform,unchecked.ind_id == ind_id)).order_by(desc(unchecked.date_))
+
+		data = DBSession.execute(query).fetchall()	
+		# Query
+		# query = select([
+		#     DataGsm.id.label('id'),
+		#     DataGsm.lat.label('lat'),
+		#     DataGsm.lon.label('lon'),
+		#     DataGsm.ele.label('ele'),
+		#     DataGsm.date.label('date')]
+		# ).where(DataGsm.platform_ == platform
+		# ).where(DataGsm.checked == False
+		# ).order_by(desc(DataGsm.date))
+		# data = DBSession.execute(query).fetchall()
+
 		# Load data from the DB then
 		# compute the distance between 2 consecutive points.
-		data = DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall()
+		 
 		df = pd.DataFrame.from_records(data, columns=data[0].keys(), coerce_float=True)
-		X1 = df.ix[:,['lat', 'lon']].values[:-1,:]
-		X2 = df.ix[1:,['lat', 'lon']].values
-		dist = pd.Series(np.append(haversine(X1, X2).round(3), 0), name='dist')
-		df = pd.concat([df['pk'], df['date'].apply(lambda x: str(x)), df['lat'], df['lon'], df['lc'], df['type'], dist], axis=1)
-		result['locations'] = df.to_dict('records')
+		X1 = df.iloc[:-1][['lat', 'lon']].values
+		X2 = df.iloc[1:][['lat', 'lon']].values
+		df['dist'] = np.append(haversine(X1, X2), 0).round(3)
+		# Compute the speed
+		df['speed'] = (df['dist'] / ((df['date'] - df['date'].shift(-1)).fillna(1) / np.timedelta64(1, 'h'))).round(3)
+		# Values to import : the first per hour
+		ids = df.set_index('date').resample('1H', how='first').dropna().id.values
+		df['import'] = df.id.isin(ids)
+		df['date'] = df['date'].apply(str) 
+		# Fill NaN
+		df.fillna(value={'ele':-999}, inplace=True)
+		return df.to_dict('records')
+		# ptt is a mandatory parameter.
 
-		# Get informations for this ptt
-		ptt_infos = select([SatTrx.ptt, SatTrx.manufacturer, SatTrx.model]).where(SatTrx.ptt == ptt)
-		result['ptt']['ptt'], result['ptt']['manufacturer'], result['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
 
-		# Get informations for the individual
-		if ind_id is not None:
-				query = select([
-						Individual.id.label('id'),
-						Individual.age.label('age'),
-						Individual.sex.label('sex'),
-						Individual.specie.label('specie'),
-						Individual.monitoring_status.label('monitoring_status'), 
-						Individual.origin.label('origin'),
-						Individual.survey_type.label('survey_type')
-				]).where(Individual.id == ind_id)
-				result['indiv'] = dict(DBSession.execute(query).fetchone())
-				# Last known location
-				c = V_Individuals_LatLonDate.c
-				query = select([c.lat, c.lon, c.date]).where(c.ind_id == ind_id).order_by(desc(c.date)).limit(1)
-				lat, lon, date = DBSession.execute(query).fetchone()
-				result['indiv']['last_loc'] = {'date':str(date), 'lat':float(lat), 'lon':float(lon)}
-		return result
+
+
+		# try:
+		# 		ptt = int(request.GET['ptt'])
+		# except:
+		# 		raise HTTPBadRequest()
+
+		# # Get all unchecked data for this ptt and this individual
+		# # Type 0 = Argos data, type 1 = GPS data
+		# argos_data = select([
+		# 		Argos.pk.label('pk'), 
+		# 		Argos.date,
+		# 		Argos.lat,
+		# 		Argos.lon,
+		# 		Argos.lc,
+		# 		literal_column('0').label('type')
+		# ]).where(Argos.checked == False).where(Argos.ptt == ptt)
+		# gps_data = select([
+		# 		Gps.pk.label('pk'),
+		# 		Gps.date,
+		# 		Gps.lat,
+		# 		Gps.lon,
+		# 		literal_column('NULL').label('lc'),
+		# 		literal_column('1').label('type')
+		# ]).where(Gps.checked == False).where(Gps.ptt == ptt)
+		# unchecked = union(argos_data, gps_data).alias('unchecked')
+		
+		# # ind_id is a facultative parameter
+		# try:
+		# 		ind_id = int(request.GET['ind_id'])
+		# 		all_data = select([
+		# 				unchecked.c.pk,
+		# 				unchecked.c.date,
+		# 				unchecked.c.lat,
+		# 				unchecked.c.lon,
+		# 				unchecked.c.lc,
+		# 				unchecked.c.type
+		# 		]).select_from(unchecked
+		# 				.join(SatTrx, SatTrx.ptt == ptt)
+		# 				.join(ProtocolIndividualEquipment,
+		# 						and_(
+		# 								SatTrx.id == ProtocolIndividualEquipment.sat_id,
+		# 								unchecked.c.date >= ProtocolIndividualEquipment.begin_date,
+		# 								or_(
+		# 										unchecked.c.date < ProtocolIndividualEquipment.end_date,
+		# 										ProtocolIndividualEquipment.end_date == None
+		# 								)
+		# 						)
+		# 				)
+		# 		).where(ProtocolIndividualEquipment.ind_id == ind_id)
+		# except KeyError or TypeError:
+		# 		all_data = select([
+		# 				unchecked.c.pk,
+		# 				unchecked.c.date,
+		# 				unchecked.c.lat,
+		# 				unchecked.c.lon,
+		# 				unchecked.c.lc,
+		# 				unchecked.c.type
+		# 		])
+		# 		ind_id = None
+
+		# # Initialize json object
+		# result = {'ptt':{}, 'locations':[], 'indiv':{}}
+	 
+		# # Load data from the DB then
+		# # compute the distance between 2 consecutive points.
+		# data = DBSession.execute(all_data.order_by(desc(all_data.c.date))).fetchall()
+		# df = pd.DataFrame.from_records(data, columns=data[0].keys(), coerce_float=True)
+		# X1 = df.ix[:,['lat', 'lon']].values[:-1,:]
+		# X2 = df.ix[1:,['lat', 'lon']].values
+		# dist = pd.Series(np.append(haversine(X1, X2).round(3), 0), name='dist')
+		# df = pd.concat([df['pk'], df['date'].apply(lambda x: str(x)), df['lat'], df['lon'], df['lc'], df['type'], dist], axis=1)
+		# result['locations'] = df.to_dict('records')
+
+		# # Get informations for this ptt
+		# ptt_infos = select([SatTrx.ptt, SatTrx.manufacturer, SatTrx.model]).where(SatTrx.ptt == ptt)
+		# result['ptt']['ptt'], result['ptt']['manufacturer'], result['ptt']['model'] = DBSession.execute(ptt_infos).fetchone()
+
+		# # Get informations for the individual
+		# if ind_id is not None:
+		# 		query = select([
+		# 				Individual.id.label('id'),
+		# 				Individual.age.label('age'),
+		# 				Individual.sex.label('sex'),
+		# 				Individual.specie.label('specie'),
+		# 				Individual.monitoring_status.label('monitoring_status'), 
+		# 				Individual.origin.label('origin'),
+		# 				Individual.survey_type.label('survey_type')
+		# 		]).where(Individual.id == ind_id)
+		# 		result['indiv'] = dict(DBSession.execute(query).fetchone())
+		# 		# Last known location
+		# 		c = V_Individuals_LatLonDate.c
+		# 		query = select([c.lat, c.lon, c.date]).where(c.ind_id == ind_id).order_by(desc(c.date)).limit(1)
+		# 		lat, lon, date = DBSession.execute(query).fetchone()
+		# 		result['indiv']['last_loc'] = {'date':str(date), 'lat':float(lat), 'lon':float(lon)}
+		# return result

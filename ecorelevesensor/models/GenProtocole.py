@@ -10,14 +10,22 @@ class GenProtocole ():
 		sex_value={'sex>male':18873,
 				'sex>female': 18874,
 				'sex>(indeterminate)':18875,
-				'':None}
+				'':None,
+				'male':18873,
+				'female': 18874,
+				'(indeterminate)':18875}
 
 		age_value={'age>newborn':18877,
 				'age>juvenile': 18878,
 				'age>adult':18879,
 				'age>(indeterminate)':18880,
 				'age>embryo (egg)':18993,
-				'':None}
+				'':None,
+				'newborn':18877,
+				'juvenile': 18878,
+				'adult':18879,
+				'(indeterminate)':18880,
+				'embryo (egg)':18993}
 
 		for Key,Value in  GivenFields.items():
 			if Key not in ['PK','name','Id_Sex','id_sex','Id_Age','id_age','Id_Taxon','id_taxon'] :

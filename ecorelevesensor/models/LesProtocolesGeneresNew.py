@@ -1,5 +1,5 @@
 # coding: utf-8
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, Unicode, text
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, Numeric, String, Text, Unicode, text, Sequence
 from sqlalchemy.dialects.mssql.base import BIT
 from sqlalchemy.orm import relationship
 from ..models import Base, GenProtocole, Station, Individual, MonitoredSite
@@ -70,7 +70,7 @@ class TProtocolBuildingAndActivity(Base,GenProtocole):
 class TProtocolChiropteraCapture(Base,GenProtocole):
     __tablename__ = 'TProtocol_Chiroptera_capture'
 
-    PK = Column(Integer, primary_key=True)
+    PK = Column(Integer, Sequence('seq_TprotocolChiroCapture_id'), primary_key=True)
     FK_TSta_ID = Column(ForeignKey(Station.id))
     Id_Taxon = Column(Integer, nullable=False)
     Name_Taxon = Column(String(1000, 'French_CI_AS'))

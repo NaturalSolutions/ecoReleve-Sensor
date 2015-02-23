@@ -6,7 +6,7 @@ Created on Tue Sep 23 17:15:47 2014
 from pyramid.view import view_config
 from sqlalchemy import desc, select, func,text, insert, join, Integer, cast, and_, Float, or_,bindparam, update, outerjoin
 from ecorelevesensor.models import (AnimalLocation,V_ProtocolIndividualEquipment,V_EquipGSM,
-	DBSession, DataGsm, EngineeringData , SatTrx, V_dataGSM_withIndivEquip, Station,
+	DBSession, DataGsm, EngineeringData , SatTrx, V_dataGSM_withIndivEquip, Station,V_dataARGOS_withIndivEquip,
 	ObjectsCaracValues, Individual,V_Individuals_LatLonDate,dbConfig )
 from ecorelevesensor.models.data import (
    ProtocolArgos,
@@ -435,14 +435,14 @@ def insert_ENG(platform, csv_data):
 def indiv_details(request):
 	print('_____DETAILS____')
 	ptt = int(request.matchdict['id'])
-	dfsfdf
+	
 
 
 	ind_id = int(request.matchdict['ind_id'])
 
 	print(ind_id)
 	print(ptt)
-	join_table = join(SatTrx, ObjectsCaracValues, SatTrx.ptt == cast(ObjectsCaracValues.value, Integer)).join(Individual, ObjectsCaracValues.object == Individual.id) 
+	join_table = join(Individual,V_dataGSM_withIndivEquip, Individual.id == V_dataGSM_withIndivEquip.ind_id) 
 
 	query = select([Individual.id.label('ind_id'),
 		Individual.survey_type.label('survey_type'),
@@ -455,7 +455,10 @@ def indiv_details(request):
 		Individual.chip_code.label('chip_code'),
 		Individual.sex.label('sex'),
 		Individual.origin.label('origin'),
-		Individual.age.label('age')]).select_from(join_table).where(and_(SatTrx.model.like('GSM%'),ObjectsCaracValues.carac_type == 19,ObjectsCaracValues.object_type == 'Individual')).where(ObjectsCaracValues.value == ptt).order_by(desc(ObjectsCaracValues.begin_date))
+		Individual.age.label('age'),
+		V_dataGSM_withIndivEquip.begin_date,
+		V_dataGSM_withIndivEquip.end_date]).select_from(join_table).where(and_(V_dataGSM_withIndivEquip.ptt == ptt,V_dataGSM_withIndivEquip.ind_id == ind_id)
+															  ).order_by(desc(V_dataGSM_withIndivEquip.begin_date))
 	print(query)
 	data = DBSession.execute(query).first()
 	transaction.commit()

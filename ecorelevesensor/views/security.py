@@ -13,28 +13,30 @@ import transaction
 route_prefix = 'security/'
 
 @view_config(
-    route_name=route_prefix+'login',
-    permission=NO_PERMISSION_REQUIRED,
-    request_method='POST')
+	route_name=route_prefix+'login',
+	permission=NO_PERMISSION_REQUIRED,
+	request_method='POST')
 def login(request):
-    user_id = request.POST.get('user_id', '')
-    pwd = request.POST.get('password', '')
-    user = DBSession.query(User).filter(User.id==user_id).one()
-    if user is not None and user.check_password(pwd):
-        headers = remember(request, user_id)
-        response = request.response
-        response.headerlist.extend(headers)
-        return response
-    else:
-        return HTTPUnauthorized()
-        
+	user_id = request.POST.get('user_id', '')
+	pwd = request.POST.get('password', '')
+	user = DBSession.query(User).filter(User.id==user_id).one()
+	if user is not None and user.check_password(pwd):
+		headers = remember(request, user_id)
+		response = request.response
+		response.headerlist.extend(headers)
+		transaction.commit()
+		return response
+	else:
+		transaction.commit()
+		return HTTPUnauthorized()
+		
 @view_config(route_name=route_prefix+'logout')
 def logout(request):
-    headers = forget(request)
-    request.response.headerlist.extend(headers)
-    return request.response
-    
+	headers = forget(request)
+	request.response.headerlist.extend(headers)
+	return request.response
+	
 @view_config(route_name=route_prefix+'has_access')
 def has_access(request):
-    transaction.commit()
-    return request.response
+	transaction.commit()
+	return request.response
