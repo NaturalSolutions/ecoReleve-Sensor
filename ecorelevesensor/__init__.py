@@ -145,6 +145,7 @@ def add_routes(config):
     
     ##### Individuals routes #####
     config.add_route('core/individual', 'ecoReleve-Core/individual/{id}')
+    config.add_route('core/individual/increment', 'ecoReleve-Core/individual/{id}/{increment}')
     config.add_route('core/individuals/history', 'ecoReleve-Core/individuals/history')
     config.add_route('core/individuals/stations', 'ecoReleve-Core/individuals/stations')
     config.add_route('core/individuals/search/values', 'ecoReleve-Core/individuals/search/values')
