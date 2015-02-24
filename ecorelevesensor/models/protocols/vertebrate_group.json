@@ -129,7 +129,7 @@
       "title": "Angle from track(degree)",
       "editorAttrs": { "min": 0, "max" : 360 }
     },
-    "timestamp": {
+    "observation_time": {
       "validators": [],
       "type": "Text",
       "title": "Obs time",
@@ -151,7 +151,7 @@
       "legend": "Individual number"
     },
     {
-      "fields": ["Measured_Distance", "Estimated_Distance","AngleNorth","AngleTrack","timestamp"],
+      "fields": ["Measured_Distance", "Estimated_Distance","AngleNorth","AngleTrack","observation_time"],
       "legend": "Orientation"
     },
     {

@@ -38,7 +38,7 @@ class Station(Base):
 	ele = Column(Integer)
 	precision = Column('Precision', Integer)
 	creator = Column('Creator', Integer)
-	updateRegion=Column('regionUpdate',BIT,server_default=text("((0))"))
+	# updateRegion=Column('regionUpdate',BIT,server_default=text("((0))"))
 	creationDate = Column('Creation_date', DateTime, server_default=func.now())
 	Id_DistanceFromObs=Column('Id_DistanceFromObs',Integer)
 	Name_DistanceFromObs=Column('Name_DistanceFromObs',String)

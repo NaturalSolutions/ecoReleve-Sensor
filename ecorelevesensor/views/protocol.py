@@ -197,8 +197,10 @@ def get_data_on_protocol (request):
 			row = OrderedDict(row)
 			if 'time' or 'hour' in [x.lower() for x in hour_cols] :
 				for time_field in hour_cols :
+					print (time_field)
 					print (row[time_field])
-					row[time_field] = row[time_field].strftime('%H:%M')
+					if row[time_field] != None :
+						row[time_field] = row[time_field].strftime('%H:%M')
 			datas.update(row)
 
 		model_proto['data']= datas
