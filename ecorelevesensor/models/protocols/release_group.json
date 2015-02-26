@@ -1,0 +1,38 @@
+{
+  "name": "Release_Group",
+  "description": "TProtocol_Release_Group",
+  "keywords": [
+    "Bird trapping",
+    "Reptile trapping",
+    "Mammal trapping"
+  ],
+  "schema": {
+    "Name_Taxon": {
+      "validators": [],
+      "type": "Text",
+      "title": "Taxon",
+      "editorAttrs": { "startId": "8" },
+      "editorClass": "autocompTree"
+    },
+	"Name_Release_Method": {
+      "validators": [],
+      "type": "Text",
+      "title": "Method",
+      "editorAttrs": { "startId": "19001" },
+      "editorClass": "autocompTree"
+    },
+    "Comments": {
+      "type": "TextArea",
+      "title": "Comments"
+    }
+  },
+  "fieldsets": [
+	{
+      "fields": ["Name_Taxon", "Name_Release_Method","Comments"],
+      "legend": ""
+    }
+  
+  
+  ]
+}
+

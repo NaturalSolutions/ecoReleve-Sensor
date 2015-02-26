@@ -28,7 +28,7 @@ route_prefix = 'argos/'
 # List all PTTs having unchecked locations, with individual id and number of locations.
 @view_config(
 		route_name='argos/unchecked/list',
-    	permission='read',
+    	# permission='read',
 		renderer='json')
 def argos_unchecked_list(request):
 		"""Returns the unchecked Argos data summary.

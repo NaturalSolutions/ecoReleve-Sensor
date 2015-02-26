@@ -1,6 +1,7 @@
 {
   "name": "Phytosociology releve",
   "description": "TProtocol_Phytosociology_releve",
+  "child" : "true",
   "keywords": [
     "Phytosociological relevé","Vegetation monitoring","Plants inventory"
   ],
