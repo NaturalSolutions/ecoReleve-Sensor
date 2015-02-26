@@ -87,8 +87,8 @@ def add_routes(config):
     config.add_route('dataGsm/upload', 'ecoReleve-Core/dataGsm/upload')
     config.add_route('dataGsm/details', 'ecoReleve-Core/dataGsm/{id}/details/{ind_id}')
     config.add_route('dataGsm/unchecked/list', 'ecoReleve-Core/dataGsm/unchecked/list')
-    config.add_route('dataGsm/unchecked/import', 'ecoReleve-Core/dataGsm/{id}/unchecked/import')
-    config.add_route('dataGsm/unchecked/import/auto', 'ecoReleve-Core/dataGsm/{id}/unchecked/import/auto')
+    config.add_route('dataGsm/unchecked/import', 'ecoReleve-Core/dataGsm/{id}/unchecked/{ind_id}/import')
+    config.add_route('dataGsm/unchecked/import/auto', 'ecoReleve-Core/dataGsm/{id}/unchecked/{ind_id}/import/auto')
     config.add_route('dataGsm/unchecked', 'ecoReleve-Core/dataGsm/{id}/unchecked/{ind_id}')
     
      ##### Transmitter #####

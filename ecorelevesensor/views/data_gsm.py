@@ -18,7 +18,7 @@ from traceback import print_exc
 import pandas as pd
 import numpy as np
 import re
-import datetime
+import datetime, time
 import transaction
 import json
 from sqlalchemy.orm import query
@@ -26,6 +26,12 @@ from sqlalchemy.orm import query
 gene = Generator('T_DataGsm')
 
 prefix = 'dataGsm/'
+def data_to_XML (data) :
+	xml = '<?xml version="1.0" ?><table>'
+	for id_ in data : 
+		xml = xml+'<row>'+str(id_)+'</row>'
+	xml = xml + '</table>'
+	return xml
 
 @view_config(route_name=prefix + 'unchecked/list', renderer='json')
 def data_gsm_unchecked_list(request):
@@ -61,7 +67,7 @@ def data_gsm_unchecked(request):
 	# 		DataGsm.platform_,
 	# 		DataGsm.date.label('date'),
 	# 		DataGsm.id.label('id'),
-	# 		DataGsm.lat.label('lat'),
+	# 		DataGsm.lat.label('lat'	),
 	# 		DataGsm.lon.label('lon'),
 	# 		DataGsm.ele.label('ele'),
 	# 	]).alias()
@@ -130,98 +136,138 @@ def data_gsm_unchecked(request):
 		
 @view_config(route_name=prefix + 'unchecked/import', renderer='json', request_method='POST')
 def data_gsm_unchecked_import(request):
-	'''Import unchecked GSM data.
-	'''
+
+
 	print('____--- Import Check ---___')
 	ptt = request.matchdict['id']
 	data = request.json_body.get('data')
-	id_ind = request.json_body.get('id_ind')
-	print(ptt)
-	print(id_ind)
+	ind_id = request.matchdict['ind_id']
+
+	xml_to_insert = data_to_XML(data)
+	# xml_to_insert = """<?xml version="1.0" ?>
+	# <table>
+	# <row > 130</row>
+	# <row > 134</row>
+	# <row > 132</row>
+	# <row > 135</row>
+	# <row > 763</row>
+	# <row > 7528</row>
+	# <row > 728</row>
+	# <row > 738</row>
+	# <row > 748</row>
+	# </table>"""
+	nb_insert, exist = gsm_unchecked_validation(ptt,ind_id,request.authenticated_userid,xml_to_insert)
+
+	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing'
+
+def gsm_unchecked_validation(ptt,ind_id,user,xml_to_insert):
+
+	'''validate unchecked GSM data from xml GSM data PK_id.
+	'''
+	start = time.time()
+	# get the full data list of the gsm file then convert to xml
+	full_data_checked = DBSession.execute(select([V_dataGSM_withIndivEquip.data_PK_ID]
+		).where(and_(V_dataGSM_withIndivEquip.ptt == ptt , V_dataGSM_withIndivEquip.ind_id == ind_id))).fetchall()
+
+	transaction.commit()
+	xml_to_update_check = data_to_XML([row[0] for row in full_data_checked])
+
+	# push xml data to insert into stored procedure in order ==> create stations and protocols if not exist
+	stmt = text(""" DECLARE @nb_insert int , @exist int;
+
+		exec """+ dbConfig['data_schema'] + """.[sp_validate_gsm] :id_list, :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT;
+	        SELECT @nb_insert, @exist; """
+	    ).bindparams(bindparam('id_list', xml_to_insert),bindparam('ind_id', ind_id),bindparam('user', user))
+	nb_insert, exist = DBSession.execute(stmt).fetchone()
+
+	# update T_DataGsm for full data file from xml
+	stmt = text(""" exec """+ dbConfig['data_schema'] + """.[sp_check_gsm_byXML] :id_list;"""
+	    ).bindparams(bindparam('id_list', xml_to_update_check))
+	DBSession.execute(stmt)
+	transaction.commit()
+	stop = time.time()
+	print ('\n time to insert '+str(stop-start))
+	return nb_insert, exist
+
+	# Get list of valid location 
+	# stmt = text(""" select * from """+ dbConfig['data_schema'] + """.[fn_valid_gsmList_from_GSM_dataID] (:id_list)
+	#         """
+	#     ).bindparams(bindparam('id_list', xml_to_insert))
+
+	# data_with_duplicate = DBSession.execute(stmt).fetchall()
+	# transaction.commit()
+
+	# for data_obj in data_with_duplicate:
+	# 		id_data = data_obj['PK_id']
+	# 		id_sta = data_obj['TSta_PK_ID']
+	# 		platform = data_obj['platform_']
+
+	# 		if id_sta != None :
+
+	# 			name = 'ARGOS_' + str(platform) + '_' + data_obj[DataGsm.date.name].strftime('%Y%m%d%H%M%S')
+	# 			gps = ProtocolGps(ind_id=ind_id, course=data_obj[DataGsm.course.name], speed=data_obj[DataGsm.speed.name])
+
+	# 			station = Station(date=data_obj[DataGsm.date.name], name=name, fieldActivityId=27
+	# 				, fieldActivityName='Automatic data acquisition', lat=data_obj[DataGsm.lat.name], lon=data_obj[DataGsm.lon.name]
+	# 				, ele=data_obj[DataGsm.ele.name], protocol_gps=gps)
+	# 			 # Add the station in the list
+	# 			data_ids.append(id_data)
+	# 			stations.append(station)
+	#  # Insert the stations (and protocols thanks to ORM)
+	# print ('_________________nb insert ______________________')
+	# print(full_data_checked)
+	# print (len(data_ids))
+	# DBSession.add_all(stations)
+	#  # Update the sensor database
+	# stmt = text(""" exec """+ dbConfig['data_schema'] + """.[sp_check_gsm_byXML] :id_list;
+	#         """
+	#     ).bindparams(bindparam('id_list', xml_to_update))
+	# DBSession.execute(stmt)
+	# stmt = text(""" exec """+ dbConfig['data_schema'] + """.[sp_validated_gsm_byXML] :id_list;
+	#         """
+	#     ).bindparams(bindparam('id_list', xml_to_insert))
+	# DBSession.execute(stmt)
+
+	# return 'number of new stations/portocols : '+str(len(data_ids)) +' number of existing stations/protocols :'+str(len(data_with_duplicate)-len(data_ids))
+
 	
-	# it = iter(data)
-	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.name == bindparam('name'), Station.lat == bindparam('lat'),
-			Station.lon == bindparam('lon'), Station.ele == bindparam('ele')))
-	# if (len(data)> 2100) :
-
-	# gsm_data = DBSession.execute(select([DataGsm.lat,DataGsm.lon,DataGsm.date,
-	# DataGsm.ele, DataGsm.platform_]).where(DataGsm.id.in_(data))).fetchall()
-	
-
-	# id_data_to_insert = []
-	
-
-	# all_gsm_data = []
-	# i = 0
-	# if (len(data)> 2100) :
-	# 	while i < len(data)-1 :
-	# 		j = i
-	# 		i += 2000
-	# 		if i > len(data)-1 :
-	# 			i=len(data)-1
-	# 		part_gsm_data =
-	# 		DBSession.query(DataGsm).filter(DataGsm.id.in_(data[j:i])).all()
-	# 		all_gsm_data.append(list(part_gsm_data))
-	# print (len(data))
-	# print('____________________all_gsm_data__________________\n')
-	# print (len(all_gsm_data))
-	# print(all_gsm_data)
-
-
-	# for id_ in data :
-	# 	name = 'ARGOS_' + str(gsm_data.platform_) + '_' +
-	# 	gsm_data.date.strftime('%Y%m%d%H%M%S')
-
-	# 	if DBSession.execute(check_duplicate_station, {'name':name,
-	# 	'lat':gsm_data.lat, 'lon':gsm_data.lon, 'ele':gsm_data.ele}).scalar() == 0:
-	# 		id_data_to_insert.append(gsm_data.id)
-	# print (len(id_data_to_insert))
-	
-
-	#query = update(DataGsm).where(DataGsm.data_PK_ID.in_(data)).values(validated
-	#= 1)
-
-	# DBSession.execute(query)
-	# # select_stmt =
-	# DBSession.execute(select([DataGsm.lat,DataGsm.lon,DataGsm.date],DataGsm.id.in_(data))).fetchall()
-	# # print (select_stmt)
-	# # query = insert(AnimalLocation, select_stmt)
-	# # DBSession.execute(query)
-	# stmt = text("""
-	# 	DECLARE @nb int;
-	# 	EXEC """ + dbConfig['data_schema'] + """.sp_validate_gsm :ind, :user ,
-	# 	:platform , @nb OUTPUT;
-	# 	SELECT @nb;"""
-	# ).bindparams(bindparam('user',
-	# request.authenticated_userid),bindparam('platform', ptt),bindparam('ind',
-	# id_ind))
-	
-
-	# nb = DBSession.execute(stmt).fetchone()
-	# print(nb)
-
-
-
-	# if error_code == 0:
-	# 	if nb > 0:
-	# 		return 'Success : ' + str(nb) + ' new rows inserted in table
-	# 		T_AnimalLocation.'
-	# 	else:
-	# 		return 'Warning : no new row inserted.'
-	# else:
-	# 	return 'Error : an error occured during validation process (error code : '
-	# 	+ str(error_code) + ' )'
 @view_config(route_name=prefix + 'unchecked/import/auto', renderer='json', request_method='POST')
 def data_gsm_unchecked_import_auto(request):
 
 	ptt = request.matchdict['id']
+	ind_id = request.matchdict['ind_id']
 
-	''' if ptt = 0 validate all gsm file for 1 location by hour '''
-	if (ptt == 0):		
-		query = update(V_dataGSM_withIndivEquip).where().values()
+	full_data_checked = DBSession.execute(select([V_dataGSM_withIndivEquip.data_PK_ID,V_dataGSM_withIndivEquip.date_ ]
+		).where(and_(V_dataGSM_withIndivEquip.ptt == ptt , V_dataGSM_withIndivEquip.ind_id == ind_id))).fetchall()
 
+	df = pd.DataFrame.from_records(full_data_checked, columns=full_data_checked[0].keys(), index=full_data_checked['date_'] , coerce_float=True)
 
+	df
+	# ''' if ptt = 0 validate all gsm file for 1 location by hour '''
 
+	# xml = """<?xml version="1.0" ?>
+	# <table>
+	# <row > 130</row>
+	# <row > 134</row>
+	# <row > 134</row>
+	# <row > 135</row>
+	# <row > 763</row>
+	# <row > 7528</row>
+	# <row > 728</row>
+	# <row > 738</row>
+	# <row > 748</row>
+	# </table>"""
+	# print (DataGsm.date.name)
+	# stmt = text(""" select * from """+ dbConfig['data_schema'] + """.[fn_valid_gsmList_from_GSM_dataID] (:id_list)
+	#         """
+	#     ).bindparams(bindparam('id_list', xml))
+	# res = DBSession.execute(stmt).fetchall()
+	# # connection = DBSession.bind.raw_connection()
+	# # cursor= connection.cursor()
+
+	# # cursor.callproc('bezin',[xml])#.fetchall()
+	# # results = list(cursor.fetchall())
+	# print([row['TSta_PK_ID'] for row in res])
 	
 def asInt(s):
 	try:
