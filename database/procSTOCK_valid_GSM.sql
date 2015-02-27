@@ -4,7 +4,7 @@
 -- Description: create procedure to validate GSM from xml containing Pk_id
 -- =============================================
 
-/****** Object:  StoredProcedure [dbo].[sp_validate_gsm]    Script Date: 25/02/2015 16:51:34 ******/
+
 SET ANSI_NULLS ON
 GO
 
@@ -12,10 +12,12 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 
-ALTER PROCEDURE [dbo].[sp_validate_gsm]
+
+alter PROCEDURE [dbo].[sp_validate_gsm]
 	@listID xml,
 	@ind int,
 	@user int,
+	@ptt int , 
 	@nb_insert int OUTPUT,
 	@exist int output
 	
@@ -79,7 +81,7 @@ output inserted.TSta_PK_ID,inserted.FieldWorker1 into @output
 select 
 27
 ,'Automatic data acquisition'
-,'ARGOS_'+CAST(platform_ as varchar(25))+'_'+CONVERT(VARCHAR(24),date_,112)
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+CONVERT(VARCHAR(24),date_,112)
 ,date_
 ,lat
 ,lon
@@ -97,10 +99,10 @@ FROM @data_to_insert i
 join @output o on o.data_id=i.data_id
 where i.data_id in (select data_id from @data_without_duplicate)
 
-
+-- update T_DataGsm for validated value and checked value 
 update TStations set FieldWorker1= null where TSta_PK_ID in (select sta_id from @output)
-
 update T_DataGsm set validated = 1 where PK_id in (select data_id from @data_to_insert)
+update V_dataGSM_with_IndivEquip set checked = 1 where ptt = @ptt and ind_id = @ind
 
 SELECT @nb_insert = COUNT(*) FROM @data_without_duplicate
 select @exist = COUNT(*) FROM @data_to_insert where data_id not in (select data_id from @data_without_duplicate)
@@ -108,6 +110,7 @@ select @exist = COUNT(*) FROM @data_to_insert where data_id not in (select data_
 
 RETURN
 END
+
 
 
 GO

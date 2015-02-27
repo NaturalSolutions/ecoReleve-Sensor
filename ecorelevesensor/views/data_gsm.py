@@ -40,16 +40,11 @@ def data_gsm_unchecked_list(request):
 	unchecked = select([DataGsm.platform_,
 		DataGsm.date]).alias()
 
-
 	unchecked = V_dataGSM_withIndivEquip
-
-	print('________________________________________________________\n\n')
-
 	unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb'), func.max(unchecked.date_).label('max_date'), func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
 	# Populate Json array
 	data = DBSession.execute(unchecked_with_ind).fetchall()
 
-	print(data)
 	return [dict(row) for row in data]
 
 @view_config(route_name=prefix + 'unchecked', renderer='json')
@@ -63,15 +58,6 @@ def data_gsm_unchecked(request):
 	else :
 		ind_id = None
 
-	# unchecked = select([
-	# 		DataGsm.platform_,
-	# 		DataGsm.date.label('date'),
-	# 		DataGsm.id.label('id'),
-	# 		DataGsm.lat.label('lat'	),
-	# 		DataGsm.lon.label('lon'),
-	# 		DataGsm.ele.label('ele'),
-	# 	]).alias()
-
 	unchecked = V_dataGSM_withIndivEquip
 	query = select([unchecked.data_PK_ID.label('id'),
 		unchecked.lat,
@@ -82,15 +68,6 @@ def data_gsm_unchecked(request):
 	data = DBSession.execute(query).fetchall()
 
 	if request.GET['format'] == 'geojson':
-		# Query
-		# query = select([
-		#     DataGsm.id.label('id'),
-		#     DataGsm.lat,
-		#     DataGsm.lon,
-		#     DataGsm.date
-		# ]).where(DataGsm.platform_ == platform).where(DataGsm.checked == False
-		# ).order_by(desc(DataGsm.date)).limit(1000)
-		# # Create list of features from query result
 
 		features = [
 			{
@@ -105,17 +82,6 @@ def data_gsm_unchecked(request):
 		return result
 		
 	elif request.GET['format'] == 'json':
-		# Query
-		# query = select([
-		#     DataGsm.id.label('id'),
-		#     DataGsm.lat.label('lat'),
-		#     DataGsm.lon.label('lon'),
-		#     DataGsm.ele.label('ele'),
-		#     DataGsm.date.label('date')]
-		# ).where(DataGsm.platform_ == platform
-		# ).where(DataGsm.checked == False
-		# ).order_by(desc(DataGsm.date))
-		# data = DBSession.execute(query).fetchall()
 
 		# Load data from the DB then
 		# compute the distance between 2 consecutive points.
@@ -136,7 +102,6 @@ def data_gsm_unchecked(request):
 		
 @view_config(route_name=prefix + 'unchecked/import', renderer='json', request_method='POST')
 def data_gsm_unchecked_import(request):
-
 
 	print('____--- Import Check ---___')
 	ptt = request.matchdict['id']
@@ -165,26 +130,16 @@ def gsm_unchecked_validation(ptt,ind_id,user,xml_to_insert):
 	'''validate unchecked GSM data from xml GSM data PK_id.
 	'''
 	start = time.time()
-	# get the full data list of the gsm file then convert to xml
-	full_data_checked = DBSession.execute(select([V_dataGSM_withIndivEquip.data_PK_ID]
-		).where(and_(V_dataGSM_withIndivEquip.ptt == ptt , V_dataGSM_withIndivEquip.ind_id == ind_id))).fetchall()
-
-	transaction.commit()
-	xml_to_update_check = data_to_XML([row[0] for row in full_data_checked])
 
 	# push xml data to insert into stored procedure in order ==> create stations and protocols if not exist
 	stmt = text(""" DECLARE @nb_insert int , @exist int;
 
-		exec """+ dbConfig['data_schema'] + """.[sp_validate_gsm] :id_list, :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT;
+		exec """+ dbConfig['data_schema'] + """.[sp_validate_gsm] :id_list, :ind_id , :user , :ptt , @nb_insert OUTPUT, @exist OUTPUT;
 	        SELECT @nb_insert, @exist; """
-	    ).bindparams(bindparam('id_list', xml_to_insert),bindparam('ind_id', ind_id),bindparam('user', user))
+	    ).bindparams(bindparam('id_list', xml_to_insert),bindparam('ind_id', ind_id),bindparam('user', user),bindparam('ptt', ptt))
 	nb_insert, exist = DBSession.execute(stmt).fetchone()
-
-	# update T_DataGsm for full data file from xml
-	stmt = text(""" exec """+ dbConfig['data_schema'] + """.[sp_check_gsm_byXML] :id_list;"""
-	    ).bindparams(bindparam('id_list', xml_to_update_check))
-	DBSession.execute(stmt)
 	transaction.commit()
+
 	stop = time.time()
 	print ('\n time to insert '+str(stop-start))
 	return nb_insert, exist
@@ -232,42 +187,60 @@ def gsm_unchecked_validation(ptt,ind_id,user,xml_to_insert):
 
 	
 @view_config(route_name=prefix + 'unchecked/import/auto', renderer='json', request_method='POST')
-def data_gsm_unchecked_import_auto(request):
+def data_gsm_unchecked_validation_auto(request):
 
 	ptt = request.matchdict['id']
 	ind_id = request.matchdict['ind_id']
 
-	full_data_checked = DBSession.execute(select([V_dataGSM_withIndivEquip.data_PK_ID,V_dataGSM_withIndivEquip.date_ ]
-		).where(and_(V_dataGSM_withIndivEquip.ptt == ptt , V_dataGSM_withIndivEquip.ind_id == ind_id))).fetchall()
+	nb_insert, exist = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing'
 
-	df = pd.DataFrame.from_records(full_data_checked, columns=full_data_checked[0].keys(), index=full_data_checked['date_'] , coerce_float=True)
+@view_config(route_name=prefix + 'unchecked/importAll/auto', renderer='json', request_method='POST')
+def data_gsm_uncheckedALL_validation_auto(request):
+	unchecked_list = data_gsm_unchecked_list(request)
+	Total_nb_insert = 0
+	Total_exist = 0
 
-	df
-	# ''' if ptt = 0 validate all gsm file for 1 location by hour '''
+	start = time.time()
 
-	# xml = """<?xml version="1.0" ?>
-	# <table>
-	# <row > 130</row>
-	# <row > 134</row>
-	# <row > 134</row>
-	# <row > 135</row>
-	# <row > 763</row>
-	# <row > 7528</row>
-	# <row > 728</row>
-	# <row > 738</row>
-	# <row > 748</row>
-	# </table>"""
-	# print (DataGsm.date.name)
-	# stmt = text(""" select * from """+ dbConfig['data_schema'] + """.[fn_valid_gsmList_from_GSM_dataID] (:id_list)
-	#         """
-	#     ).bindparams(bindparam('id_list', xml))
-	# res = DBSession.execute(stmt).fetchall()
-	# # connection = DBSession.bind.raw_connection()
-	# # cursor= connection.cursor()
+	# stmt = text(""" DECLARE @nb_insert int , @exist int;
 
-	# # cursor.callproc('bezin',[xml])#.fetchall()
-	# # results = list(cursor.fetchall())
-	# print([row['TSta_PK_ID'] for row in res])
+	# 	exec """+ dbConfig['data_schema'] + """.[sp_auto_validateALL_gsm] :user , @nb_insert OUTPUT, @exist OUTPUT;
+	#         SELECT @nb_insert, @exist; """
+	#     ).bindparams(bindparam('user', request.authenticated_userid))
+	# Total_nb_insert, Total_exist = DBSession.execute(stmt).fetchone()
+	# transaction.commit()
+	
+
+	for row in unchecked_list : 
+		ptt = row['platform_']
+		ind_id = row['ind_id']
+		print (ind_id)
+		if ind_id != None : 
+			nb_insert, exist = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+			Total_exist += exist
+			Total_nb_insert += nb_insert
+	print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
+
+	stop = time.time()
+	print ('\n time to insert '+str(stop-start))
+	return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing'
+
+
+def auto_validate_gsm (ptt,ind_id,user) :
+	start = time.time()
+
+	stmt = text(""" DECLARE @nb_insert int , @exist int;
+
+		exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT;
+	        SELECT @nb_insert, @exist; """
+	    ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user))
+	nb_insert, exist = DBSession.execute(stmt).fetchone()
+	transaction.commit()
+
+	stop = time.time()
+	print ('\n time to insert '+str(stop-start))
+	return nb_insert, exist
 	
 def asInt(s):
 	try:
