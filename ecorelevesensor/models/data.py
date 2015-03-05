@@ -169,7 +169,23 @@ class V_dataARGOS_withIndivEquip (Base) :
 		,Column('checked' ,BIT)
 		,Column('imported',BIT) 
 		)
+class V_dataGPS_withIndivEquip (Base) : 
+	__table__ = Table ('V_dataGPS_with_IndivEquip', Base.metadata,
+		Column('ind_id',Integer)
+      	,Column('ptt',Integer)
+		,Column('begin_date',DateTime)
+		,Column('end_date',DateTime)
+		,Column('lat',Numeric(9,5))
+		,Column('lon',Numeric(9,5))
+		,Column('ele',Integer)
+		,Column('checked',BIT)
+		,Column('imported',BIT)
+		,Column('date_',DateTime)
+		,Column('course',Integer)
+		,Column('speed',Integer)
+		,Column('data_PK_ID',Integer,  primary_key= True)
 
+		)
 
 V_Individuals_LatLonDate = Table('V_Individuals_LatLonDate', Base.metadata,
 							 Column('ind_id', Integer),

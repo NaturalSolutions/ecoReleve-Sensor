@@ -14,6 +14,8 @@ from ecorelevesensor.models.data import (
 from ecorelevesensor.utils.generator import Generator
 
 from ecorelevesensor.utils.distance import haversine
+from ecorelevesensor.utils.data_toXML import data_to_XML
+
 from traceback import print_exc
 import pandas as pd
 import numpy as np
@@ -26,12 +28,6 @@ from sqlalchemy.orm import query
 gene = Generator('T_DataGsm')
 
 prefix = 'dataGsm/'
-def data_to_XML (data) :
-	xml = '<?xml version="1.0" ?><table>'
-	for id_ in data : 
-		xml = xml+'<row>'+str(id_)+'</row>'
-	xml = xml + '</table>'
-	return xml
 
 @view_config(route_name=prefix + 'unchecked/list', renderer='json')
 def data_gsm_unchecked_list(request):
@@ -121,7 +117,7 @@ def data_gsm_unchecked_import(request):
 	# <row > 738</row>
 	# <row > 748</row>
 	# </table>"""
-	nb_insert, exist = gsm_unchecked_validation(ptt,ind_id,request.authenticated_userid,xml_to_insert)
+	nb_insert, exist, error = gsm_unchecked_validation(ptt,ind_id,request.authenticated_userid,xml_to_insert)
 
 	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing'
 
@@ -132,17 +128,17 @@ def gsm_unchecked_validation(ptt,ind_id,user,xml_to_insert):
 	start = time.time()
 
 	# push xml data to insert into stored procedure in order ==> create stations and protocols if not exist
-	stmt = text(""" DECLARE @nb_insert int , @exist int;
+	stmt = text(""" DECLARE @nb_insert int , @exist int, @error int;
 
-		exec """+ dbConfig['data_schema'] + """.[sp_validate_gsm] :id_list, :ind_id , :user , :ptt , @nb_insert OUTPUT, @exist OUTPUT;
-	        SELECT @nb_insert, @exist; """
+		exec """+ dbConfig['data_schema'] + """.[sp_validate_gsm] :id_list, :ind_id , :user , :ptt , @nb_insert OUTPUT, @exist OUTPUT , @error OUTPUT;
+	        SELECT @nb_insert, @exist, @error; """
 	    ).bindparams(bindparam('id_list', xml_to_insert),bindparam('ind_id', ind_id),bindparam('user', user),bindparam('ptt', ptt))
-	nb_insert, exist = DBSession.execute(stmt).fetchone()
+	nb_insert, exist , error = DBSession.execute(stmt).fetchone()
 	transaction.commit()
 
 	stop = time.time()
 	print ('\n time to insert '+str(stop-start))
-	return nb_insert, exist
+	return nb_insert, exist, error
 
 	# Get list of valid location 
 	# stmt = text(""" select * from """+ dbConfig['data_schema'] + """.[fn_valid_gsmList_from_GSM_dataID] (:id_list)
@@ -192,15 +188,16 @@ def data_gsm_unchecked_validation_auto(request):
 	ptt = request.matchdict['id']
 	ind_id = request.matchdict['ind_id']
 
-	nb_insert, exist = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
-	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing'
+	nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+	transaction.commit()
+	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
 
 @view_config(route_name=prefix + 'unchecked/importAll/auto', renderer='json', request_method='POST')
 def data_gsm_uncheckedALL_validation_auto(request):
 	unchecked_list = data_gsm_unchecked_list(request)
 	Total_nb_insert = 0
 	Total_exist = 0
-
+	Total_error = 0
 	start = time.time()
 
 	# stmt = text(""" DECLARE @nb_insert int , @exist int;
@@ -217,30 +214,31 @@ def data_gsm_uncheckedALL_validation_auto(request):
 		ind_id = row['ind_id']
 		print (ind_id)
 		if ind_id != None : 
-			nb_insert, exist = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+			nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
 			Total_exist += exist
 			Total_nb_insert += nb_insert
+			Total_error += error
 	print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
-
+	transaction.commit()
 	stop = time.time()
 	print ('\n time to insert '+str(stop-start))
-	return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing'
+	return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
 
 
 def auto_validate_gsm (ptt,ind_id,user) :
 	start = time.time()
 
-	stmt = text(""" DECLARE @nb_insert int , @exist int;
+	stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
 
-		exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT;
-	        SELECT @nb_insert, @exist; """
+		exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
+	        SELECT @nb_insert, @exist, @error; """
 	    ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user))
-	nb_insert, exist = DBSession.execute(stmt).fetchone()
+	nb_insert, exist , error= DBSession.execute(stmt).fetchone()
 	transaction.commit()
 
 	stop = time.time()
 	print ('\n time to insert '+str(stop-start))
-	return nb_insert, exist
+	return nb_insert, exist , error
 	
 def asInt(s):
 	try:
