@@ -132,7 +132,6 @@
     }
   },
   "defaults":{
-    "Sampled" : 1,
     "Comments" : "",
     "Wings" : ""
 
