@@ -1,7 +1,7 @@
 from array import array
 
 from pyramid.view import view_config
-
+from pyramid.response import Response
 from sqlalchemy import func, desc, select, union, union_all, and_, bindparam, update, or_, literal_column, join, text
 
 from pyramid.httpexceptions import HTTPBadRequest
@@ -25,7 +25,11 @@ from ecorelevesensor.models.data import (
 from ecorelevesensor.utils.distance import haversine
 
 route_prefix = 'argos/'
-
+def asInt(s):
+	try:
+		return int(s)
+	except:
+		return None
 # List all PTTs having unchecked locations, with individual id and number of locations.
 @view_config(
 		route_name='{type}/unchecked/list',
@@ -111,34 +115,58 @@ def argos_manual_validate(request) :
 	'argos':'[sp_validate_argos]',
 	'gps' : '[sp_validate_gps]'
 	}
+	ind_id = asInt(ind_id)
 	
-	xml_to_insert = data_to_XML(data)
-	'''validate unchecked ARGOS_ARGOS or ARGOS_GPS data from xml data PK_id.
-	'''
-	start = time.time()
+	try : 
+		if isinstance( ind_id, int ): 
+			xml_to_insert = data_to_XML(data)
+			'''validate unchecked ARGOS_ARGOS or ARGOS_GPS data from xml data PK_id.
+			'''
+			start = time.time()
 
-	# push xml data to insert into stored procedure in order ==> create stations and protocols if not exist
-	stmt = text(""" DECLARE @nb_insert int , @exist int, @error int;
+			# push xml data to insert into stored procedure in order ==> create stations and protocols if not exist
+			stmt = text(""" DECLARE @nb_insert int , @exist int, @error int;
 
-		exec """+ dbConfig['data_schema'] + """."""+dict_proc[type_]+""":id_list, :ind_id , :user , :ptt , @nb_insert OUTPUT, @exist OUTPUT , @error OUTPUT;
-	        SELECT @nb_insert, @exist, @error; """
-	    ).bindparams(bindparam('id_list', xml_to_insert),bindparam('ind_id', ind_id),bindparam('user', user),bindparam('ptt', ptt))
-	nb_insert, exist , error = DBSession.execute(stmt).fetchone()
-	transaction.commit()
+				exec """+ dbConfig['data_schema'] + """."""+dict_proc[type_]+""":id_list, :ind_id , :user , :ptt , @nb_insert OUTPUT, @exist OUTPUT , @error OUTPUT;
+			        SELECT @nb_insert, @exist, @error; """
+			    ).bindparams(bindparam('id_list', xml_to_insert),bindparam('ind_id', ind_id),bindparam('user', request.authenticated_userid),bindparam('ptt', ptt))
+			nb_insert, exist , error = DBSession.execute(stmt).fetchone()
+			transaction.commit()
 
-	stop = time.time()
-	print ('\n time to insert '+str(stop-start))
-	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+			stop = time.time()
+			print ('\n time to insert '+str(stop-start))
+			return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+		else : 
+			return error_response(None)
+	except  Exception as err :
+		return error_response(err)
 
 @view_config(route_name=route_prefix + 'import/auto', renderer='json', request_method='POST')
 def data_argos_validation_auto(request):
+	try :
+		ptt = request.matchdict['id']
+		ind_id = request.matchdict['ind_id']
+		type_ = request.matchdict['type']
+		ind_id = asInt(ind_id)
 
-	ptt = request.matchdict['id']
-	ind_id = request.matchdict['ind_id']
-	type_ = request.matchdict['type']
+		
+		if isinstance( ind_id, int ): 
+			nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_)
+			return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+		else : 
+			return error_response(None)
+	except  Exception as err :
+		return error_response(err)
 
-	nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_)
-	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+def error_response (err) : 
+		
+		if err !=None : 
+			msg = err.args[0] if err.args else ""
+			response=Response('Problem occurs : '+str(type(err))+' = '+msg)
+		else : 
+			response=Response('No induvidual is equiped with this ptt at this date')
+		response.status_int = 500
+		return response
 
 @view_config(route_name=route_prefix + 'importAll/auto', renderer='json', request_method='POST')
 def data_argos_ALL_validation_auto(request):
@@ -148,22 +176,27 @@ def data_argos_ALL_validation_auto(request):
 	Total_exist = 0
 	Total_error = 0
 	start = time.time()
+	try : 
+		for row in unchecked_list : 
+			ptt = row['platform_']
+			ind_id = row['ind_id']
+			print (ind_id)
+			if ind_id != None : 
+				nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_)
+				Total_exist += exist
+				Total_nb_insert += nb_insert
+				Total_error += error
+		print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
 
-	for row in unchecked_list : 
-		ptt = row['platform_']
-		ind_id = row['ind_id']
-		print (ind_id)
-		if ind_id != None : 
-			nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_)
-			Total_exist += exist
-			Total_nb_insert += nb_insert
-			Total_error += error
-	print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
+		stop = time.time()
+		print ('\n time to insert '+str(stop-start))
+		return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
+	except  Exception as err :
 
-	stop = time.time()
-	print ('\n time to insert '+str(stop-start))
-	return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
-
+		msg = err.args[0] if err.args else ""
+		response=Response('Problem occurs  : '+str(type(err))+' = '+msg)
+		response.status_int = 500
+		return response
 
 def auto_validate_argos_gps (ptt,ind_id,user,type_) :
 	start = time.time()

@@ -2,7 +2,7 @@
 Created on Tue Sep 23 17:15:47 2014
 @author: Natural Solutions (Thomas)
 """
-
+from pyramid.response import Response
 from pyramid.view import view_config
 from sqlalchemy import desc, select, func,text, insert, join, Integer, cast, and_, Float, or_,bindparam, update, outerjoin
 from ecorelevesensor.models import (AnimalLocation,V_ProtocolIndividualEquipment,V_EquipGSM,
@@ -117,9 +117,21 @@ def data_gsm_unchecked_import(request):
 	# <row > 738</row>
 	# <row > 748</row>
 	# </table>"""
-	nb_insert, exist, error = gsm_unchecked_validation(ptt,ind_id,request.authenticated_userid,xml_to_insert)
+	try : 
+		ind_id = asInt(ind_id)
+		if isinstance( ind_id, int ): 
+			nb_insert, exist, error = gsm_unchecked_validation(ptt,ind_id,request.authenticated_userid,xml_to_insert)
 
-	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing'
+			return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing'
+		else : 
+			return error_response(None)
+
+	except  Exception as err :
+
+		msg = err.args[0] if err.args else ""
+		response=Response('Problem occurs on station update : '+str(type(err))+' = '+msg)
+		response.status_int = 500
+		return response
 
 def gsm_unchecked_validation(ptt,ind_id,user,xml_to_insert):
 
@@ -187,10 +199,18 @@ def data_gsm_unchecked_validation_auto(request):
 
 	ptt = request.matchdict['id']
 	ind_id = request.matchdict['ind_id']
+	try : 
+		ind_id = asInt(ind_id)
+		if isinstance( ind_id, int ): 
 
-	nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
-	transaction.commit()
-	return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+			nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+			transaction.commit()
+			return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+		else : 
+			return error_response(None)
+
+	except  Exception as err :
+		return error_response(err)
 
 @view_config(route_name=prefix + 'unchecked/importAll/auto', renderer='json', request_method='POST')
 def data_gsm_uncheckedALL_validation_auto(request):
@@ -207,23 +227,33 @@ def data_gsm_uncheckedALL_validation_auto(request):
 	#     ).bindparams(bindparam('user', request.authenticated_userid))
 	# Total_nb_insert, Total_exist = DBSession.execute(stmt).fetchone()
 	# transaction.commit()
-	
+	try : 
 
-	for row in unchecked_list : 
-		ptt = row['platform_']
-		ind_id = row['ind_id']
-		print (ind_id)
-		if ind_id != None : 
-			nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
-			Total_exist += exist
-			Total_nb_insert += nb_insert
-			Total_error += error
-	print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
-	transaction.commit()
-	stop = time.time()
-	print ('\n time to insert '+str(stop-start))
-	return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
+		for row in unchecked_list : 
+			ptt = row['platform_']
+			ind_id = row['ind_id']
+			print (ind_id)
+			if ind_id != None : 
+				nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+				Total_exist += exist
+				Total_nb_insert += nb_insert
+				Total_error += error
+		print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
+		transaction.commit()
+		stop = time.time()
+		print ('\n time to insert '+str(stop-start))
+		return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
+	except  Exception as err :
+		return error_response(err)
 
+def error_response (err) : 
+		if err !=None : 
+			msg = err.args[0] if err.args else ""
+			response=Response('Problem occurs : '+str(type(err))+' = '+msg)
+		else : 
+			response=Response('No induvidual is equiped with this ptt at this date')
+		response.status_int = 500
+		return response
 
 def auto_validate_gsm (ptt,ind_id,user) :
 	start = time.time()
