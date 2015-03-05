@@ -1,11 +1,9 @@
+
 -- =============================================
 -- Author:		Romain FABBRO
--- Create date: 2015-02-26
--- Description: create procedure to validate GSM from xml containing Pk_id
+-- Create date: 2015-03-04
+-- Description:	stored procedure for Argos_GPS manual validation  
 -- =============================================
-
-
-
 
 SET ANSI_NULLS ON
 GO
@@ -15,7 +13,8 @@ GO
 
 
 
-CREATE PROCEDURE [dbo].[sp_validate_gsm]
+
+CREATE PROCEDURE [dbo].[sp_validate_gps]
 	@listID xml,
 	@ind int,
 	@user int,
@@ -38,9 +37,6 @@ BEGIN
 		,speed int
 		,course int
 		,ele int 
-		,hdop numeric(3,1)
-		,vdop numeric(3,1)
-		,sat_count int
 		, FK_ind int
 		,creator int
 		 );
@@ -54,22 +50,19 @@ BEGIN
 							data_id int);
 	DECLARE @NbINserted int ; 
 
-INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,hdop,vdop,sat_count,FK_ind,creator)
+INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,FK_ind,creator)
 SELECT 
 PK_id
-,platform_
-,d.DateTime
-,Latitude_N
-,Longitude_E
+,FK_ptt
+,date
+,lat
+,lon
 ,Speed
 ,Course
-,Altitude_m
-,HDOP
-,VDOP
-,SatelliteCount
+,ele
 ,@ind
 ,@user
-FROM T_DataGsm d WHERE PK_id in (
+FROM ecoreleve_sensor.dbo.Tgps WHERE PK_id in (
 select * from [dbo].[XML_extractID_1] (@listID)
 ) and checked = 0
 
@@ -80,7 +73,7 @@ from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.d
 
 
 -- insert data creating new station and linked Tsta_PK_ID to data_id using FieldWorker1
-Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate,FieldWorker1)
+Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate, FieldWorker1)
 output inserted.TSta_PK_ID,inserted.FieldWorker1 into @output
 select 
 27
@@ -103,14 +96,23 @@ FROM @data_to_insert i
 join @output o on o.data_id=i.data_id
 where i.data_id not in (select data_id from @data_duplicate)
 
--- update T_DataGsm for validated value and checked value 
-update TStations set FieldWorker1= null where TSta_PK_ID in (select sta_id from @output)
-update T_DataGsm set validated = 1 where PK_id in (select data_id from @data_to_insert)
-update V_dataGSM_with_IndivEquip set checked = 1 where ptt = @ptt and ind_id = @ind
 
-SELECT @nb_insert = @NbINserted
-select @exist = COUNT(*) FROM @data_duplicate 
-SELECT @error = @@ERROR
+update TStations set FieldWorker1= null where TSta_PK_ID in (select sta_id from @output)
+update ecoreleve_sensor.dbo.Tgps set imported = 1 where PK_id in (select data_id from @data_to_insert)
+update V_dataGPS_with_IndivEquip set checked = 1 where ptt = @ptt and ind_id = @ind
+
+SET @nb_insert = @NbINserted
+SELECT @exist = COUNT(*) FROM @data_duplicate
+SET @error=@@ERROR
 
 RETURN
 END
+
+
+
+
+
+
+GO
+
+

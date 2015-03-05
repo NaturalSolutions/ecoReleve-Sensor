@@ -1,8 +1,10 @@
+
 -- =============================================
 -- Author:		Romain FABBRO
--- Create date: 2015-02-27
--- Description: create procedure to auto validate GSM 1 data/hour
+-- Create date: 2015-03-04
+-- Description:	stored procedure for Argos_GPS auto validation 1/hour
 -- =============================================
+
 SET ANSI_NULLS ON
 GO
 
@@ -10,7 +12,9 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 
-CREATE PROCEDURE [dbo].[sp_auto_validate_gsm]
+
+
+CREATE PROCEDURE [dbo].[sp_auto_validate_gps]
 	@ptt int,
 	@ind int,
 	@user int,
@@ -35,9 +39,6 @@ BEGIN
 		,speed int
 		,course int
 		,ele int 
-		,hdop numeric(3,1)
-		,vdop numeric(3,1)
-		,sat_count int
 		, FK_ind int
 		,creator int
 		 );
@@ -55,11 +56,11 @@ BEGIN
 	WITH data AS (
 		SELECT *
 			, ROW_NUMBER() OVER (PARTITION BY CONVERT(DATE, date_), DATEPART(hour, date_) ORDER BY date_) as r
-		FROM V_dataGSM_with_IndivEquip where ind_id = @ind and ptt=@ptt and checked = 0 
+		FROM V_dataGPS_with_IndivEquip where ind_id = @ind and ptt=@ptt and checked = 0 
 	)
 
 
-	INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,hdop,vdop,sat_count,FK_ind,creator)
+	INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,FK_ind,creator)
 		SELECT 
 		data_PK_ID
 		,ptt
@@ -69,9 +70,6 @@ BEGIN
 		,Speed
 		,Course
 		,ele
-		,HDOP
-		,VDOP
-		,sat_count
 		,ind_id
 		,@user
 		FROM data
@@ -108,8 +106,8 @@ BEGIN
 	where i.data_id not in (select data_id from @data_duplicate)
 
 	update TStations set FieldWorker1= null where TSta_PK_ID in (select sta_id from @output)
-	update T_DataGsm set validated = 1 where PK_id in (select data_id from @data_to_insert)
-	update V_dataGSM_with_IndivEquip set checked = 1 where ptt = @ptt and ind_id = @ind
+	update  ecoreleve_sensor.dbo.Tgps set imported = 1 where PK_id in (select data_id from @data_to_insert)
+	update V_dataGPS_with_IndivEquip set checked = 1 where ptt = @ptt and ind_id = @ind
 
 	SET @nb_insert=@NbINserted
 	select @exist = COUNT(*) FROM @data_duplicate
@@ -120,9 +118,5 @@ End
 
 
 GO
-
-
-
-
 
 

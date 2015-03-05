@@ -49,18 +49,21 @@ def add_routes(config):
     config.add_route('core/currentUser', 'ecoReleve-Core/currentUser')
     
     ##### Argos #####
-    config.add_route('argos/unchecked/geo', 'ecoReleve-Sensor/argos/{id}/unchecked/{ind_id}/geo')
-    config.add_route('argos/unchecked/json', 'ecoReleve-Sensor/argos/{id}/unchecked/{ind_id}/json')
+    config.add_route('argos/importAll/auto', 'ecoReleve-Sensor/{type}/unchecked/importAll/auto')
+    config.add_route('argos/import/auto', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/import/auto')
+    config.add_route('argos/import', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/import')
+    config.add_route('argos/unchecked/geo', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/geo')
+    config.add_route('argos/unchecked/json', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/json')
 
-    config.add_route('argos/details', 'ecoReleve-Sensor/argos/{id}/details/{ind_id}')
+    config.add_route('argos/details', 'ecoReleve-Sensor/{type}/{id}/details/{ind_id}')
     # config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')
 
     config.add_route('sensor/unchecked', 'ecoReleve-Sensor/sensor/unchecked')
-    config.add_route('argos/unchecked/list', 'ecoReleve-Sensor/argos/unchecked/list')
+    config.add_route('{type}/unchecked/list', 'ecoReleve-Sensor/{type}/unchecked/list')
     config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
     
     config.add_route('argos/check', 'ecoReleve-Sensor/argos/check')
-    config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
+    # config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
 
     config.add_route('gps/unchecked/count', 'ecoReleve-Sensor/gps/unchecked/count')
 
