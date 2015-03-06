@@ -31,10 +31,10 @@ def get_operator_fn(op):
 def eval_binary_expr(op1, operator, op2):
 	op1,op2 = op1, op2
 	print (op1.type)
-	# if 'date' in str(op1.type).lower() :
-	# 	op1=cast(op1,Date)
-	# 	print(op1)
-	# 	print(get_operator_fn(operator)(op1, op2))
+	if 'date' in str(op1.type).lower() :
+		op1=cast(op1,Date)
+		print(op1)
+		print(get_operator_fn(operator)(op1, op2))
 	return get_operator_fn(operator)(op1, op2)
 
 class Geometry(UserDefinedType):
@@ -563,6 +563,10 @@ def station_search (request) :
 				query=query.where(or_(table.c['FieldWorker1_ID']==obj['Value'],
 					table.c['FieldWorker2_ID']==obj['Value'],
 					table.c['FieldWorker3_ID']==obj['Value']))
+			if 'date' in key.lower() :
+				op1=cast(table.c[Col],Date)
+				query=query.where(eval_.eval_binary_expr(op1, obj['Operator'], obj['Value']))
+
 			else:
 				query=query.where(eval_.eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
 

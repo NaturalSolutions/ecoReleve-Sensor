@@ -87,9 +87,6 @@ def monitoredSite_byName(request):
 	return dict([ (key,val) for key,val in data.items()])
 
 
-
-
-
 @view_config(route_name=prefix+'/search', renderer='json')
 def monitoredSite_search(request):
 
