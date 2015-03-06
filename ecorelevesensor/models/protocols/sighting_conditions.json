@@ -29,21 +29,21 @@
 		"validators": ["required"],
 		"type": "Text",
 		"title":"Start time",
-		"editorClass": "timePicker"	
+		"editorClass": "timePicker oneRequired"	
 		},
 
 		"End_time":{
 		"validators": ["required"],
 		"type": "Text",
 		"title":"End time",
-		"editorClass": "timePicker"	
+		"editorClass": "timePicker oneRequired"	
 		},
 
 		"Observation_Duration":{
 		"validators": ["required"],
 		"type": "Text",
 		"title":"Observation duration",
-		"editorClass": "timePicker"	
+		"editorClass": "timePicker oneRequired"	
 		},
 
 		"Name_Weather":{
@@ -101,7 +101,8 @@
 		"validators":[
 		],
 		"type": "TextArea",
-		"title":"Comments"
+		"title":"Comments",
+		"editorClass": "wideField"
 		}
 	},
     "defaults":{

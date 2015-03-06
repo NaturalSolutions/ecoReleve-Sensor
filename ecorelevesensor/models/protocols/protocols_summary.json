@@ -49,7 +49,7 @@
 	  "name": "Capture_Group",
 	  "label" : "Vertebrate Capture",
 	  "child" : "false",
-	  "isOneInstance" :"true",
+	  "isOneInstance" :"false",
 	  "isParent" : "true",
 	  "parent" : ""
 	},
@@ -58,7 +58,7 @@
 	  "name": "Chiroptera_capture",
 	  "label" : "Chiro capture",
 	  "child" : "false",
-	  "isOneInstance" :"true",
+	  "isOneInstance" :"false",
 	  "isParent" : "false",
 	  "parent" : ""
 	},
@@ -67,7 +67,7 @@
 	  "name": "Chiroptera_detection",
 	  "label" : "Chiro detection",
 	  "child" : "false",
-	  "isOneInstance" :"true",
+	  "isOneInstance" :"false",
 	  "isParent" : "false",
 	  "parent" : ""
 	},
