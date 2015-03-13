@@ -151,7 +151,7 @@ class Generator :
             r=update(self.table).where(self.table.c[id_name]==id_).values(model['patch'])
             DBSession.execute(r)
     
-    def get_geoJSON(self,criteria={},offset=None,per_page=None, order_by=None) :
+    def get_geoJSON(self,criteria={},offset=None,per_page=None, order_by=None, cols_for_properties=None) :
 
         query = select(self.table.c)
         result=[]
@@ -180,11 +180,15 @@ class Generator :
             query, total=self.get_page(query,offset,per_page, order_by)
         '''
 
-        data=DBSession.execute(query).fetchall()    
+        data=DBSession.execute(query).fetchall()
 
         geoJson=[]
         for row in data:
-            geoJson.append({'type':'Feature', 'properties':{'id':row['id']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
+            properties = {}
+            if cols_for_properties != None :
+                for col in cols_for_properties :
+                    properties[col.replace('_',' ')] = row[col]
+            geoJson.append({'type':'Feature', 'properties':properties, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
 
 
         transaction.commit()
