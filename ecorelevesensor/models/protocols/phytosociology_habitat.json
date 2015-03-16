@@ -192,7 +192,8 @@
 		"validators":[
 		],
 		"type": "TextArea",
-		"title":"Comments"
+		"title":"Comments",
+		"editorClass": "wideField"
 		}
 	},
     "defaults":{

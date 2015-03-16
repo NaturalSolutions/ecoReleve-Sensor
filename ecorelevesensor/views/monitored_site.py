@@ -87,9 +87,6 @@ def monitoredSite_byName(request):
 	return dict([ (key,val) for key,val in data.items()])
 
 
-
-
-
 @view_config(route_name=prefix+'/search', renderer='json')
 def monitoredSite_search(request):
 
@@ -163,7 +160,8 @@ def monitoredSite_geoJSON(request):
 		print(offset)
 		perPage = json.loads(request.GET.get('per_page',{}))
 		orderBy = json.loads(request.GET.get('order_by',{}))
-		content = gene.get_geoJSON(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+		content = gene.get_geoJSON(criteria, offset=offset, per_page=perPage, order_by=orderBy
+			, cols_for_properties = ['id','name','type','begin_date','end_date'])
 	else :
 		content = gene.get_geoJSON(criteria)
 
@@ -201,7 +199,7 @@ def monitoredSite_detailGeoJSON(request):
 	print (data)
 	geoJson=[]
 	for row in data:
-            geoJson.append({'type':'Feature', 'properties':{'id':row['id'], 'end': row['end_date'], 'begin': row['begin_date']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
+            geoJson.append({'type':'Feature', 'properties':{'id':row['id'],'name':row['name'],'type':row['type'], 'end': row['end_date'], 'begin': row['begin_date']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
 	return geoJson
 
 

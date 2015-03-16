@@ -254,8 +254,9 @@
       "validators": [
 
       ],
-      "type": "Text",
-      "title": "Comments"
+      "type": "TextArea",
+      "title": "Comments",
+	  "editorClass": "wideField"
     }
   },
   "defaults":{

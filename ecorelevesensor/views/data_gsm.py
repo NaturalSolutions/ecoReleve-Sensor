@@ -324,7 +324,7 @@ def get_ALL_gps_toInsert(file_obj) :
 			index_col=0,
 			parse_dates=True,
 			# Read those values as NaN
-			na_values=['No Fix', 'Batt Drain', 'Low Voltage'],
+			
 			# Only import the first 8 columns
 			#usecols=range(9)
 			)
@@ -388,7 +388,9 @@ def insert_GPS(platform, csv_data) :
 
 	else : 
 		if (data_to_insert.shape[0] != 0) :
-			platform_count = data_to_insert.groupby(DataGsm.platform_.name)[DataGsm.platform_.name].agg(['count'])
+			print(DataGsm.platform_.name)
+			ptt_name = 'GSM_ID'
+			platform_count = data_to_insert.groupby(ptt_name)[ptt_name].agg(['count'])
 			res = platform_count.to_dict()
 		else : 
 			res = {'new GPS data inserted' : 0}

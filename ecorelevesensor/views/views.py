@@ -134,25 +134,21 @@ def theme_list(request):
 		# 	print(e)
 	return data
 
-@view_config(route_name = 'core/protocoles/list', renderer = 'string')
+@view_config(route_name = 'core/protocoles/list', renderer = 'json')
 def protocoles_list(request):
-	xml = "<protocoles>"
+	data = []
 	try:
 		protocol=DBSession.execute(select([Protocole.id, Protocole.Relation, Protocole.Caption, Protocole.Description]).order_by(Protocole.Caption)).fetchall()
 		for id, relation, caption, description in protocol:
-			xml = xml + "<protocole id='"+str(id)+"'>"+caption+"</protocole>"
-		xml = xml + "</protocoles>"
+			data.append({'id':id, 'caption': caption, 'description': description})
 	except Exception as e:
 		print ("________________ prtocole_list error :")
 		print(e)
-	request.response.content_type = "text/xml"
-	print ("________________ prtocole_list")
-	print (xml)
-	return xml
+	return data
 
-@view_config(route_name = 'core/views/list', renderer = 'string')
+@view_config(route_name = 'core/views/list', renderer = 'json')
 def views_list(request):
-	xml = "<views>"
+	data = []
 	 # try:
 	query = select([MapSelectionManager.id, MapSelectionManager.TSMan_sp_name, MapSelectionManager.TSMan_Layer_Name, MapSelectionManager.TSMan_Description, MapSelectionManager.TSMan_FK_Theme]).order_by(MapSelectionManager.TSMan_Layer_Name)
 	try:
@@ -161,12 +157,8 @@ def views_list(request):
 	except Exception as e:
 		 print(e)
 	for id, sp_name, layer_name, description, fk_theme in DBSession.execute(query).fetchall():
-		 xml = xml + "<view id='"+sp_name+"'>"+description+"</view>"
-	xml = xml + "</views>"
-	 # except Exception as e:
-		# 	print(e)
-	request.response.content_type = "text/xml"
-	return xml
+		 data.append({'id':id, 'caption': layer_name,'relation':sp_name, 'description': description})
+	return data
 
 @view_config(route_name = 'core/views/export/details', renderer = 'json')
 def views_details(request):

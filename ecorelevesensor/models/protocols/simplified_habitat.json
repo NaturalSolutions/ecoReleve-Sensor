@@ -78,16 +78,20 @@
 
   "Vegetation_cover":{
   "validators":[
+  {"type":"max", "value":100}
   ],
   "type": "Number",
-  "title":"Vegetation cover(%)"
+  "title":"Vegetation cover(%)",
+  "editorAttrs": { "max" : 100 }
   },
 
   "Perennial_cover":{
   "validators":[
+	{"type":"max", "value":100}
   ],
   "type": "Number",
-  "title":"Perennial cover(%)"
+  "title":"Perennial cover(%)",
+  "editorAttrs": { "max" : 100 }
   },
 
   "FK_TSta_ID":{
@@ -123,11 +127,21 @@
   "validators":[
   ],
   "type": "TextArea",
-  "title":"Comments"
+  "title":"Comments",
+  "editorClass": "wideField"
   }
   },
     "defaults":{
   },
-  "fieldsets": []
+  "fieldsets": [
+	{
+      "fields": ["Name_Habitat","Name_Habitat2","Name_Geomorphology","Vegetation_cover","Perennial_cover", "Name_Flora_Main_Species_1",
+				 "Cultivated_1","Name_Flora_Main_Species_2","Cultivated_2","Name_Flora_Main_Species_3","Cultivated_3","Comments"],
+      "legend": ""
+    }
+  
+  
+  
+  ]
 }
 

@@ -2,7 +2,10 @@
   "name": "Station description",
   "description": "TProtocol_Station_Description",
   "keywords": [
-    "test"
+    "Nest monitoring",
+    "Microchip scanning",
+    "Automatic radio scanning",
+    "Camera - trapping"
   ],
   "schema": {
     "Name_Landscape": {
@@ -187,7 +190,8 @@
     "Comments": {
       "validators": [],
       "type": "Text",
-      "title": "Comments"
+      "title": "Comments",
+	  "editorClass": "wideField"
     }
   },
     "defaults":{

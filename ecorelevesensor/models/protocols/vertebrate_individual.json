@@ -25,45 +25,18 @@
       "editorAttrs": { "startId": "25" },
       "editorClass": "autocompTree"
     },
-    "name_sex": {
-      "validators": [],
-      "type": "Text",
-      "title": "Sex",
-      "editorAttrs": { "startId": "18872" },
-      "editorClass": "autocompTree"
-    },
-    "name_age": {
-      "validators": [],
-      "type": "Text",
-      "title": "Age",
-      "editorAttrs": { "startId": "18876" },
-      "editorClass": "autocompTree"
-    },
-    "Sampled": {
-      "validators": [],
-      "options" : ["true"],
-      "type": "Checkbox",
-      "title": "Sampled"
-    },
-    "Name_Posture": {
-      "validators": [],
-      "type": "Text",
-      "title": "Posture",
-      "editorAttrs": { "startId": "34" },
-      "editorClass": "autocompTree"
-    },
-    "Name_Behaviour": {
-      "validators": [],
-      "type": "Text",
-      "title": "Behaviour",
-      "editorAttrs": { "startId": "1032620" },
-      "editorClass": "autocompTree"
-    },
     "Comments": {
       "type": "TextArea",
-      "title": "Comments"
+      "title": "Comments",
+	  "editorClass": "wideField"
     }
   },
-  "fieldsets": []
+  "fieldsets": [
+	{
+      "fields": ["Fk_TInd_ID","frequency","Name_signal_type","Comments"],
+      "legend": ""
+    }
+  
+  ]
 }
 

@@ -101,7 +101,8 @@
     "Comments": {
       "validators": [],
       "type": "TextArea",
-      "title": "Comments"
+      "title": "Comments",
+	  "editorClass": "wideField"
     },
     "Measured_Distance": {
       "validators": [],
@@ -145,10 +146,21 @@
       "fields": ["Name_Taxon", "Id_taxon","Identity_sure"],
       "legend": "Identification"
     },
-    {
-      "fields": ["Nb_Adult_Male","Nb_Adult_Female","Nb_Adult_Indeterminate","Nb_Juvenile_Male","Nb_Juvenile_Female","Nb_Juvenile_Indeterminate",
-      "Nb_NewBorn_Male","Nb_NewBorn_Female","Nb_NewBorn_Indeterminate","Nb_Indeterminate","Nb_Total"],
-      "legend": "Individual number"
+	{
+      "fields": ["Nb_Adult_Male","Nb_Adult_Female","Nb_Adult_Indeterminate"],
+      "legend": "Individual adult"
+    },
+	{
+      "fields": ["Nb_Juvenile_Male","Nb_Juvenile_Female","Nb_Juvenile_Indeterminate"],
+      "legend": "Individual juvenile"
+    },
+	{
+      "fields": ["Nb_NewBorn_Male","Nb_NewBorn_Female","Nb_NewBorn_Indeterminate"],
+      "legend": "Individual new born"
+    },
+	{
+      "fields": ["Nb_Indeterminate","Nb_Total"],
+      "legend": "Individual"
     },
     {
       "fields": ["Measured_Distance", "Estimated_Distance","AngleNorth","AngleTrack","observation_time"],

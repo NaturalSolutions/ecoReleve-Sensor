@@ -159,10 +159,10 @@ def get_data_on_protocol (request):
 	print(proto_name)
 	print(pk_data)
 
-	table=Base.metadata.tables['V_TThem_Proto']
+	table=Base.metadata.tables['TProtocole']
 
-	proto_relation = DBSession.execute(select([table.c['proto_relation']]
-			).where(table.c['proto_name'] == proto_name)).fetchone()
+	proto_relation = DBSession.execute(select([table.c['Relation']]
+			).where(table.c['Caption'] == proto_name)).fetchone()
 	print (proto_relation)
 	transaction.commit()
 
