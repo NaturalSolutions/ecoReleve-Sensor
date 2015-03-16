@@ -213,6 +213,13 @@ def views_filter_count(request):
    	column=fltr['Column']
    	query = query.where(eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
+   try:
+   	bbox=criteria['bbox']
+   	print('______________________')
+   	print(bbox)
+   	query = query.where(and_(between(table.c['LAT'], float(bbox[3]), float(bbox[1])), between(table.c['LON'], float(bbox[2]), float(bbox[0]))))
+   except Exception as e:
+   	print(e)
 
    count = DBSession.execute(query).scalar()
 
