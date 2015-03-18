@@ -336,7 +336,7 @@ def views_filter_result(request):
 	 	
 	 	#bbox selection
 	 	bbox=criteria['bbox']
-	 	query = query.where(and_(between(table.c['LAT'], float(bbox[1]), float(bbox[3])), between(table.c['LON'], float(bbox[0]), float(bbox[2]))))
+	 	query = query.where(and_(between(table.c['LAT'], float(bbox[3]), float(bbox[1])), between(table.c['LON'], float(bbox[2]), float(bbox[0]))))
 	 	
 	 	rows = DBSession.execute(query).fetchall()[0:15]
 	 	tmp={}
