@@ -180,7 +180,7 @@ class Generator :
             query, total=self.get_page(query,offset,per_page, order_by)
         '''
 
-        data=DBSession.execute(query).fetchall()
+        data=DBSession.execute(query.where(self.table.c['lat'] != None)).fetchall()
 
         geoJson=[]
         for row in data:

@@ -268,9 +268,9 @@ def argos_unchecked_geo(request):
 	features = [
 		{
 			'type':'Feature',
-			'properties':{'id':id_,'date':str(date),'type':type_},
+			'properties':{'date':str(date),'type':type_},
 			'geometry':{'type':'Point', 'coordinates':[float(lon),float(lat)]},
-			
+			'id':id_
 		}
 	for id_, lat, lon, date, ele, type_ in data]
 	transaction.commit()
