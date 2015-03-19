@@ -39,7 +39,7 @@ with toto as
   FROM [ecoReleve_DataNew].[dbo].[T_DataRfid] rfid
   join [dbo].[T_Object] obj on rfid.FK_obj=obj.PK_id
   join [dbo].[T_MonitoredSiteEquipment] e on rfid.FK_obj=e.FK_obj
- and rfid.date_ >= e.begin_date and rfid.date_ <= e.end_date
+ and rfid.date_ >= e.begin_date and (rfid.date_ <= e.end_date or e.end_date is null)
   join [dbo].[TMonitoredStations] s on s.TGeo_pk_id=e.FK_site
 
   group by rfid.FK_obj, rfid.[FK_creator] ,rfid.[checked],obj.identifier,rfid.creation_date,s.Name,s.name_Type, e.begin_date,e.end_date,e.lat,e.lon ,rfid.checked

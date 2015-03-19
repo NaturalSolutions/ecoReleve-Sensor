@@ -81,9 +81,8 @@ def rfid_detail(request):
 def rfid_active_byDate(request):
     date = datetime.strptime(request.params['date'], '%d/%m/%Y  %H:%M:%S')
     data = DBSession.query(MonitoredSite.id, MonitoredSite.name, MonitoredSite.type_,  MonitoredSitePosition.lat,  MonitoredSitePosition.lon
-        ).outerjoin(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
-        ).filter(MonitoredSitePosition.begin_date <= date
-        ).filter(or_(MonitoredSitePosition.end_date >= date, MonitoredSitePosition.end_date == None )).all()
+        ).join(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
+        ).filter(MonitoredSitePosition.end_date == None ).all()
     siteName_type=[{'id_site':row[0] ,'type':row[2] , 'name':row[1], 'positions': {'lat': row[3], 'lon': row[4] }} for row in data]
     result = {'siteType': list(set([row[2] for row in data])), 'siteName_type': siteName_type}
     return result
@@ -188,12 +187,12 @@ def rfid_import(request):
         ## check if Date corresponds with pose remove module ##
         table = Base.metadata.tables['RFID_MonitoredSite']
         q_check_date = select([func.count('*')]).where(
-            and_(table.c['begin_date'] < allDate[0], table.c['end_date'] > allDate[-1])
+            and_(table.c['begin_date'] < allDate[0], or_(table.c['end_date'] >= allDate[-1],table.c['end_date'] == None))
             ).where(table.c['identifier'] == module)
         check = DBSession.execute(q_check_date).scalar() 
         if check == 0 :
             request.response.status_code = 510
-            message = "Dates of this uploded file (first date : "+str(allDate[0])+" , last date : "+str(allDate[-1])+") don't correspond with the Pose/remove dates of the selected module"
+            message = "Dates of this uploded file (first date : "+str(allDate[0])+" , last date : "+str(allDate[-1])+") don't correspond with the deploy/remove dates of the selected module"
             return message
 
 
