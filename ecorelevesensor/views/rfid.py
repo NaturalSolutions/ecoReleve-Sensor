@@ -223,17 +223,18 @@ def rfid_validate(request):
     frequency_hour = request.GET['frequency_hour']
     print (frequency_hour)
     stmt = text("""
-        DECLARE @error int, @nb int;
-        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT, @error OUTPUT;
+        DECLARE @error int, @nb int, @exist int;
+        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT,@exist OUTPUT, @error OUTPUT;
         SELECT @error, @nb;"""
     ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', frequency_hour),bindparam('checked', 0))
-    error_code, nb = DBSession.execute(stmt).fetchone()
+    error_code, nb, exist = DBSession.execute(stmt).fetchone()
     if error_code == 0:
         if nb > 0:
-            return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation.'
+            return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation, '+str(exist)+' existing'
         else:
             return 'Warning : no new row inserted.'
     else:
+        print(error)
         return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
 
 @view_config(route_name=prefix + 'validate/search', renderer='json', request_method='GET')

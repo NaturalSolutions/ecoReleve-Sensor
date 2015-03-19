@@ -1,12 +1,13 @@
-USE [ecoReleve_Data]
+USE [ecoReleve_eReleve]
 GO
 
-/****** Object:  StoredProcedure [dbo].[sp_validate_rfid]    Script Date: 23/12/2014 10:17:33 ******/
+/****** Object:  StoredProcedure [dbo].[sp_validate_rfid]    Script Date: 19/03/2015 20:28:52 ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 
 
@@ -20,6 +21,7 @@ ALTER PROCEDURE [dbo].[sp_validate_rfid]
 	@frequency_hour int,
 	@user int,
 	@nb int OUTPUT,
+	@exist int output,
 	@error int OUTPUT
 AS
 BEGIN
@@ -36,6 +38,10 @@ BEGIN
 		, lon decimal(9,5)
 		,freq int );
 
+	DECLARE @data_duplicate table ( 
+		data_id int,
+		fk_loc_id int
+		);
 	-- Gather not validated data.
 	WITH data AS (
 		SELECT PK_id
@@ -66,10 +72,16 @@ BEGIN
 		AND (data.date_ <= e.end_date OR e.end_date IS NULL)
 	WHERE data.r = @frequency_hour AND data.validated = 0 and data.checked=@checked;
 
+insert into  @data_duplicate  
+select d.PK_id, s.PK_ID
+from @data_to_insert d 
+join T_AnimalLocation s on d.lat = s.lat and d.lon = s.lon and d.FK_obj = s.FK_obj and d.date_ = s.date_
+
+
 	-- Insert only the first chip lecture per RFID, per individual, per hour.
 	INSERT INTO T_AnimalLocation (FK_creator, FK_obj, FK_ind, type_, date_, lat, lon, creation_date, frequency_hour)
 	SELECT @user, FK_obj, FK_ind, 'rfid', date_, lat, lon, CURRENT_TIMESTAMP, freq
-	FROM @data_to_insert
+	FROM @data_to_insert where PK_id not in (select data_id from @data_duplicate)
 
 	-- Update inserted data.
 	UPDATE T_DataRfid SET validated = 1 , frequency_hour= @frequency_hour
@@ -77,12 +89,14 @@ BEGIN
 	UPDATE T_DataRfid SET checked = 1
 	
 
-
+	
 	SELECT @error = @@ERROR
-	SELECT @nb = COUNT(*) FROM @data_to_insert
-
+	SELECT @nb = COUNT(*) FROM @data_to_insert where not PK_id in (select data_id from @data_duplicate)
+	SELECT @exist = COUNT(*) from @data_duplicate
+	
 	RETURN
 END
+
 
 
 GO
