@@ -5,7 +5,7 @@ Created on Tue Sep 23 17:15:47 2014
 from pyramid.response import Response
 from pyramid.view import view_config
 from sqlalchemy import desc, select, func,text, insert, join, Integer, cast, and_, Float, or_,bindparam, update, outerjoin
-from ecorelevesensor.models import (AnimalLocation,V_ProtocolIndividualEquipment,V_EquipGSM,
+from ecorelevesensor.models import (AnimalLocation,V_ProtocolIndividualEquipment,
 	DBSession, DataGsm, EngineeringData , SatTrx, V_dataGSM_withIndivEquip, Station,V_dataARGOS_withIndivEquip,
 	ObjectsCaracValues, Individual,V_Individuals_LatLonDate,dbConfig )
 from ecorelevesensor.models.data import (

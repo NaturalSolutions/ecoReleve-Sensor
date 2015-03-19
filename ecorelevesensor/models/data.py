@@ -111,19 +111,15 @@ class V_ProtocolIndividualEquipment (Base) :
 	model_precision = __table__.c['model_precision']
 
 	__mapper_args__ = {
-        'polymorphic_on':model_precision,
-        'polymorphic_identity':'object'
-    }
+		'polymorphic_on':model_precision,
+		'polymorphic_identity':'object'
+	}
 
-class V_EquipGSM (V_ProtocolIndividualEquipment) :
-	__mapper_args__ = {
-        'polymorphic_identity':'GSM%'
-    }
 
 class V_dataGSM_withIndivEquip (Base) : 
 	__table__ = Table ('V_dataGSM_with_IndivEquip', Base.metadata,
 		Column('ind_id',Integer)
-      	,Column('ptt',Integer)
+		,Column('ptt',Integer)
 		,Column('begin_date',DateTime)
 		,Column('end_date',DateTime)
 		,Column('lat',Numeric(9,5))
@@ -141,12 +137,32 @@ class V_dataGSM_withIndivEquip (Base) :
 		,Column('data_PK_ID',Integer,  primary_key= True)
 
 		)
+
+class V_dataARGOS_GPS_with_IndivEquip (Base) : 
+	__table__ = Table ('V_dataARGOS_GPS_with_IndivEquip', Base.metadata,
+		Column('ind_id',Integer)
+		,Column('ptt',Integer)
+		,Column('begin_date',DateTime)
+		,Column('end_date',DateTime)
+		,Column('lat',Numeric(9,5))
+		,Column('lon',Numeric(9,5))
+		,Column('ele',Integer)
+		,Column('checked',BIT)
+		,Column('imported',BIT)
+		,Column('date_',DateTime)
+		,Column('course',Integer)
+		,Column('speed',Integer)
+		,Column('validated',BIT)
+		,Column('data_PK_ID',Integer,  primary_key= True)
+		,Column('type_',String)
+		)
+
 class V_dataARGOS_withIndivEquip (Base) : 
 	__table__ = Table ('V_dataARGOS_with_IndivEquip', Base.metadata,
 
 		Column('data_PK_ID',Integer,  primary_key= True)
 		,Column('ind_id',Integer)
-      	,Column('ptt',Integer)
+		,Column('ptt',Integer)
 		,Column('begin_date',DateTime)
 		,Column('end_date',DateTime)
 		,Column('lat',Numeric(9,5))
@@ -169,10 +185,11 @@ class V_dataARGOS_withIndivEquip (Base) :
 		,Column('checked' ,BIT)
 		,Column('imported',BIT) 
 		)
+
 class V_dataGPS_withIndivEquip (Base) : 
 	__table__ = Table ('V_dataGPS_with_IndivEquip', Base.metadata,
 		Column('ind_id',Integer)
-      	,Column('ptt',Integer)
+		,Column('ptt',Integer)
 		,Column('begin_date',DateTime)
 		,Column('end_date',DateTime)
 		,Column('lat',Numeric(9,5))
