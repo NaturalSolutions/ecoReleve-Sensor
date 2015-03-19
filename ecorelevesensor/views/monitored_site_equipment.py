@@ -21,6 +21,8 @@ prefix = 'monitoredSiteEquipment/'
 def monitored_site_equipment_pose(request):
     t = MonitoredSiteEquipment
     pose_info = request.POST
+    print('______________pose info --------------')
+    print (pose_info)
     creator= request.authenticated_userid
     values = {t.creator.name:creator}
     obj = DBSession.query(ObjectRfid.id).filter(ObjectRfid.identifier==pose_info['identifier']).scalar()
@@ -35,8 +37,7 @@ def monitored_site_equipment_pose(request):
         values[t.site.name] = site
         values[t.begin_date.name] = begin_date
         lat, lon = DBSession.execute(select([MonitoredSitePosition.lat, MonitoredSitePosition.lon]).where(
-            MonitoredSitePosition.site == site).where(MonitoredSitePosition.begin_date <= begin_date).where(
-                or_(MonitoredSitePosition.end_date == None, MonitoredSitePosition.end_date <= begin_date))).fetchone()
+            MonitoredSitePosition.site == site).where(MonitoredSitePosition.end_date == None)).fetchone()
         values[t.lat.name] = lat
         values[t.lon.name] = lon
         values[t.end_date.name] = parse(pose_info['end'])
