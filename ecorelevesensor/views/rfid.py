@@ -224,13 +224,10 @@ def rfid_validate(request):
         SELECT @error, @nb;"""
     ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', frequency_hour),bindparam('checked', 0))
     error_code, nb, exist = DBSession.execute(stmt).fetchone()
-    if error_code == 0:
-        if nb > 0:
-            return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation, '+str(exist)+' existing'
-        else:
-            return 'Warning : no new row inserted.'
+    if nb > 0:
+        return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation, '+str(exist)+' existing'
     else:
-        return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
+        return 'Warning : no new row inserted.'
 
 @view_config(route_name=prefix + 'validate/search', renderer='json', request_method='GET')
 def rfids_search(request):
