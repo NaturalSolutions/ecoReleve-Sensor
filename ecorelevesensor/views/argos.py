@@ -45,13 +45,9 @@ def argos_unchecked_list(request):
 		elif type_ == 'gsm' :
 			unchecked = V_dataGSM_withIndivEquip
 
-		print('________________________________________________________\n\n')
-
 		unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb'), func.max(unchecked.date_).label('max_date'), func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
 		# Populate Json array
-		print(unchecked_with_ind)
 		data = DBSession.execute(unchecked_with_ind).fetchall()
-		print(data)
 		return [dict(row) for row in data]
 
 
@@ -79,10 +75,8 @@ def argos_manual_validate(request) :
 	try : 
 		if isinstance( ind_id, int ): 
 			xml_to_insert = data_to_XML(data)
-			'''validate unchecked ARGOS_ARGOS or ARGOS_GPS data from xml data PK_id.
-			'''
+			# validate unchecked ARGOS_ARGOS or ARGOS_GPS data from xml data PK_id.			
 			start = time.time()
-
 			# push xml data to insert into stored procedure in order ==> create stations and protocols if not exist
 			stmt = text(""" DECLARE @nb_insert int , @exist int, @error int;
 
@@ -93,7 +87,6 @@ def argos_manual_validate(request) :
 			transaction.commit()
 
 			stop = time.time()
-			print ('\n time to insert '+str(stop-start))
 			return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
 		else : 
 			return error_response(None)
@@ -108,7 +101,6 @@ def data_argos_validation_auto(request):
 		type_ = request.matchdict['type']
 		ind_id = asInt(ind_id)
 
-		
 		if isinstance( ind_id, int ): 
 			nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_)
 			return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
@@ -139,16 +131,13 @@ def data_argos_ALL_validation_auto(request):
 		for row in unchecked_list : 
 			ptt = row['platform_']
 			ind_id = row['ind_id']
-			print (ind_id)
+
 			if ind_id != None : 
 				nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_)
 				Total_exist += exist
 				Total_nb_insert += nb_insert
 				Total_error += error
-		print (str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existing')
-
 		stop = time.time()
-		print ('\n time to insert '+str(stop-start))
 		return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
 	except  Exception as err :
 
@@ -168,7 +157,6 @@ def auto_validate_argos_gps (ptt,ind_id,user,type_) :
 	transaction.commit()
 
 	stop = time.time()
-	print ('\n time to insert '+str(stop-start))
 	return nb_insert, exist , error
 
 @view_config(route_name = 'argos/check', renderer = 'json')
@@ -194,17 +182,9 @@ def argos_check(request):
 @view_config(route_name= 'argos/details', renderer='json')
 def indiv_details(request):
 	type_= request.matchdict['type']
-
 	unchecked = V_dataARGOS_GPS_with_IndivEquip
-
-
-	print('_____DETAILS____')
 	ptt = int(request.matchdict['id'])
-
 	ind_id = int(request.matchdict['ind_id'])
-
-	print(ind_id)
-	print(ptt)
 	join_table = join(Individual,unchecked, Individual.id == unchecked.ind_id) 
 
 	query = select([Individual.id.label('ind_id'),
@@ -222,25 +202,13 @@ def indiv_details(request):
 		unchecked.begin_date,
 		unchecked.end_date]).select_from(join_table).where(and_(unchecked.ptt == ptt,unchecked.ind_id == ind_id)
 															  ).order_by(desc(unchecked.begin_date))
-	print(query)
 	data = DBSession.execute(query).first()
 	transaction.commit()
-	# if data['end_date'] == None :
-	#     end_date=datetime.datetime.now()
-	# else :
-	#     end_date=data['end_date']
-
 	result = dict([ (key[0],key[1]) for key in data.items()])
-	print(result)
-	# result['duration']=(end_date.month-data['begin_date'].month)+(end_date.year-data['begin_date'].year)*12
-	
-	query = select([V_Individuals_LatLonDate.c.date]).where(V_Individuals_LatLonDate.c.ind_id == result['ind_id']).order_by(desc(V_Individuals_LatLonDate.c.date)).limit(1)
-	 
+	query = select([V_Individuals_LatLonDate.c.date]).where(V_Individuals_LatLonDate.c.ind_id == result['ind_id']).order_by(desc(V_Individuals_LatLonDate.c.date)).limit(1)	 
 	lastObs = DBSession.execute(query).fetchone()
 	result['last_observation'] = lastObs['date'].strftime('%d/%m/%Y')
-
 	result['ptt'] = ptt
-	print(result)
 	return result
 
 # Unchecked data for one PTT.
@@ -262,9 +230,7 @@ def argos_unchecked_geo(request):
 		unchecked.date_.label('date'),
 		unchecked.ele,
 		unchecked.type_]).where(and_(unchecked.ptt == platform,unchecked.ind_id == ind_id)).order_by(desc(unchecked.date_))
-
 	data = DBSession.execute(query).fetchall()
-
 	features = [
 		{
 			'type':'Feature',
@@ -280,11 +246,7 @@ def argos_unchecked_geo(request):
 @view_config(route_name='argos/unchecked/json', renderer='json')
 def argos_unchecked_json(request):	
 		type_= request.matchdict['type']
-
 		unchecked = V_dataARGOS_GPS_with_IndivEquip
-
-
-
 		platform = int(request.matchdict['id'])
 
 		if (request.matchdict['ind_id'] != 'null') :

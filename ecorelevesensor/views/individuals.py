@@ -189,25 +189,12 @@ def core_individuals_count(request):
    
 @view_config(route_name='core/individual', renderer='json')
 def core_individual(request):
-    ''' Get the attributes of an identified individual.
-    '''
-    
+    #Get the attributes of an identified individual.   
     id = int(request.matchdict['id'])
     return search_individual(id)
-    # indiv = DBSession.query(Individual).filter(Individual.id==id).one()
-    # query = select([V_Individuals_History.c.label, V_Individuals_History.c.value, cast(V_Individuals_History.c.begin_date, Date), cast(V_Individuals_History.c.end_date, Date)]
-    #                  ).where(V_Individuals_History.c.id == id
-    #                  ).order_by(V_Individuals_History.c.carac, desc(V_Individuals_History.c.begin_date))
-    # carac = DBSession.execute(query).fetchall()
-    # null_date_filter = lambda date: None if date is None else str(date)
-    # indiv.history = [OrderedDict([('name',label), ('value',value), ('from',str(begin_date)), ('to',null_date_filter(end_date))]) for label, value, begin_date, end_date in carac]
-    # print('___________________________')
-    # print(indiv)
-    # return indiv
 
 def search_individual(id):
-    ''' Get the attributes of an identified individual.
-    '''
+    #Get the attributes of an identified individual.
     try :
       indiv = DBSession.query(Individual).filter(Individual.id==id).one()
       query = select([V_Individuals_History.c.label, V_Individuals_History.c.value, cast(V_Individuals_History.c.begin_date, Date), cast(V_Individuals_History.c.end_date, Date)]
@@ -216,10 +203,6 @@ def search_individual(id):
       carac = DBSession.execute(query).fetchall()
       null_date_filter = lambda date: None if date is None else str(date)
       indiv.history = [OrderedDict([('name',label), ('value',value), ('from',str(begin_date)), ('to',null_date_filter(end_date))]) for label, value, begin_date, end_date in carac]
-      print('___________________________')
-      print(indiv)
-      return indiv
-
     except : 
       return None
 
@@ -228,17 +211,13 @@ def core_individual_next(request):
 
   id = int(request.matchdict['id'])
   increment = request.matchdict['increment']
-
   last_id = DBSession.execute(select([Individual.id]).order_by(Individual.id.desc())).first()
   last_id = last_id[0]
 
   if increment == 'next' :
     i=1
-    print ('______NEXT______')
   elif increment == 'prev' :
     i=-1
-    print ('______PREV______')
-
   id +=i
   while search_individual(id) == None :
     id +=i
@@ -246,5 +225,4 @@ def core_individual_next(request):
       id = last_id
     elif id > last_id :
       id = 1
-
   return search_individual(id)

@@ -21,8 +21,6 @@ prefix = 'monitoredSiteEquipment/'
 def monitored_site_equipment_pose(request):
     t = MonitoredSiteEquipment
     pose_info = request.POST
-    print('______________pose info --------------')
-    print (pose_info)
     creator= request.authenticated_userid
     values = {t.creator.name:creator}
     obj = DBSession.query(ObjectRfid.id).filter(ObjectRfid.identifier==pose_info['identifier']).scalar()

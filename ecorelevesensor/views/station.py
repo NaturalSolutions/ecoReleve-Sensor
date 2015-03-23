@@ -30,11 +30,8 @@ def get_operator_fn(op):
 		}[op]
 def eval_binary_expr(op1, operator, op2):
 	op1,op2 = op1, op2
-	print (op1.type)
 	if 'date' in str(op1.type).lower() :
 		op1=cast(op1,Date)
-		print(op1)
-		print(get_operator_fn(operator)(op1, op2))
 	return get_operator_fn(operator)(op1, op2)
 
 class Geometry(UserDefinedType):
@@ -84,7 +81,6 @@ def station_by_id(request):
    
 	id_ = request.matchdict['id']
 	data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
-	print(data)
 	if data != None : 
 		res = {key:val for key, val in data.items() }
 		res['PK'] = res['TSta_PK_ID'] 
@@ -100,19 +96,15 @@ def next_station(request):
 	data = None
 	last_id = DBSession.execute(select([Station.id]).order_by(Station.id.desc())).first()
 	last_id = last_id[0]
-	print (last_id)
 	while data == None :
 		id_+=1
-		print(id_)
 		if id_ > last_id :
 			id_ = 1
 		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
-	
 	res = {key:val for key, val in data.items()}
 	res['PK'] = res['TSta_PK_ID']
 
 	del res['TSta_PK_ID']
-
 	workerList = [res['FieldWorker1'],res['FieldWorker2'],res['FieldWorker3']]
 	users_ID_query = select([User.fullname], User.id.in_((workerList)))
 	users_ID = DBSession.execute(users_ID_query).fetchall()
@@ -123,7 +115,6 @@ def next_station(request):
 	
 	if len(users_ID) <= 1 :
 		users_ID.extend([None,None])
-	
 	return res
 
 @view_config(route_name=prefix+'/id/prev', renderer='json', request_method='GET')
@@ -136,11 +127,9 @@ def prev_station(request):
 	
 	while data == None :
 		id_-=1
-		print(id_)
 		if id_ < 1 :
 			id_ = last_id
 		data = DBSession.execute(select([Station]).where(Station.id == id_)).fetchone()
-	
 	res = {key:val for key, val in data.items() }
 	res['PK'] = res['TSta_PK_ID'] 
 	del res['TSta_PK_ID']
@@ -150,9 +139,7 @@ def prev_station(request):
 def monitoredSitesArea(request):
 
 	req = request.POST
-
 	if 'name_view' in req :
-		print('name_view')
 		try :
 			proto_view_Table = Base.metadata.tables[proto_view_Name]
 			join_table = join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
@@ -160,14 +147,9 @@ def monitoredSitesArea(request):
 			proto_view_Table = dict_proto[proto_view_Name]()
 			join_table = join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
 
-		print (proto_view_Table)
-
-	
 		slct = select([Station.area]).distinct().select_from(join_table)
 		data = DBSession.execute(slct).fetchall()
 		return [row['Region' or 'Area'] for row in data]
-
-
 	else :
 		table = Base.metadata.tables['geo_CNTRIES_and_RENECO_MGMTAreas']
 		slct = select([table.c['Place']]).distinct()
@@ -190,20 +172,15 @@ def listArea_with_coord(request):
 
 	return OrderedDict(areaList)
 
-
 @view_config(route_name=prefix+'/locality', renderer='json', request_method='POST')
 def monitoredSitesLocality(request):
 
 	req = request.POST
-
 	if 'name_view' in req :
-		print('name_view')
 		try :
 			proto_view_Table=Base.metadata.tables[proto_view_Name]
 			join_table=join(proto_view_Table, Station, proto_view_Table.c['TSta_PK_ID'] == Station.id )
-
-		except :
-			
+		except :			
 			proto_view_Table=dict_proto[proto_view_Name]()
 			join_table=join(proto_view_Table, Station, proto_view_Table.FK_TSta_ID == Station.id )
 
@@ -216,35 +193,27 @@ def monitoredSitesLocality(request):
 		data=DBSession.execute(query).fetchall()
 		return [row[0] for row in data]
 
-
 @view_config(route_name=prefix+'/addStation', renderer='json', request_method='POST')
 def insertNewStation(request):
 
 	data=dict(request.params)
-	print(data)
 	check_duplicate_station = select([func.count(Station.id)]).where(and_(Station.date == bindparam('date'),
 		Station.lat == bindparam('lat'),Station.lon == bindparam('lon')))
 	date=data.get('Date_')
-	print (data)
-	print(date)
 
 	if 'PK' not in data or data['PK']=='' :
 		try: 
 			if (data['LON'],data['LAT'])!=('','') :
-				print('______________________')
 				if DBSession.execute(check_duplicate_station, {'date':date, 'lat':data['LAT'], 'lon':data['LON']}).scalar() == 0 :
 
 					# get REGION and UTM by stored procedure
-					print ('_______Region___________')
 					stmt_Region = text("""
 						DECLARE @geoPlace varchar(255);
 						EXEC dbo.sp_GetRegionFromLatLon :lat, :lon, @geoPlace OUTPUT;
 						SELECT @geoPlace;"""
 					).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
 					geoRegion=DBSession.execute(stmt_Region).scalar()
-					print (geoRegion)
 
-					print ('_______UTM___________')
 					stmt_UTM=text("""
 						DECLARE @geoPlace varchar(255);
 						EXEC dbo.sp_GetUTMCodeFromLatLon   :lat, :lon, @geoPlace OUTPUT;
@@ -252,38 +221,18 @@ def insertNewStation(request):
 					).bindparams(bindparam('lat', value=data['LAT'] , type_=Numeric(9,5)),bindparam('lon', value=data['LON'] , type_=Numeric(9,5)))
 					geoUTM=DBSession.execute(stmt_UTM).scalar()
 					locality=None
-					print (geoUTM)
-
 				else :
 					response=Response('a station exists at same date and coordinates')
 					response.status_int = 500
 					return response
-
 			else :
 				geoUTM=None
 				geoRegion=data['Region']
 				data['LAT'] = None
 				data['LON'] = None
-
-			#get userID with fieldWorker_Name
-			# users_ID_query = select([User.id], User.fullname.in_((data['FieldWorker1'],data['FieldWorker2'],data['FieldWorker3'])))
-			# users_ID = DBSession.execute(users_ID_query).fetchall()
-			# users_ID=[row[0] for row in users_ID]
-			
-			# if len(users_ID) <3 :
-			# 	users_ID.extend([None,None])
-
 			if data['id_site']=='':
 				data['id_site']=None
 			else :
-				
-				# join_table= select([MonitoredSitePosition, MonitoredSite]).join(MonitoredSite, MonitoredSitePosition.site == MonitoredSite.id)
-				# q= select([MonitoredSitePosition.id,MonitoredSitePosition.lat
-				# 	, MonitoredSitePosition.lon, MonitoredSitePosition.ele
-				# 	, MonitoredSitePosition.precision]).select_from(join_table).filter(and_(MonitoredSitePosition.begin_date< data['Date_']
-				# 		, or_(MonitoredSitePosition.end_date>data['Date_'], MonitoredSitePosition.end_date == None)))
-				
-
 				dt = DBSession.query(MonitoredSitePosition.id,MonitoredSitePosition.lat
 					, MonitoredSitePosition.lon, MonitoredSitePosition.ele
 					, MonitoredSitePosition.precision
@@ -315,12 +264,9 @@ def insertNewStation(request):
 			DBSession.add(station)
 			DBSession.flush()
 			id_sta=station.id
-		
-			print(id_sta)
 			return {'PK':id_sta,'Region':geoRegion,'UTM20':geoUTM}
 
-		except Exception as err: 
-			
+		except Exception as err: 		
 			msg = err.args[0] if err.args else ""
 			response=Response('Problem occurs on station insert : '+str(type(err))+' = '+msg)
 			response.status_int = 500
@@ -329,15 +275,10 @@ def insertNewStation(request):
 	elif 'PK' in data :
 		
 		try: 
-			print('_______________________')
-			print(type(data['PK']))
 			up_station=DBSession.query(Station).get(data['PK'])
-			
 			if 'Date_' in data : 
 				data['date']=data['Date_']
-			
 			toDel = ['Date_','PK','FieldWorker4','FieldWorker5']
-
 			for field in toDel : 
 				if field in data :
 					del data[field]
@@ -349,10 +290,7 @@ def insertNewStation(request):
 			colToAttr=dict({v.name:k for k,v in up_station.__mapper__.c.items()})
 
 			for k, v in data.items() :
-				# if 'FieldWorker' in k :
-				# 	v=getWorkerID([v])[0]
 				setattr(up_station,colToAttr[k],v)
-				print(k+' : ')
 			if 'FieldActivity_Name' in data : 
 				up_station.fieldActivityId=getFieldActitityID(data['FieldActivity_Name'])
 				
@@ -360,27 +298,20 @@ def insertNewStation(request):
 			return data
 
 		except Exception as err: 
-
 			msg = err.args[0] if err.args else ""
 			response=Response('Problem occurs on station update : '+str(type(err))+' = '+msg)
 			response.status_int = 500
 			return response
 	
-
 @view_config(route_name=prefix+'/addMultStation', renderer='json', request_method='POST')
 def insertMultStation(request):
 
 	data=list(request.params)
-
 	data=json.loads(data[0])
-	print(type(data))
 	start=time.time()
 	creation_date=datetime.datetime.now()
 	userID=[data[0]['fieldWorker1'],data[0]['fieldWorker2'],data[0]['fieldWorker3']]
 	col=tuple(['name','date','LAT','LON','FieldWorker1','FieldWorker2','FieldWorker3','FieldActivity_Name','Creator','Creation_date'])
-
-	print(userID)
-	# ----------------------------------------------
 	#### TODO ==> Add elevation field ####
 	final=[dict(zip(col,[
 		row['name']
@@ -395,9 +326,6 @@ def insertMultStation(request):
 		,creation_date
 		])) for row in data ]
 
-	
-	
-	# ----------------------------------------------
 	# Create temporary Table and insert all waypoints
 	tempName='tempTable'+str(request.authenticated_userid)
 	tempTable=Table (tempName,
@@ -428,13 +356,11 @@ def insertMultStation(request):
 
 	tempTable.create(checkfirst=True)
 	DBSession.execute(tempTable.insert(),final)
-
 	# -------------------------- #
 	# Launch procedure : check duplicate, 
 	# retrieve UTM, Region from coord, fieldActivity_ID from fieldActivity_Name,
 	# and insert in Table(Station)
 	# -------------------------- #
-
 	df=pandas.DataFrame(data=final)
 	query='''DELETE {tableName}
 	WHERE EXISTS (SELECT* FROM TStations t WHERE t.LAT={tableName}.LAT 
@@ -477,9 +403,7 @@ def insertMultStation(request):
 	'''.format(tableName=tempName, minLON=min(df['LON']), minLAT=min(df['LAT']), maxLON=max(df['LON']), maxLAT=max(df['LAT']))
 
 	try :
-		DBSession.execute(query)
-		print (time.time()-start)
-		
+		DBSession.execute(query)	
 		# -------------------------- #
 		# Retrieve new station created 
 		query=select([Station]).where(and_(Station.creator==request.authenticated_userid,Station.creationDate==creation_date))
@@ -497,7 +421,6 @@ def insertMultStation(request):
 		,'data': result }
 
 	except Exception as err:
-		print ('_______EXCEPTION______')
 		msg = err.args[0] if err.args else ""
 		response=Response('Problem occurs on station import : '+str(type(err))+' = '+msg)
 		response.status_int = 500
@@ -513,19 +436,15 @@ def insertMultStation(request):
 def station_byDate (request) :
 
 	data=reques.params
-
 	query= select(Station).filter(Station.date>=data.get('begin_date')).filter(Station.date<=data.get('end_date'))
 	result= DBSession.execute(query).fetchall()
-	
 	return result
 
 @view_config(route_name=prefix+'/search', renderer='json', request_method='POST')
 def station_search (request) :
 	start=time.time()
 	table=Base.metadata.tables['V_Search_AllStation_with_MonitoredSite_Indiv2']
-	
 	criteria = json.loads(request.POST.get('criteria', '{}'))
-	
 	dictio={
 	'pk':'id',
 	'region':'Region',
@@ -550,9 +469,6 @@ def station_search (request) :
 		, table.c['UTM20']]).distinct()
 
 	for key, obj in criteria.items():
-		print(key)
-		print(obj)
-
 		if obj['Value'] != None:
 			try:
 				Col=dictio[key.lower()]
@@ -569,15 +485,9 @@ def station_search (request) :
 
 			else:
 				query=query.where(eval_.eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
-
-	print(query)
-
 	total = DBSession.execute(select([func.count()]).distinct().select_from(query.alias())).scalar()
 	result = [{'total_entries':total}]
-
-
 	order_by = json.loads(request.POST.get('order_by', '[]'))
-	print(order_by)
 	order_by_clause = []
 	for obj in order_by:
 		column, order = obj.split(':')
@@ -589,9 +499,7 @@ def station_search (request) :
 			elif order == 'desc':
 				order_by_clause.append(table.c[column].desc())
 	if len(order_by_clause) > 0:
-		print(order_by_clause)
 		query = query.order_by(*order_by_clause)
-
 
 	# Define the limit and offset if exist
 	offset = int(request.POST.get('offset', 0))
@@ -602,15 +510,10 @@ def station_search (request) :
 		query = query.offset(offset)
 	
 	data=DBSession.execute(query).fetchall()
-
-	print('_____DATA______')
 	list_sta = []
 	for row in data :
 		row = OrderedDict(row)
-		row['Date_'] = row['Date_'].strftime('%d/%m/%Y %H:%M')
-		
+		row['Date_'] = row['Date_'].strftime('%d/%m/%Y %H:%M')		
 		list_sta.append(OrderedDict(row))
 	result.append(list_sta)
-	stop=time.time()
-	print ('____ time '+str(stop-start))
 	return result

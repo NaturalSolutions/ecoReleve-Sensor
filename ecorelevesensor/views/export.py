@@ -36,17 +36,12 @@ def views_filter_export(request):
 	try:
 		function_export= { 'csv': export_csv, 'pdf': export_pdf, 'gpx': export_gpx }
 		criteria = request.json_body.get('criteria', {})
-
 		viewName = criteria['viewName']
 		table = Base.metadata.tables[viewName]
 		type_export= criteria['type_export']
-
 		#columns selection
 		columns=criteria['columns']
-		print(columns)
-
 		coll=[]
-
 		for col in columns:
 			coll.append(table.c[col])
 		
@@ -54,7 +49,6 @@ def views_filter_export(request):
 			query = select(coll)
 		else :
 			query = select('*')
-
 		#filters selection	
 		filterList=criteria['filters']['filters']
 		for fltr in filterList:
@@ -62,8 +56,6 @@ def views_filter_export(request):
 			query = query.where(eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
 		bbox=criteria['bbox']
-
-		print(bbox)
 
 		query = query.where(and_(between(table.c['LAT'], float(bbox[3]), float(bbox[1])), between(table.c['LON'], float(bbox[2]), float(bbox[0]))))
 		rows = DBSession.execute(query).fetchall()

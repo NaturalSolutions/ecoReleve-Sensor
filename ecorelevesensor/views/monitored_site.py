@@ -53,7 +53,6 @@ def monitoredSite_list(request):
 def monitoredSite_name(request):
 
 	typeSite=request.params.get('type')
-	print(typeSite)
 	query =select([MonitoredSite.name]
 		).order_by(MonitoredSite.name)
 
@@ -81,17 +80,11 @@ def monitoredSite_byName(request):
 		, MonitoredSite.id.label('id_site'),MonitoredSitePosition.ele.label('ele'),MonitoredSitePosition.precision.label('precision')]
 		).select_from(join(MonitoredSitePosition, MonitoredSite , MonitoredSitePosition.site == MonitoredSite.id)
 		).where(and_(MonitoredSite.name==nameSite, MonitoredSite.type_==typeSite)).order_by(desc(MonitoredSitePosition.begin_date))
-
 	data = DBSession.execute(query).first()
-
 	return dict([ (key,val) for key,val in data.items()])
-
 
 @view_config(route_name=prefix+'/search', renderer='json')
 def monitoredSite_search(request):
-
-	print('________Search___________')
-
 
 	try:
 		criteria = json.loads(request.GET.get('criteria',{}))
@@ -102,8 +95,6 @@ def monitoredSite_search(request):
 			obj['Column'] = 'Active'
 			if(obj['Value'] == 'Active'): obj['Value'] = True
 			else: obj['Value'] = False
-
-
 
 	if(request.GET.get('offset')):
 		offset = json.loads(request.GET.get('offset',{}))
@@ -112,17 +103,13 @@ def monitoredSite_search(request):
 		content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
 	else :
 		content = gene.get_search(criteria)
-	
-
 	return content
 
 @view_config(route_name=prefix + '/getFilters', renderer='json', request_method='GET')
 def monitoredSite_filters(request):
-	print('____________FIELDS_________________')
+
 	table=Base.metadata.tables['V_Qry_MonitoredSites_V2']
-	
 	columns=table.c
-	
 	final={}
 	for col in columns :
 		name=col.name
@@ -130,19 +117,12 @@ def monitoredSite_filters(request):
 		if 'VARCHAR' in Ctype:
 			Ctype='String'
 		final[name]=Ctype
-
 	return final
-
 
 @view_config(route_name=prefix + '/search_geoJSON', renderer='json', request_method='GET')
 def monitoredSite_geoJSON(request):
 
-
 	table=Base.metadata.tables['V_Qry_MonitoredSites_V2']
-
-
-	print(request.GET)
-
 	try:
 		criteria = json.loads(request.GET.get('criteria',{}))
 	except:
@@ -156,8 +136,6 @@ def monitoredSite_geoJSON(request):
 
 	if(request.GET.get('offset')):
 		offset = json.loads(request.GET.get('offset',{}))
-		print('_________________')
-		print(offset)
 		perPage = json.loads(request.GET.get('per_page',{}))
 		orderBy = json.loads(request.GET.get('order_by',{}))
 		content = gene.get_geoJSON(criteria, offset=offset, per_page=perPage, order_by=orderBy
@@ -171,52 +149,32 @@ def monitoredSite_geoJSON(request):
 def monitoredSite_detail(request):	
 	id_ = request.matchdict['id']
 	table = Base.metadata.tables['V_fullMonitoredSites']
-	print('____________________fds')
-	print(table.c)
-
-
-
 	data = DBSession.execute(select([table]).where(table.c['id']==id_)).fetchall()
-	print(data)
-	#print(data['end_date'])
-	print(type(data))
-	print(data)
 	result= []
 	result.append([OrderedDict(row) for row in data])
-	print(result)
-	#result['end_date'] = data['end_date'].strftime('%m/%d/%Y')
-	#result['begin_date'] = data['begin_date'].strftime('%m/%d/%Y')
-
 	return result
 
 @view_config(route_name=prefix + '/detail_geoJSON', renderer='json', request_method='GET')
 def monitoredSite_detailGeoJSON(request):	
 	id_ = request.matchdict['id']
 	table = Base.metadata.tables['V_fullMonitoredSites']
-	print('____________________test')
-	print(id_)
 	data = DBSession.execute(select([table]).where(table.c['id']==id_)).fetchall()
-	print (data)
 	geoJson=[]
 	for row in data:
             geoJson.append({'type':'Feature', 'properties':{'id':row['id'],'name':row['name'],'type':row['type'], 'end': row['end_date'], 'begin': row['begin_date']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
 	return geoJson
 
-
 @view_config(route_name=prefix + '/newSite', renderer='json', request_method='POST')
 def monitoredSite_newSite(request):
 
-	print ('new Site')
 	data = request.json_body
 	location = data['location']
-	print(location)
 
 	type_id = DBSession.execute(select([distinct(MonitoredSite.id_type
 		)]).where(MonitoredSite.type_ == data['type'])).scalar()
 
 	new_site = MonitoredSite(creator = request.authenticated_userid, type_ = data['type'], id_type = type_id
 		, name = data['name'], active = data['active'])
-
 	DBSession.add(new_site)
 	DBSession.flush()
 	data['id'] = new_site.id
@@ -229,20 +187,16 @@ def monitoredSite_newSite(request):
 @view_config(route_name=prefix + '/newLocation', renderer='json', request_method='POST')
 def monitoredSite_newLocation(request, _id = None):
 
-	print ('new Location')	
-	
 	if (_id != None) :
 		location = request['location']
 	else :
 		location = request.json_body
 
-	print(_id)
 	new_location = MonitoredSitePosition(site = location['site'], lat = location['lat'], lon = location['lon'], ele = location['ele']
 		, precision= location['precision'], date = func.now() , begin_date = location['begin_date'] 
 		, end_date = location['end_date'], comments = location['comments'])
 	DBSession.add(new_location)
 	DBSession.flush()
-
 	location['id'] = new_location.id
 	if (_id != None) :
 		request['location'] = location

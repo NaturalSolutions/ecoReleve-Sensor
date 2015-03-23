@@ -1,5 +1,4 @@
-USE [ecoReleve_DataNew]
-GO
+
 
 /****** Object:  View [dbo].[V_dataRFID_as_file]    Script Date: 19/12/2014 15:20:08 ******/
 SET ANSI_NULLS ON
@@ -48,31 +47,31 @@ with toto as
 
 select * from toto 
 
-union
+--union
 
-(SELECT 
-      rfid.[FK_obj] as id_obj    
-	  ,obj.identifier as identifier
-	  ,rfid.[FK_creator] as id_creator
-      ,rfid.[checked] as checked
-	, count (distinct chip_code) as nb_chip_code
-	 , count (chip_code) as total_scan
-	 ,NULL as begin_date
-	 ,NULL as end_date
-	 ,NULL as lat
-	 ,NULL as lon
-	 ,NULL as site_name
-	,NULL as site_type
-	,rfid.creation_date
-	,Max(rfid.date_) as last_scan
-	,Min(rfid.date_) as first_scan
+--(SELECT 
+     -- rfid.[FK_obj] as id_obj    
+	  --,obj.identifier as identifier
+	  --,rfid.[FK_creator] as id_creator
+      --,rfid.[checked] as checked
+	--, count (distinct chip_code) as nb_chip_code
+	 --, count (chip_code) as total_scan
+	 --,NULL as begin_date
+	 --,NULL as end_date
+	 --,NULL as lat
+	 --,NULL as lon
+	 --,NULL as site_name
+	--,NULL as site_type
+	--,rfid.creation_date
+	--,Max(rfid.date_) as last_scan
+	--,Min(rfid.date_) as first_scan
 	
 
 
-  FROM [ecoReleve_DataNew].[dbo].[T_DataRfid] rfid
-  join [dbo].[T_Object] obj on rfid.FK_obj=obj.PK_id
-  where rfid.creation_date not in (select creation_date from toto)
-  group by rfid.FK_obj, rfid.[FK_creator] ,rfid.[checked],obj.identifier,rfid.creation_date,rfid.checked)
+  --FROM [ecoReleve_DataNew].[dbo].[T_DataRfid] rfid
+  --join [dbo].[T_Object] obj on rfid.FK_obj=obj.PK_id
+  --where rfid.creation_date not in (select creation_date from toto)
+  --group by rfid.FK_obj, rfid.[FK_creator] ,rfid.[checked],obj.identifier,rfid.creation_date,rfid.checked)
 
 
 

@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 class Generator :
     def __init__(self,table):
-        print('------------------- Generator '+ table +'-------------------')
+    
 
         self.dictCell={
             'VARCHAR':'string',
@@ -85,8 +85,6 @@ class Generator :
 
         for obj in criteria:
 
-            print('__________________')
-            print(obj['Value'])
             if obj['Value'] != None and obj['Value']!='':
 
                 try:
@@ -143,10 +141,8 @@ class Generator :
         return query, total
 
     def update_data(self,model,id_name) : 
-        print('______UPDATE ! ___________')
 
         id_=model[id_name]
-        print(model['patch'])
         if model['patch']!={} :   
             r=update(self.table).where(self.table.c[id_name]==id_).values(model['patch'])
             DBSession.execute(r)
@@ -156,30 +152,14 @@ class Generator :
         query = select(self.table.c)
         result=[]
         total=None
-
-        print(criteria)
-        '''
         for obj in criteria:
-            query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
-        '''
-        for obj in criteria:
-            print('__________________')
-            print(obj['Value'])
             if obj['Value'] != None and obj['Value']!='':
-                
-                
                 try:
                     Col=dictio[key]
                 except: 
                     Col=obj['Column']
                 
                 query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
-
-        '''
-        if offset!=None:
-            query, total=self.get_page(query,offset,per_page, order_by)
-        '''
-
         data=DBSession.execute(query.where(self.table.c['lat'] != None)).fetchall()
 
         geoJson=[]
@@ -189,7 +169,5 @@ class Generator :
                 for col in cols_for_properties :
                     properties[col.replace('_',' ')] = row[col]
             geoJson.append({'type':'Feature', 'properties':properties, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
-
-
         transaction.commit()
         return {'type':'FeatureCollection', 'features': geoJson}

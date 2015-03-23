@@ -28,8 +28,6 @@ class PDFrenderer(object):
 			ct = response.content_type
 			if ct == response.default_content_type:
 				response.content_type = 'application/pdf'
-
-
 		fout = io.BytesIO()
 		cols=value.get('header', [])
 		rows=value.get('rows', [])
@@ -41,8 +39,6 @@ class PDFrenderer(object):
 				row.append(item)                
 			data.append(row)
 
-
-		print (len(data))
 		table_font_size = 9
 		if name_vue == "V_Qry_VIndiv_MonitoredLostPostReleaseIndividuals_LastStations":
 			table_font_size = 8
@@ -66,8 +62,6 @@ class PDFrenderer(object):
 		cols.append('No check')
 
 		data.insert(0,cols)
-		
-		print (data[0])
 		styleSheet = getSampleStyleSheet()
 		doc=SimpleDocTemplate(fout,pagesize=landscape(A4),rightMargin=72,leftMargin=72,topMargin=20,bottomMargin=18)
 		Story=[]
@@ -91,18 +85,14 @@ class PDFrenderer(object):
                 leftPadding = 0, rightPadding = 0,
                 topPadding = 0, bottomPadding = 0,
                 id='frame1')
-		# ltemplate = PageTemplate(id='landscape',frames =[frame1], onPage=self.make_landscape)
-		# doc.addPageTemplates([ltemplate])
+
 		spreadsheet_table = SpreadsheetTable(data, repeatRows = 1)
 		spreadsheet_table.setStyle(table_style)
 		Story.append(spreadsheet_table)
 		Story.append(PageBreak())
 		doc.build(Story, onFirstPage=self.addPageNumber, onLaterPages=self.addPageNumber)
-
 		pdf=fout.getvalue()
 		fout.close()
 		return pdf
-
-
 	def make_landscape(self,canvas,doc):
 		canvas.setPageSize(landscape(letter))
