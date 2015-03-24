@@ -27,12 +27,6 @@ Twitter
 Please consider following the [@Nat_Solutions](https://twitter.com/Nat_Solutions) Twitter team for updates.
 
 
-ecoRelevé process
-------------
-
-![ecoRelevé](https://github.com/NaturalSolutions/ecoReleve/blob/master/Images/newecoReleve.png)
-
-
 Sponsor
 ------------
 
