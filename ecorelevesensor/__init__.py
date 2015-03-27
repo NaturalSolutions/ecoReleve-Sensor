@@ -63,6 +63,7 @@ def add_routes(config):
     config.add_route('argos/unchecked/count', 'ecoReleve-Sensor/argos/unchecked/count')
     
     config.add_route('argos/check', 'ecoReleve-Sensor/argos/check')
+
     # config.add_route('argos/insert', 'ecoReleve-Sensor/argos/insert')
 
     config.add_route('gps/unchecked/count', 'ecoReleve-Sensor/gps/unchecked/count')
@@ -126,6 +127,7 @@ def add_routes(config):
     config.add_route('station/id/next', 'ecoReleve-Core/station/{id}/next')
     config.add_route('station/id/prev', 'ecoReleve-Core/station/{id}/prev')
 
+    config.add_route('station/last_imported', 'ecoReleve-Core/station/last_imported/')
 
     config.add_route('station', 'ecoReleve-Core/station')
     config.add_route('station/addStation', 'ecoReleve-Core/station/addStation/insert')
