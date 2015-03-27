@@ -167,7 +167,7 @@
       "legend": "Orientation"
     },
     {
-      "fields": ["Comments","Disturbed","Name_Behaviour","Id_Behaviour"],
+      "fields": ["Name_Behaviour","Disturbed","Comments","Id_Behaviour"],
       "legend": "Other"
     }
   ]
