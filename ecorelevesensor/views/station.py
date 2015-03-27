@@ -570,3 +570,4 @@ def lasimported_stations(request):
         result.append(row)
     
     return result
+
