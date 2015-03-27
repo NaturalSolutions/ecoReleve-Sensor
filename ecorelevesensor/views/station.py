@@ -479,7 +479,7 @@ def station_search (request) :
 				query=query.where(or_(table.c['FieldWorker1_ID']==obj['Value'],
 					table.c['FieldWorker2_ID']==obj['Value'],
 					table.c['FieldWorker3_ID']==obj['Value']))
-			if 'date' in key.lower() :
+			elif 'date' in key.lower() :
 				op1=cast(table.c[Col],Date)
 				query=query.where(eval_.eval_binary_expr(op1, obj['Operator'], obj['Value']))
 
