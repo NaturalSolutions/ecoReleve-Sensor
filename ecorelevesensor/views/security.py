@@ -30,7 +30,9 @@ def login(request):
 		transaction.commit()
 		return HTTPUnauthorized()
 		
-@view_config(route_name=route_prefix+'logout')
+@view_config(
+	route_name=route_prefix+'logout', 
+	permission=NO_PERMISSION_REQUIRED,)
 def logout(request):
 	headers = forget(request)
 	request.response.headerlist.extend(headers)

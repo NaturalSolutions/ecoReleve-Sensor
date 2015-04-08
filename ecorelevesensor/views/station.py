@@ -14,9 +14,12 @@ from sqlalchemy.types import *
 import pandas
 from collections import OrderedDict
 from ecorelevesensor.utils.eval import Eval
+from ecorelevesensor.utils.generator import Generator
 
 prefix = 'station'
 eval_ = Eval()
+
+gene= Generator('V_Search_AllStation_with_MonitoredSite_Indiv2')
 def get_operator_fn(op):
 	return {
 		'<' : operator.lt,
@@ -519,13 +522,12 @@ def station_byDate (request) :
 	
 	return result
 
+
 @view_config(route_name=prefix+'/search', renderer='json', request_method='POST')
 def station_search (request) :
 	start=time.time()
 	table=Base.metadata.tables['V_Search_AllStation_with_MonitoredSite_Indiv2']
-	
 	criteria = json.loads(request.POST.get('criteria', '{}'))
-	
 	dictio={
 	'pk':'id',
 	'region':'Region',
@@ -550,34 +552,27 @@ def station_search (request) :
 		, table.c['UTM20']]).distinct()
 
 	for key, obj in criteria.items():
-		print(key)
-		print(obj)
-
 		if obj['Value'] != None:
 			try:
 				Col=dictio[key.lower()]
 			except: 
-				Col=key	
+				Col=key 
 			
 			if key.lower() == 'fieldworker' :
+				print('___________FIeldworker')
 				query=query.where(or_(table.c['FieldWorker1_ID']==obj['Value'],
 					table.c['FieldWorker2_ID']==obj['Value'],
 					table.c['FieldWorker3_ID']==obj['Value']))
-			if 'date' in key.lower() :
+			elif 'date' in key.lower() :
 				op1=cast(table.c[Col],Date)
 				query=query.where(eval_.eval_binary_expr(op1, obj['Operator'], obj['Value']))
 
 			else:
 				query=query.where(eval_.eval_binary_expr(table.c[Col], obj['Operator'], obj['Value']))
-
-	print(query)
-
+	print (query)
 	total = DBSession.execute(select([func.count()]).distinct().select_from(query.alias())).scalar()
 	result = [{'total_entries':total}]
-
-
 	order_by = json.loads(request.POST.get('order_by', '[]'))
-	print(order_by)
 	order_by_clause = []
 	for obj in order_by:
 		column, order = obj.split(':')
@@ -589,9 +584,7 @@ def station_search (request) :
 			elif order == 'desc':
 				order_by_clause.append(table.c[column].desc())
 	if len(order_by_clause) > 0:
-		print(order_by_clause)
 		query = query.order_by(*order_by_clause)
-
 
 	# Define the limit and offset if exist
 	offset = int(request.POST.get('offset', 0))
@@ -602,15 +595,84 @@ def station_search (request) :
 		query = query.offset(offset)
 	
 	data=DBSession.execute(query).fetchall()
-
-	print('_____DATA______')
 	list_sta = []
 	for row in data :
 		row = OrderedDict(row)
 		row['Date_'] = row['Date_'].strftime('%d/%m/%Y %H:%M')
-		
 		list_sta.append(OrderedDict(row))
 	result.append(list_sta)
-	stop=time.time()
-	print ('____ time '+str(stop-start))
 	return result
+
+
+@view_config(route_name=prefix+'/last_imported', renderer='json', request_method='GET')
+def lasimported_stations(request):
+	user = request.authenticated_userid
+	table = Base.metadata.tables['V_lastStation_3Days_without_Protocols']
+	query = select([table]).where(table.c['Creator'] == user)
+	data = DBSession.execute(query).fetchall()
+
+	result = []
+	for row in data :
+		
+		row  = dict(OrderedDict(row))
+		row['Date_'] = row['DATE'].strftime('%d/%m/%Y %H:%M') 
+		row['PK'] = row['TSta_PK_ID']
+		del row['TSta_PK_ID']     
+		del row['timestamp']
+		result.append(row)
+	
+	return result
+
+
+
+
+@view_config(route_name=prefix+'/searchGene', renderer='json', request_method='GET')
+def station_search (request) :
+
+	print('________Search___________')
+
+	try:
+		criteria = json.loads(request.GET.get('criteria',{}))
+	except:
+		criteria={}
+	for obj in criteria :
+		if obj['Column'] == 'Status' :
+			obj['Column'] = 'Active'
+			if(obj['Value'] == 'Active'): obj['Value'] = True
+			else: obj['Value'] = False
+
+	if(request.GET.get('offset')):
+		offset = json.loads(request.GET.get('offset',{}))
+		perPage = json.loads(request.GET.get('per_page',{}))
+		orderBy = json.loads(request.GET.get('order_by',{}))
+		content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
+	else :
+		content = gene.get_search(criteria)
+	transaction.commit()
+
+	return content
+
+
+@view_config(route_name=prefix + '/search_geoJSON', renderer='json', request_method='GET')
+def station_geoJSON(request):
+
+	try:
+		criteria = json.loads(request.GET.get('criteria',{}))
+	except:
+		criteria={}
+
+	for obj in criteria :
+		if obj['Column'] == 'Status' :
+			obj['Column'] = 'Active'
+			if(obj['Value'] == 'Active'): obj['Value'] = True
+			else: obj['Value'] = False
+
+	if(request.GET.get('offset')):
+		offset = json.loads(request.GET.get('offset',{}))
+		perPage = json.loads(request.GET.get('per_page',{}))
+		orderBy = json.loads(request.GET.get('order_by',{}))
+		content = gene.get_geoJSON(criteria)
+	else :
+		content = gene.get_geoJSON(criteria)
+	transaction.commit()
+	return content

@@ -11,6 +11,7 @@ import json
 from ecorelevesensor.models import Base, DBSession
 
 from collections import OrderedDict
+import transaction
 
 prefix = 'monitoredSite'
 
@@ -112,7 +113,7 @@ def monitoredSite_search(request):
 		content = gene.get_search(criteria, offset=offset, per_page=perPage, order_by=orderBy)
 	else :
 		content = gene.get_search(criteria)
-	
+	transaction.commit()
 
 	return content
 
@@ -130,7 +131,7 @@ def monitoredSite_filters(request):
 		if 'VARCHAR' in Ctype:
 			Ctype='String'
 		final[name]=Ctype
-
+	
 	return final
 
 
@@ -164,7 +165,7 @@ def monitoredSite_geoJSON(request):
 			, cols_for_properties = ['id','name','type','begin_date','end_date'])
 	else :
 		content = gene.get_geoJSON(criteria)
-
+	transaction.commit()
 	return content
 
 @view_config(route_name=prefix + '/detail', renderer='json', request_method='GET')
