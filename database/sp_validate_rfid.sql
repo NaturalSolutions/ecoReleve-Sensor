@@ -70,12 +70,12 @@ BEGIN
 		ON e.FK_obj = data.FK_obj 
 		AND data.date_ >= e.begin_date
 		AND (data.date_ <= e.end_date OR e.end_date IS NULL)
-	WHERE data.r = @frequency_hour AND data.validated = 0 and data.checked=@checked;
+	WHERE data.r = 1 AND data.validated = 0 and data.checked=@checked;
 
 insert into  @data_duplicate  
 select d.PK_id, s.PK_ID
 from @data_to_insert d 
-join T_AnimalLocation s on d.lat = s.lat and d.lon = s.lon and d.FK_obj = s.FK_obj and d.date_ = s.date_
+join T_AnimalLocation s ON d.FK_ind = a.FK_ind and d.date_ = a.date_ and d.FK_obj = a.FK_obj
 
 
 	-- Insert only the first chip lecture per RFID, per individual, per hour.

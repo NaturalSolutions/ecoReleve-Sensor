@@ -119,18 +119,23 @@ def rfid_import(request):
         fieldtype3 = {'Transponder Type:':'type','Transponder Code:':'code','Date:':'no','Time:':'no','Event:':'Event','Unit #:':'Unit','Antenna #:':'Antenna','Memo:':'Memo','Custom:':'Custom'}
 
         entete = data[0]
+        
         if re.compile('\t').search(entete):
             separateur = '\t'
+
         elif re.compile(';').search(entete):
             separateur = ';'
         entete = entete.split(separateur)
+
         #file with head
         if (sorted(entete) == sorted(fieldtype1.keys())):
             field_label = ["no","Type","Code","date","time"]
             isHead = True
+
         elif (sorted(entete) == sorted(fieldtype2.keys())):
             field_label = ["no","Type","Code","date","time","no","no","no","no","no"]
             isHead = True
+
         elif (sorted(entete) == sorted(fieldtype3.keys())):
             field_label = ["Type","Code","date","time","no","no","no","no","no"]
             isHead = True
@@ -143,6 +148,9 @@ def rfid_import(request):
                     field_label = ["Type","Code","date","time","no","no","no","no","no"]
                 if entete[0] == 'Transponder Type:':
                     isHead = True
+                elif entete[1] == 'Transponder Type:':
+                    isHead = True
+                    field_label = ["no","Type","Code","date","time"]
                 else:
                     field_label = ["no","Type","Code","date","time"]
 
@@ -157,7 +165,7 @@ def rfid_import(request):
         allDate = []
         while j < len(data):
             i = 0
-            if data[j] != "":
+            if data[j] != "" :
                 line = data[j].replace('"','').split(separateur)
                 while i < len(field_label):
                     if field_label[i] == 'Code':
@@ -168,12 +176,14 @@ def rfid_import(request):
                         time = re.sub('\s','',line[i])
                         format_dt = '%d/%m/%Y %H:%M:%S'
                         if re.search('PM|AM',time):
+
                             format_dt = '%m/%d/%Y %I:%M:%S%p'
                             format_dtBis='%d/%m/%Y %I:%M:%S%p'
                         dt = date+' '+time
                         try :
                             dt = datetime.strptime(dt, format_dt)
-                        except :
+                        except Exception as e:
+
                             dt = datetime.strptime(dt, format_dtBis)
                         allDate.append(dt)
 
@@ -221,7 +231,7 @@ def rfid_validate(request):
     stmt = text("""
         DECLARE @error int, @nb int, @exist int;
         EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT,@exist OUTPUT, @error OUTPUT;
-        SELECT @error, @nb;"""
+        SELECT @error, @nb,@exist;"""
     ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', frequency_hour),bindparam('checked', 0))
     error_code, nb, exist = DBSession.execute(stmt).fetchone()
     if nb > 0:
