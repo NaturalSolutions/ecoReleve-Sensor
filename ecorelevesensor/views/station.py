@@ -627,7 +627,7 @@ def lasimported_stations(request):
 
 
 @view_config(route_name=prefix+'/searchGene', renderer='json', request_method='GET')
-def station_search (request) :
+def station_searchGene (request) :
 
 	print('________Search___________')
 
