@@ -203,6 +203,7 @@ def search_individual(id):
       carac = DBSession.execute(query).fetchall()
       null_date_filter = lambda date: None if date is None else str(date)
       indiv.history = [OrderedDict([('name',label), ('value',value), ('from',str(begin_date)), ('to',null_date_filter(end_date))]) for label, value, begin_date, end_date in carac]
+      return indiv
     except : 
       return None
 

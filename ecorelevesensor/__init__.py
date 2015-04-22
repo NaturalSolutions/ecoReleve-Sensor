@@ -52,8 +52,8 @@ def add_routes(config):
     config.add_route('argos/importAll/auto', 'ecoReleve-Sensor/{type}/unchecked/importAll/auto')
     config.add_route('argos/import/auto', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/import/auto')
     config.add_route('argos/import', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/import')
-    config.add_route('argos/unchecked/geo', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/geo')
-    config.add_route('argos/unchecked/json', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/json')
+    config.add_route('argos/unchecked/format', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/{format}')
+    config.add_route('argos/unchecked/format/increment', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/{format}/{increment}')
 
     config.add_route('argos/details', 'ecoReleve-Sensor/{type}/{id}/details/{ind_id}')
     # config.add_route('argos/unchecked', 'ecoReleve-Sensor/argos/unchecked')

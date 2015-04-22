@@ -45,7 +45,12 @@ def argos_unchecked_list(request):
         elif type_ == 'gsm' :
             unchecked = V_dataGSM_withIndivEquip
 
-        unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb'), func.max(unchecked.date_).label('max_date'), func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
+        unchecked_with_ind = select([unchecked.ptt.label('platform_'),
+            unchecked.ind_id, unchecked.begin_date, unchecked.end_date,
+            func.count().label('nb'), func.max(unchecked.date_).label('max_date'),
+            func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0
+            ).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date
+            ).order_by(unchecked.ind_id.desc())
         # Populate Json array
         data = DBSession.execute(unchecked_with_ind).fetchall()
         return [dict(row) for row in data]
@@ -212,15 +217,23 @@ def indiv_details(request):
     return result
 
 # Unchecked data for one PTT.
-@view_config(route_name='argos/unchecked/geo', renderer='json')
-def argos_unchecked_geo(request):
-    """Returns list of unchecked locations for a given ptt."""
-    type_= request.matchdict['type']
-    unchecked = V_dataARGOS_GPS_with_IndivEquip
+@view_config(route_name='argos/unchecked/format', renderer='json')
+def argos_unchecked_get_format (request):
+    format_ = request.matchdict['format']
     platform = int(request.matchdict['id'])
+    ind_id = request.matchdict['ind_id']
 
-    if (request.matchdict['ind_id'] != 'null') :
-        ind_id = int(request.matchdict['ind_id'])
+    if format_ == 'json' : 
+        return argos_unchecked_json(platform,ind_id)
+    elif format_ == 'geo' : 
+        return argos_unchecked_geo(platform,ind_id)
+
+def argos_unchecked_geo(platform,ind_id):
+    """Returns list of unchecked locations for a given ptt."""
+    unchecked = V_dataARGOS_GPS_with_IndivEquip
+
+    if (ind_id != 'null') :
+        ind_id = int(ind_id)
     else :
         ind_id = None
 
@@ -243,14 +256,11 @@ def argos_unchecked_geo(request):
     result = {'type':'FeatureCollection', 'features':features}
     return result
 
-@view_config(route_name='argos/unchecked/json', renderer='json')
-def argos_unchecked_json(request):  
-        type_= request.matchdict['type']
+def argos_unchecked_json(platform,ind_id):  
         unchecked = V_dataARGOS_GPS_with_IndivEquip
-        platform = int(request.matchdict['id'])
 
-        if (request.matchdict['ind_id'] != 'null') :
-            ind_id = int(request.matchdict['ind_id'])
+        if (ind_id != 'null') :
+            ind_id = int(ind_id)
         else :
             ind_id = None
         query = select([unchecked.data_PK_ID.label('id'),
