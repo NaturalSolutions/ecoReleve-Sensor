@@ -5,8 +5,6 @@
 -- =============================================
 
 
-
-
 SET ANSI_NULLS ON
 GO
 
@@ -15,7 +13,8 @@ GO
 
 
 
-CREATE PROCEDURE [dbo].[sp_validate_gsm]
+
+ALTER PROCEDURE [dbo].[sp_validate_gsm]
 	@listID xml,
 	@ind int,
 	@user int,
@@ -43,6 +42,7 @@ BEGIN
 		,sat_count int
 		, FK_ind int
 		,creator int
+		,name varchar(100)
 		 );
 
 	DECLARE @data_duplicate table ( 
@@ -54,7 +54,7 @@ BEGIN
 							data_id int);
 	DECLARE @NbINserted int ; 
 
-INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,hdop,vdop,sat_count,FK_ind,creator)
+INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,hdop,vdop,sat_count,FK_ind,creator,name)
 SELECT 
 PK_id
 ,platform_
@@ -69,6 +69,7 @@ PK_id
 ,SatelliteCount
 ,@ind
 ,@user
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+CONVERT(VARCHAR(24),DateTime,112)
 FROM T_DataGsm d WHERE PK_id in (
 select * from [dbo].[XML_extractID_1] (@listID)
 ) and checked = 0
@@ -76,7 +77,7 @@ select * from [dbo].[XML_extractID_1] (@listID)
 -- check duplicate station before insert data in @data_without_duplicate
 insert into  @data_duplicate  
 select d.data_id, s.TSta_PK_ID
-from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.date_ = s.DATE
+from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.date_ = s.DATE and s.Name = d.name
 
 
 -- insert data creating new station and linked Tsta_PK_ID to data_id using FieldWorker1
@@ -114,3 +115,7 @@ SELECT @error = @@ERROR
 
 RETURN
 END
+
+GO
+
+

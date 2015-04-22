@@ -115,7 +115,6 @@ def station_graph(request):
 @view_config(route_name = 'theme/list', renderer = 'json')
 def theme_list(request):
 	data = []
-	 # try:
 	j = join(ThemeEtude, MapSelectionManager, ThemeEtude.id == MapSelectionManager.TSMan_FK_Theme)
 	query = select([ThemeEtude.id, ThemeEtude.Caption]).where(ThemeEtude.Actif == 1).group_by(ThemeEtude.id, ThemeEtude.Caption).order_by(ThemeEtude.Caption)
 	try:
@@ -130,8 +129,6 @@ def theme_list(request):
 				data.append({'id':'null', 'caption': 'Others'})
 	except:
 		 pass
-	 # except Exception as e:
-		# 	print(e)
 	return data
 
 @view_config(route_name = 'core/protocoles/list', renderer = 'json')
@@ -142,7 +139,6 @@ def protocoles_list(request):
 		for id, relation, caption, description in protocol:
 			data.append({'id':id, 'caption': caption, 'description': description})
 	except Exception as e:
-		print ("________________ prtocole_list error :")
 		print(e)
 	return data
 
@@ -163,7 +159,6 @@ def views_list(request):
 @view_config(route_name = 'core/views/export/details', renderer = 'json')
 def views_details(request):
 	data = []
- # try:
 	name_vue = request.matchdict['name']
 	table = Base.metadata.tables[name_vue]
 	for column in table.c:
@@ -173,33 +168,20 @@ def views_details(request):
 				type_c = 'string'
 		 data.append({'name':name_c, 'type':type_c})
 	return data
-	 # except Exception as e:
-	 # 	print(e)
 
 @view_config(route_name = 'core/views/export/count', renderer = 'json')
 def views_count(request):
-	 # try:
-	 		
 	name_vue = request.matchdict['name']
 	table = Base.metadata.tables[name_vue]
 	count = DBSession.execute(table.count()).scalar()
 	return count
-	 # except Exception as e:
-		# 	print(e)
-
 
 @view_config(route_name = 'core/views/export/filter/count', renderer = 'json')
 def views_filter_count(request):
-   print('_________'+'core/views/export/filter/count'+'_________')
-   # try:
    criteria = request.json_body.get('criteria', {})
-
-
    viewName = criteria['viewName']
    table = Base.metadata.tables[viewName]
-      #No Model?
    query = select([func.count(table.c.values()[0])])
-
    filterList=criteria['filters']
    for fltr in filterList:
    	column=fltr['Column']
@@ -207,137 +189,52 @@ def views_filter_count(request):
 
    try:
    	bbox=criteria['bbox']
-   	print('______________________')
-   	print(bbox)
    	query = query.where(and_(between(table.c['LAT'], float(bbox[3]), float(bbox[1])), between(table.c['LON'], float(bbox[2]), float(bbox[0]))))
    except Exception as e:
    	print(e)
-
    count = DBSession.execute(query).scalar()
-
    return count
-
-   # except Exception as e:
-   #    print(e)
 
 @view_config(route_name = 'core/views/export/filter/geo', renderer = 'json')
 def views_filter(request):
-	 # try:
-			#name_vue = request.matchdict['name']
-			#table = Base.metadata.tables[name_vue]
 	criteria = request.json_body.get('criteria', {})
-
 	viewName = criteria['viewName']
-
 	table = Base.metadata.tables[viewName]
-
-
-
 	result = {'type':'FeatureCollection', 'features':[]}
-
 	query = select([cast(table.c['LAT'].label('lat'), Float), cast(table.c['LON'].label('lon'), Float), func.count(table.c.values()[0])]).group_by(table.c['LAT'].label('lat'), table.c['LON'])
-	
-
 	filterList=criteria['filters']
 	for fltr in filterList:
 		column=fltr['Column']
 		query = query.where(eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
 
-
 	for lat, lon, nb in  DBSession.execute(query).fetchall():
 		 result['features'].append({'type':'Feature', 'properties':{'count': nb}, 'geometry':{'type':'Point', 'coordinates':[lon,lat]}})
 	return result
-	 # except Exception as e:
-		# 	print(e)
 
 @view_config(route_name = 'core/views/export/filter/result', renderer = 'json')
 def views_filter_result(request):
 
-
-	 '''
 	 try:
-			name_vue = request.matchdict['name']
-			table = Base.metadata.tables[name_vue]
-			criteria = request.params
-			skip = 0
-			limit = 10
-			try:
-				 if criteria['skip']:
-						skip = int(criteria['skip'])
-			except:
-				 pass
-			try:
-				 if criteria['limit']:
-						limit = int(criteria['limit'])
-			except:
-				 pass
-			columns = []
-			cols = []
-			if criteria['columns']:
-				 columns.append(func.row_number().over(order_by=table.c.values()[0].asc()).label('Id'))
-				 cols = criteria['columns'].split(',')
-				 for col in cols:
-						columns.append(table.c[col])
-
-			#count
-			query_count = select([func.count(table.c.values()[0])])
-			query_count = query_criteria(query_count, table, criteria)
-			count = DBSession.execute(query_count).scalar()
-			# select data
-			query = select(columns)
-			query = query_criteria(query, table, criteria)
-			query = query.order_by(table.c.values()[0].asc()).limit(limit).offset(skip)
-
-			data = DBSession.execute(query).fetchall()
-			result = {'count':str(count), 'values':[]}
-			result['values'] = [dict(row) for row in data]
-			for obj in result['values']:
-				 for key, item in obj.items():
-							 obj[key] = item
-			return result
-	 except Exception as e:
-			print(e)
-	 '''
-	 try:
-
 	 	criteria = request.json_body.get('criteria', {})
-
-
-	 	
 	 	viewName = criteria['viewName']
 	 	table = Base.metadata.tables[viewName]
 
-
-
-
-	 	#query = select([func.count(table.c.values()[0])])
-
-
-
-
 	 	#columns selection
 	 	columns=criteria['columns']
-
 	 	coll=[]
-
 	 	for col in columns:
 	 		coll.append(table.c[col])
-	 	
 	 	query = select(coll)
 
-
-	 	#filters selection
-	 	
+	 	#filters selection	 	
 	 	filterList=criteria['filters']['filters']
 	 	for fltr in filterList:
 	 		column=fltr['Column']
 	 		query = query.where(eval.eval_binary_expr(table.c[column], fltr['Operator'], fltr['Value']))
-
 	 	
 	 	#bbox selection
 	 	bbox=criteria['bbox']
 	 	query = query.where(and_(between(table.c['LAT'], float(bbox[3]), float(bbox[1])), between(table.c['LON'], float(bbox[2]), float(bbox[0]))))
-	 	
 	 	rows = DBSession.execute(query).fetchall()[0:15]
 	 	tmp={}
 	 	result = {'columns':[], 'rows':[]}
@@ -351,19 +248,8 @@ def views_filter_result(request):
  			result['rows'].append(tmp)
 
 	 	result['columns']=columns
-
-
-
-
 	 	return result
 	 except: raise
-
-
-
-
-
-
-
 
 def query_criteria(query, table, criteria):
 	 for column, value in criteria.items():

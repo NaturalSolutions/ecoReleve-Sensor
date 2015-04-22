@@ -20,6 +20,7 @@ def login(request):
 	user_id = request.POST.get('user_id', '')
 	pwd = request.POST.get('password', '')
 	user = DBSession.query(User).filter(User.id==user_id).one()
+
 	if user is not None and user.check_password(pwd):
 		headers = remember(request, user_id)
 		response = request.response

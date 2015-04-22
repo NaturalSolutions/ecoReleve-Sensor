@@ -81,20 +81,17 @@ def rfid_detail(request):
 def rfid_active_byDate(request):
     date = datetime.strptime(request.params['date'], '%d/%m/%Y  %H:%M:%S')
     data = DBSession.query(MonitoredSite.id, MonitoredSite.name, MonitoredSite.type_,  MonitoredSitePosition.lat,  MonitoredSitePosition.lon
-        ).outerjoin(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
-        ).filter(MonitoredSitePosition.begin_date <= date
-        ).filter(or_(MonitoredSitePosition.end_date >= date, MonitoredSitePosition.end_date == None )).all()
+        ).join(MonitoredSitePosition, MonitoredSite.id==MonitoredSitePosition.id
+        ).filter(MonitoredSitePosition.end_date == None ).all()
     siteName_type=[{'id_site':row[0] ,'type':row[2] , 'name':row[1], 'positions': {'lat': row[3], 'lon': row[4] }} for row in data]
     result = {'siteType': list(set([row[2] for row in data])), 'siteName_type': siteName_type}
     return result
-
 
 @view_config(route_name=prefix+'identifier', renderer='json')
 def rfid_get_identifier(request):
     query = select([ObjectRfid.identifier]).where(ObjectRfid.type_=='rfid')
     data =  DBSession.execute(query).fetchall()
     transaction.commit()
-
     return [row[0] for row in data]
 
 @view_config(route_name=prefix+'import', renderer='string')
@@ -122,18 +119,23 @@ def rfid_import(request):
         fieldtype3 = {'Transponder Type:':'type','Transponder Code:':'code','Date:':'no','Time:':'no','Event:':'Event','Unit #:':'Unit','Antenna #:':'Antenna','Memo:':'Memo','Custom:':'Custom'}
 
         entete = data[0]
+        
         if re.compile('\t').search(entete):
             separateur = '\t'
+
         elif re.compile(';').search(entete):
             separateur = ';'
         entete = entete.split(separateur)
+
         #file with head
         if (sorted(entete) == sorted(fieldtype1.keys())):
             field_label = ["no","Type","Code","date","time"]
             isHead = True
+
         elif (sorted(entete) == sorted(fieldtype2.keys())):
             field_label = ["no","Type","Code","date","time","no","no","no","no","no"]
             isHead = True
+
         elif (sorted(entete) == sorted(fieldtype3.keys())):
             field_label = ["Type","Code","date","time","no","no","no","no","no"]
             isHead = True
@@ -146,6 +148,9 @@ def rfid_import(request):
                     field_label = ["Type","Code","date","time","no","no","no","no","no"]
                 if entete[0] == 'Transponder Type:':
                     isHead = True
+                elif entete[1] == 'Transponder Type:':
+                    isHead = True
+                    field_label = ["no","Type","Code","date","time"]
                 else:
                     field_label = ["no","Type","Code","date","time"]
 
@@ -160,7 +165,7 @@ def rfid_import(request):
         allDate = []
         while j < len(data):
             i = 0
-            if data[j] != "":
+            if data[j] != "" :
                 line = data[j].replace('"','').split(separateur)
                 while i < len(field_label):
                     if field_label[i] == 'Code':
@@ -171,12 +176,14 @@ def rfid_import(request):
                         time = re.sub('\s','',line[i])
                         format_dt = '%d/%m/%Y %H:%M:%S'
                         if re.search('PM|AM',time):
+
                             format_dt = '%m/%d/%Y %I:%M:%S%p'
                             format_dtBis='%d/%m/%Y %I:%M:%S%p'
                         dt = date+' '+time
                         try :
                             dt = datetime.strptime(dt, format_dt)
-                        except :
+                        except Exception as e:
+
                             dt = datetime.strptime(dt, format_dtBis)
                         allDate.append(dt)
 
@@ -188,14 +195,13 @@ def rfid_import(request):
         ## check if Date corresponds with pose remove module ##
         table = Base.metadata.tables['RFID_MonitoredSite']
         q_check_date = select([func.count('*')]).where(
-            and_(table.c['begin_date'] < allDate[0], table.c['end_date'] > allDate[-1])
+            and_(table.c['begin_date'] < allDate[0], or_(table.c['end_date'] >= allDate[-1],table.c['end_date'] == None))
             ).where(table.c['identifier'] == module)
         check = DBSession.execute(q_check_date).scalar() 
         if check == 0 :
             request.response.status_code = 510
-            message = "Dates of this uploded file (first date : "+str(allDate[0])+" , last date : "+str(allDate[-1])+") don't correspond with the Pose/remove dates of the selected module"
+            message = "Dates of this uploded file (first date : "+str(allDate[0])+" , last date : "+str(allDate[-1])+") don't correspond with the deploy/remove dates of the selected module"
             return message
-
 
         Rfids = [{DataRfid.creator.name: crea, DataRfid.obj.name: idMod, DataRfid.checked.name: '0',
                 DataRfid.chip_code.name: c, DataRfid.date.name: d, DataRfid.creation_date.name: now} for crea, idMod, c, d  in Rfids]
@@ -222,30 +228,22 @@ def rfid_validate(request):
     #TODO: SQL SERVER specific code removal
     checked = request.GET['checked']
     frequency_hour = request.GET['frequency_hour']
-    print (frequency_hour)
     stmt = text("""
-        DECLARE @error int, @nb int;
-        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT, @error OUTPUT;
-        SELECT @error, @nb;"""
+        DECLARE @error int, @nb int, @exist int;
+        EXEC """ + dbConfig['data_schema'] + """.sp_validate_rfid :checked, :frequency_hour, :user, @nb OUTPUT,@exist OUTPUT, @error OUTPUT;
+        SELECT @error, @nb,@exist;"""
     ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', frequency_hour),bindparam('checked', 0))
-    error_code, nb = DBSession.execute(stmt).fetchone()
-    if error_code == 0:
-        if nb > 0:
-            return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation.'
-        else:
-            return 'Warning : no new row inserted.'
+    error_code, nb, exist = DBSession.execute(stmt).fetchone()
+    if nb > 0:
+        return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation, '+str(exist)+' existing'
     else:
-        return 'Error : an error occured during validation process (error code : ' + str(error_code) + ' )'
+        return 'Warning : no new row inserted.'
 
 @view_config(route_name=prefix + 'validate/search', renderer='json', request_method='GET')
 def rfids_search(request):
 
-    print('________Search___________')
-
     data_helper= Generator('V_dataRFID_as_file')
-
-    criteria=[{'Column':'checked','Operator':'=', 'Value': 0}]
-        
+    criteria=[{'Column':'checked','Operator':'=', 'Value': 0}]      
     if(request.GET.get('offset')):
         offset = json.loads(request.GET.get('offset',{}))
         perPage = json.loads(request.GET.get('per_page',{}))
@@ -256,27 +254,18 @@ def rfids_search(request):
     
     return content
 
-
 @view_config(route_name=prefix + 'validate/search', renderer='json', request_method='POST')
 def rfids_update(request):
 
     data_helper= Generator('V_dataRFID_as_file')
     data=request.json_body
-
-    print('________POST_______')
-    print(data)
     gene.update_data(data,'PK_id')
-
-
     data_helper.update_data(data,'PK_obj')
 
 @view_config(route_name=prefix + 'validate/getFields', renderer='json', request_method='GET')
 def rfids_field(request):
 
-    print('____________FIELDS_________________')
-
     data_helper= Generator('V_dataRFID_as_file')
-
     colist=[
     {'name':'identifier','label':'Identifier','display':False,'edit':False},
     {'name':'checked','label':'CHECKED','display':False, 'edit':False},
@@ -289,21 +278,15 @@ def rfids_field(request):
     {'name':'site_name','label':'Site Name','display':True, 'edit':False},
     {'name':'site_type','label':'Site Type','display':True, 'edit':False},
     ]
-
     check = request.GET.get('checked') == 'true'
     cols = data_helper.get_col(colist, checked=check)
-
     return cols
-
-
 
 @view_config(route_name=prefix + 'validate/getFilters', renderer='json', request_method='GET')
 def rfids_filters(request):
-    print('____________FIELDS_________________')
+
     table=Base.metadata.tables['RFID_MonitoredSite']
-    print (table.c)
-    columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]
-    
+    columns=[table.c['identifier'],table.c['begin_date'],table.c['end_date'],table.c['Name'],table.c['name_Type']]  
     final={}
     for col in columns :
         name=col.name
@@ -311,60 +294,33 @@ def rfids_filters(request):
         if 'VARCHAR' in Ctype:
             Ctype='String'
         final[name]=Ctype
-
-    print (final)
     return final
-
-
-
 
 @view_config(route_name=prefix + 'search_geoJSON', renderer='json', request_method='POST')
 def rfids_geoJSON(request):
 
     table=Base.metadata.tables['RFID_MonitoredSite']
-
     criteria = request.json_body.get('criteria', {})
-    print(type(criteria))
-    print(criteria)
-
     query = select(table.c)
-
-
     for obj in criteria:
-
         query=query.where(eval_binary_expr(table.c[obj['Column']], obj['Operator'], obj['Value']))
-
     data=DBSession.execute(query).fetchall()    
     geoJson=[]
     for row in data:
         geoJson.append({'type':'Feature', 'properties':{'name':row['Name']}, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['lat']]}})
     return {'type':'FeatureCollection', 'features':geoJson}
 
-
-
 @view_config(route_name=prefix + 'update', renderer='json', request_method='POST')
 def rfid_update(request):
     data = request.body
     rfid = json.loads(request.body.decode(encoding='UTF-8'))
-
-    #table or view?
     table=Base.metadata.tables['RFID_MonitoredSite']
-
     query = select(table.c)
-
-    '''
-    SELECT obj.*,eq.lat, eq.lon,eq.begin_date,eq.end_date, MS.name_Type,MS.Name
-    FROM T_Object obj JOIN  [T_MonitoredSiteEquipment] eq ON obj.PK_id=eq.FK_obj
-    JOIN [dbo].[TMonitoredStations] MS ON eq.FK_site=MS.TGeo_pk_id 
-    '''
-
-    
+  
 @view_config(route_name=prefix + 'pose/getFields', renderer='json', request_method='GET')
 def rfid_pose_filters(request):
-    
-    print('____________FIELDS_________________')
-    data_helper= Generator('RFID_MonitoredSite')
 
+    data_helper= Generator('RFID_MonitoredSite')
     colist=[
     {'name':'PK_obj','label':'ID_Obj','display':False,'edit':False},
     {'name':'identifier','label':'Identifier','display':True, 'edit':False},
@@ -373,10 +329,8 @@ def rfid_pose_filters(request):
     {'name':'Name','label':'Site Name','display':True, 'edit':False},
     {'name':'name_Type','label':'Site Type','display':True, 'edit':False},
     ]
-
     check = request.GET.get('checked') == 'true'
     cols = data_helper.get_col(colist, checked=check)
-
     return cols
 
 @view_config(route_name=prefix + 'pose/search', renderer='json', request_method='GET')
@@ -384,12 +338,5 @@ def rfids_update(request):
 
     data_helper= Generator('RFID_MonitoredSite')
     criteria=json.loads(request.params.get('criteria',{}))
-
-  
-    print('________search_______')
-    print(criteria)
     result = data_helper.get_search(criteria,offset=0,per_page=0, order_by={'begin_date:desc'})
     return result
-
-# @view_config(route_name=prefix + 'import/checkData', renderer='json', request_method='GET')
-# def rfids_update(request):

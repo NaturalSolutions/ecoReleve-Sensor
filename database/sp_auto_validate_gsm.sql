@@ -3,6 +3,7 @@
 -- Create date: 2015-02-27
 -- Description: create procedure to auto validate GSM 1 data/hour
 -- =============================================
+
 SET ANSI_NULLS ON
 GO
 
@@ -10,7 +11,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 
-CREATE PROCEDURE [dbo].[sp_auto_validate_gsm]
+
+ALTER PROCEDURE [dbo].[sp_auto_validate_gsm]
 	@ptt int,
 	@ind int,
 	@user int,
@@ -40,6 +42,7 @@ BEGIN
 		,sat_count int
 		, FK_ind int
 		,creator int
+		,name varchar(100)
 		 );
 	DECLARE @data_duplicate table ( 
 		data_id int,
@@ -59,7 +62,7 @@ BEGIN
 	)
 
 
-	INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,hdop,vdop,sat_count,FK_ind,creator)
+	INSERT INTO @data_to_insert (data_id,platform_,date_,lat,lon,speed,course,ele,hdop,vdop,sat_count,FK_ind,creator,name)
 		SELECT 
 		data_PK_ID
 		,ptt
@@ -74,6 +77,7 @@ BEGIN
 		,sat_count
 		,ind_id
 		,@user
+		,'ARGOS_'+CAST(ptt as varchar(55))+'_'+CONVERT(VARCHAR(24),date_,112)
 		FROM data
 		WHERE data.r = 1;
 
@@ -81,7 +85,7 @@ BEGIN
 	--check duplicate data into @data_without_duplicate  
 	insert into  @data_duplicate 
 	select d.data_id, s.TSta_PK_ID
-	from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.date_ = s.DATE
+	from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.date_ = s.DATE and s.Name = d.name
 
 	-- insert data creating new station and linked Tsta_PK_ID to data_id using FieldWorker1
 	Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate,FieldWorker1)
@@ -119,10 +123,7 @@ BEGIN
 End
 
 
+
 GO
-
-
-
-
 
 

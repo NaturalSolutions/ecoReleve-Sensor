@@ -2,8 +2,7 @@ from ..models import Base, DBSession, User
 from sqlalchemy import select
 
 class GenProtocole ():
-	def __init__(self):
-		print('-------------------OK GenProtocole-------------------')
+
 	def InitFromFields (self,GivenFields):
 
 		# dictionnary to retrieve ID from Thesaurus
@@ -30,11 +29,9 @@ class GenProtocole ():
 		for Key,Value in  GivenFields.items():
 			if Key not in ['PK','name','Id_Sex','id_sex','Id_Age','id_age','Id_Taxon','id_taxon'] :
 				setattr(self,self.GetAttributeNameFromColumn(Key),Value)
-				print(' Set Attribute ' + Key + ':' + str(Value) )
 
 			if (Key =='Name_Sex' or Key=='name_sex' and Val!=None) :
 				
-				print(' Set Attribute Id_Sex:' + str(sex_value[Value]) )
 				try :
 					setattr(self,self.GetAttributeNameFromColumn('Id_Sex'),sex_value[Value])
 				except :
@@ -43,42 +40,23 @@ class GenProtocole ():
 
 			if (Key =='Name_Age' or Key=='name_age' and Val!=None) :
 				
-				print(' Set Attribute Id_Age:' + str(age_value[Value]) )
-
 				try :
 					setattr(self,self.GetAttributeNameFromColumn('Id_Age'),age_value[Value])
 				except :
 					setattr(self,self.GetAttributeNameFromColumn('id_age'),age_value[Value])
 					continue
 
-			# if (Key=='Id_Observer' or Key=='Id_Assistant') :
-			# 	users_ID_query = select([User.id], User.fullname.in_(([Value])))
-			# 	users_ID = DBSession.execute(users_ID_query).fetchone()
-			# 	try:
-			# 		setattr(self,self.GetAttributeNameFromColumn(Key),users_ID[0])
-			# 	except :
-			# 		setattr(self,self.GetAttributeNameFromColumn(Key),None)
-			# 		continue
-
 			if (Key=='Name_Taxon' or Key=='name_taxon') :
 				taxName=Value.split('>')[-1]
-				print (taxName)
 				Tthesaurus=Base.metadata.tables['Tthesaurus']
-				print (Tthesaurus.c['ID'])
 				query=select([Tthesaurus.c.ID]).where(Tthesaurus.c.topic_en==taxName)
-				print(query)
 				id_taxon=DBSession.execute(query).scalar()
-				print(' Set Attribute Id_Taxon:' + str(id_taxon) )
 
 				try :
 					setattr(self,self.GetAttributeNameFromColumn('Id_Taxon'),id_taxon)
 				except :
 					setattr(self,self.GetAttributeNameFromColumn('id_taxon'),id_taxon)
 					continue
-
-
-
-
 				
 	def GetAttributeNameFromColumn(self,ColumnName):
 		return ColumnName
