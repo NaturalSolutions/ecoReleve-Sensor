@@ -149,6 +149,7 @@ class Generator :
             DBSession.execute(r)
     
     def get_geoJSON(self,criteria={},offset=None,per_page=None, order_by=None, cols_for_properties=None) :
+        print('mother fucker ________________________________________')
 
         query = select(self.table.c)
         result=[]
@@ -161,15 +162,34 @@ class Generator :
                     Col=obj['Column']
                 
                 query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
-        data=DBSession.execute(query.where(self.table.c['lat'] != None)).fetchall()
+        data=DBSession.execute(query.where(self.table.c['LAT'] != None)).fetchall()
 
-        geoJson=[]
-        for row in data:
-            properties = {}
-            if cols_for_properties != None :
-                for col in cols_for_properties :
-                    properties[col.replace('_',' ')] = row[col]
-            geoJson.append({'type':'Feature', 'properties':properties, 'geometry':{'type':'Point', 'coordinates':[row['lon'],row['LAT']]}})
-        transaction.commit()
-        return {'type':'FeatureCollection', 'features': geoJson}
+        tmp = data[0]
+        print(tmp)
+
+        lat = self.case(tmp, 'LAT')
+        lon = self.case(tmp, 'LON')
+
+        print(lat)
+
+
+        if(len(data) <= 20000):
+            geoJson=[]
+            for row in data:
+                properties = {}
+                if cols_for_properties != None :
+                    for col in cols_for_properties :
+                        properties[col.replace('_',' ')]
+                geoJson.append({'type':'Feature', 'properties':properties, 'geometry':{'type':'Point', 'coordinates':[row[lon],row[lat]]}})
+            transaction.commit()
+            return {'type':'FeatureCollection', 'features': geoJson}
+        else :
+            return False
+        
+    def case(self, row, arg) :
+        if( arg in row ) :
+            return arg
+        else :
+            return arg.lower()
+
 

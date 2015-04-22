@@ -610,6 +610,8 @@ def station_searchGene (request) :
 @view_config(route_name=prefix + '/search_geoJSON', renderer='json', request_method='GET')
 def station_geoJSON(request):
 
+    print('fdsfdslfkjdslfkdjsdflksdjflkj___________sdfkjhsdfkjhsdfkjhdsfkjh')
+
     try:
         criteria = json.loads(request.GET.get('criteria',{}))
     except:
@@ -627,6 +629,6 @@ def station_geoJSON(request):
         orderBy = json.loads(request.GET.get('order_by',{}))
         content = gene.get_geoJSON(criteria)
     else :
-        content = gene.get_geoJSON(criteria)
+        content = gene.get_geoJSON(criteria, cols_for_properties=['DATE','Name','FieldActivity_Name'])
     transaction.commit()
     return content
