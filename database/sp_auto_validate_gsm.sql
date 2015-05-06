@@ -77,7 +77,7 @@ BEGIN
 		,sat_count
 		,ind_id
 		,@user
-		,'ARGOS_'+CAST(ptt as varchar(55))+'_'+CONVERT(VARCHAR(24),date_,112)
+		,'ARGOS_'+CAST(ptt as varchar(55))+'_'+FORMAT(date_,'yyyyMMddHHmmss')
 		FROM data
 		WHERE data.r = 1;
 
@@ -93,7 +93,7 @@ BEGIN
 	select 
 	27
 	,'Automatic data acquisition'
-	,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+CONVERT(VARCHAR(24),date_,112)
+	,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+FORMAT(date_,'yyyyMMddHHmmss')
 	,date_
 	,lat
 	,lon

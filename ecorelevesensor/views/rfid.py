@@ -235,7 +235,7 @@ def rfid_validate(request):
     ).bindparams(bindparam('user', request.authenticated_userid),bindparam('frequency_hour', frequency_hour),bindparam('checked', 0))
     error_code, nb, exist = DBSession.execute(stmt).fetchone()
     if nb > 0:
-        return 'Success : ' + str(nb) + ' new rows inserted in table T_AnimalLocation, '+str(exist)+' existing'
+        return 'Success : ' + str(nb) + ' new rows inserted, '+str(exist)+' existing'
     else:
         return 'Warning : no new row inserted.'
 
