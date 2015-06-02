@@ -3,14 +3,14 @@ from array import array
 from pyramid.view import view_config
 from pyramid.response import Response
 from sqlalchemy import func, desc, select, union, union_all, and_, bindparam, update, or_, literal_column, join, text
-
+import json
 from pyramid.httpexceptions import HTTPBadRequest
 from ecorelevesensor.utils.data_toXML import data_to_XML
 import pandas as pd
 import numpy as np
 import transaction, time
 from ecorelevesensor.models import DBSession
-from ecorelevesensor.models.sensor import Argos, Gps
+from ecorelevesensor.models.sensor import Argos, Gps, ArgosGps
 from ecorelevesensor.models import Individual, dbConfig
 from ecorelevesensor.models.data import (
     V_dataARGOS_withIndivEquip,
@@ -24,6 +24,14 @@ from ecorelevesensor.models.data import (
     V_Individuals_LatLonDate
 )
 from ecorelevesensor.utils.distance import haversine
+import win32con, win32gui, win32ui, win32service, os, time
+from win32 import win32api
+import shutil
+from time import sleep
+import subprocess 
+from pyramid.security import NO_PERMISSION_REQUIRED
+import ecorelevesensor
+from datetime import datetime
 
 route_prefix = 'argos/'
 def asInt(s):
@@ -290,3 +298,134 @@ def argos_unchecked_json(platform,ind_id):
         df.replace(to_replace = {'speed': np.inf}, value = {'speed':9999}, inplace = True)
         return df.to_dict('records')
 
+@view_config(route_name=route_prefix, renderer='json' ,request_method='POST',permission = NO_PERMISSION_REQUIRED)
+def uploadFile(request) :
+
+    print ('*********************** UPLOAD ARGOS **************************')
+    tmp_path = os.path.join(os.path.expanduser('~%s' % 'Romain'), "AppData", "Local", "Temp")
+    import_path = os.path.join(tmp_path, "ecoReleve_import")
+    if not os.path.exists(import_path):
+        os.makedirs(import_path)
+
+    DS_path = os.path.join(tmp_path, "ecoReleve_import")
+
+    if not os.path.exists(DS_path):
+        os.makedirs(DS_path)
+
+    file_obj = request.POST['file']
+    filename = request.POST['file'].filename
+    input_file = request.POST['file'].file
+
+    full_filename = os.path.join(DS_path, filename)
+    input_file.seek(0)
+    with open(full_filename, 'wb') as output_file :
+        shutil.copyfileobj(input_file, output_file)
+
+
+    return parseDSFileAndInsert(full_filename)
+
+def parseDSFileAndInsert(full_filename):
+    import getpass
+    username =  getpass.getuser()
+    workDir = os.path.dirname(os.path.dirname(os.path.abspath(ecorelevesensor.__file__)))
+    con_file = os.path.join(workDir,'init.txt')
+    MTI_path = os.path.join(workDir,'MTIwinGPS.exe')
+
+
+    out_path = os.path.join(os.path.expanduser('~%s' % username), "AppData", "Local", "Temp",os.path.splitext(os.path.basename(full_filename))[0])
+    if not os.path.exists(out_path):
+        os.makedirs(out_path)
+
+    with open(con_file,'w') as f: 
+        f.write("-eng\n")
+        f.write("-argos\n")
+        f.write("-title\n")
+        f.write("-out\n")
+        f.write(out_path+"\n")
+        f.write(full_filename)
+
+    args = [MTI_path]
+    os.startfile(args[0])
+    # p = subprocess.Popen([args[0]])
+    hwnd = 0
+    while hwnd == 0 :
+        sleep(0.3)
+        hwnd = win32gui.FindWindow(0, "MTI Argos-GPS Parser")
+
+    btnHnd= win32gui.FindWindowEx(hwnd, 0 , "Button", "Run")
+
+    win32api.SendMessage(btnHnd, win32con.BM_CLICK, 0, 0)
+    
+    
+
+    filenames = [os.path.join(out_path,fn) for fn in next(os.walk(out_path))[2]]
+    win32api.SendMessage(hwnd, win32con.WM_CLOSE, 0,0);
+
+    for filename in filenames:
+        fullname = os.path.splitext(os.path.basename(filename))[0]
+        ptt = int(fullname[0:len(fullname)-1])
+
+        if filename.endswith("g.txt"):
+            tempG = pd.read_csv(filename,sep='\t',header=0 , parse_dates = [0], infer_datetime_format = True)
+            tempG['ptt'] = ptt
+            try:
+                GPSData = GPSData.append(tempG)
+            except :
+                GPSData = tempG
+
+        if filename.endswith("e.txt"):
+            usecols= ['txData','pttDate','satId','activity','txCount','temp','batt','fixTime','satCount','resetHours','fixDays','season','shunt','mortalityGT','seasonalGT']
+            tempEng = pd.read_csv(filename,sep='\t',parse_dates=True,header = None, skiprows = [0])
+            if len(tempEng.columns )== 17:
+
+                usecols.append('latestLat')
+                usecols.append('latestLon')
+            tempEng.columns = usecols
+            tempEng['ptt'] = ptt
+            try:
+                EngData = EngData.append(tempEng)
+            except :
+                EngData = tempEng
+
+    GPSData['datetime'] = GPSData.apply(lambda row: np.datetime64(row['Date/Time']).astype(datetime), axis=1)
+    GPSData['id'] = range(GPSData.shape[0])
+    maxDateGPS = GPSData['datetime'].max(axis=1)
+    minDateGPS = GPSData['datetime'].min(axis=1)
+    GPSData['Latitude(N)'] = np.round(GPSData['Latitude(N)'],decimals = 5)
+    GPSData['Longitude(E)'] = np.round(GPSData['Longitude(E)'],decimals = 5)
+    
+    
+    print ('\n\n********************* DATE **********************\n')
+    # print(GPSData['datetime'][:0])
+    queryGPS = select([ArgosGps.pk_id, ArgosGps.date, ArgosGps.lat, ArgosGps.lon, ArgosGps.ptt]).where(ArgosGps.type_ == 'gps')
+    queryGPS = queryGPS.where(and_(ArgosGps.date >= minDateGPS , ArgosGps.date <= maxDateGPS))
+    data = DBSession.execute(queryGPS).fetchall()
+
+    GPSrecords = pd.DataFrame.from_records(data
+        ,columns=[ArgosGps.pk_id.name, ArgosGps.date.name, ArgosGps.lat.name, ArgosGps.lon.name, ArgosGps.ptt.name]
+        , coerce_float=True )
+
+
+    GPSrecords['lat'] = GPSrecords['lat'].astype(float)
+    GPSrecords['lon'] = GPSrecords['lon'].astype(float)
+
+    merge = pd.merge(GPSData,GPSrecords, left_on = ['datetime','Latitude(N)','Longitude(E)','ptt'], right_on = ['date','lat','lon','FK_ptt'])
+    DFToInsert = GPSData[~GPSData['id'].isin(merge['id'])]
+
+    DFToInsert = DFToInsert.drop(['id','datetime'],1)
+    DFToInsert.columns = ['date','lat','lon','speed','course','ele','FK_ptt']
+
+    DFToInsert = DFToInsert.replace('2D fix',np.nan )
+    DFToInsert = DFToInsert.replace('low alt',np.nan )
+    DFToInsert['type']='gps'
+
+    data_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
+    print (data_to_insert)
+
+    if len(data_to_insert) != 0 :
+        stmt = ArgosGps.__table__.insert()#.values(data_to_insert[0:2])
+        res = DBSession.execute(stmt,data_to_insert)
+
+    shutil.rmtree(out_path)
+
+    return len(data_to_insert)

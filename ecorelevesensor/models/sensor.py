@@ -82,8 +82,8 @@ class ArgosGps(Base):
     __tablename__ = 'T_argosgps'
     pk_id = Column('PK_id', Integer, primary_key=True)
     ptt = Column('FK_ptt', Integer, nullable = False)
-    type_ = Column(String(3), nullable = False)
-    date = Column('date_', DateTime, nullable = False)
+    type_ = Column('type',String(3), nullable = False)
+    date = Column('date', DateTime, nullable = False)
     lat = Column(Numeric(9, 5), nullable = False)
     lon = Column(Numeric(9, 5), nullable = False)
     ele = Column(Integer)

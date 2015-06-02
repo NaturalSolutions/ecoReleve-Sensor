@@ -50,6 +50,7 @@ def add_routes(config):
     config.add_route('core/currentUser', 'ecoReleve-Core/currentUser')
     
     ##### Argos #####
+    config.add_route('argos/', 'ecoReleve-Sensor/argos')
     config.add_route('argos/importAll/auto', 'ecoReleve-Sensor/{type}/unchecked/importAll/auto')
     config.add_route('argos/import/auto', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/import/auto')
     config.add_route('argos/import', 'ecoReleve-Sensor/{type}/{id}/unchecked/{ind_id}/import')
