@@ -5,3 +5,4 @@ ecorelevesensor.egg-info/*
 *.egg
 build/*
 dist/*
+init.txt

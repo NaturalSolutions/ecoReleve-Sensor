@@ -1,6 +1,0 @@
--eng
--argos
--title
--out
-C:\Users\Romain\AppData\Local\Temp\2015-05-09_DS
-"C:\Users\Romain\AppData\Roaming\NaturalSolutions\Argos\CD-ROM_646_1_01_2_DB_DS_CRLF aout2014.txt"

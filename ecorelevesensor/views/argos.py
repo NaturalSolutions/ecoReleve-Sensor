@@ -303,6 +303,10 @@ def uploadFile(request) :
     import getpass
     username =  getpass.getuser()
     print ('*********************** UPLOAD ARGOS **************************')
+
+    import getpass
+    username =  getpass.getuser()
+
     tmp_path = os.path.join(os.path.expanduser('~%s' % username), "AppData", "Local", "Temp")
     import_path = os.path.join(tmp_path, "ecoReleve_import")
     if not os.path.exists(import_path):
