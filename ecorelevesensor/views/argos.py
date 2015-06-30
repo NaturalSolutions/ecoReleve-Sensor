@@ -302,7 +302,9 @@ def argos_unchecked_json(platform,ind_id):
 def uploadFile(request) :
 
     print ('*********************** UPLOAD ARGOS **************************')
-    tmp_path = os.path.join(os.path.expanduser('~%s' % 'Romain'), "AppData", "Local", "Temp")
+    import getpass
+    username =  getpass.getuser()
+    tmp_path = os.path.join(os.path.expanduser('~%s' % username), "AppData", "Local", "Temp")
     import_path = os.path.join(tmp_path, "ecoReleve_import")
     if not os.path.exists(import_path):
         os.makedirs(import_path)
