@@ -468,15 +468,17 @@ def parseDIAGFileAndInsert(full_filename):
         content2 = re.sub('[\n\r]\s{10,14}[0-9\s]+$',"\n",content2)
         content2 = re.sub('^[\n\r\s]+',"",content2)
         content2 = re.sub('[\n\r\s]+$',"",content2)
-        splitBlock = 'm[\n\r]\s'
+        splitBlock = 'm[\n\r]'
+
         blockPosition = re.split(splitBlock,content2)
 
     colsInBlock = ['FK_ptt','date','lc','iq','lat1'
         ,'lon1','lat2','lon2','nbMsg','nbMsg120'
         ,'bestLevel','passDuration','nopc', 'freq','ele']
     ListOfdictParams = []
-
+    j = 0
     for block in blockPosition :
+        
         block = re.sub('[\n\r]+',"",block)
         block = re.sub('[a-zA-Z]\s+Lat'," Lat",block)
         block = re.sub('[a-zA-Z]\s+Lon'," Lon",block)
@@ -488,7 +490,11 @@ def parseDIAGFileAndInsert(full_filename):
         split = '\#?[a-zA-Z0-9\-\>]+\s:\s'
         splitParameters = re.split(split,block)
         curDict = {}
+
         for i in range(len(splitParameters)) :
+            if re.search('[?]+([a-zA-Z]+)?',splitParameters[i]) :
+                splitParameters[i] = re.sub('[?]+([a-zA-Z]{1,2})?',"NaN",splitParameters[i])
+
             if re.search('[0-9]',splitParameters[i]):
                 splitParameters[i] = re.sub('[a-zA-Z\s]'," ",splitParameters[i])
 
@@ -507,12 +513,12 @@ def parseDIAGFileAndInsert(full_filename):
 
     df = pd.DataFrame.from_dict(ListOfdictParams)
 
+    df = df.dropna(subset=['lat1', 'lon1','lat2', 'lon2','date'])
     DFToInsert = checkExistingArgos(df)
     DFToInsert['type']='arg'
     DFToInsert = DFToInsert.drop(['id','lat1','lat2','lon1','lon2'],1)
 
     data_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
-    print (data_to_insert)
 
     if len(data_to_insert) != 0 :
         stmt = ArgosGps.__table__.insert()#.values(data_to_insert[0:2])
@@ -538,5 +544,4 @@ def checkExistingArgos (dfToCheck) :
     merge = pd.merge(dfToCheck,ArgosRecords, left_on = ['date','lat','lon','FK_ptt'], right_on = ['date','lat','lon','FK_ptt'])
     DFToInsert = dfToCheck[~dfToCheck['id'].isin(merge['id'])]
 
-    print (DFToInsert)
     return DFToInsert

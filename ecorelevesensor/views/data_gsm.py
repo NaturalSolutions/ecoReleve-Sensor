@@ -53,7 +53,7 @@ def data_gsm_unchecked(request):
         unchecked.lat,
         unchecked.lon,
         unchecked.date_.label('date'),
-        unchecked.ele]).where(and_(unchecked.ptt == platform,unchecked.ind_id == ind_id)).order_by(desc(unchecked.date_))
+        unchecked.ele]).where(and_(unchecked.checked == 0,and_(unchecked.ptt == platform,unchecked.ind_id == ind_id))).order_by(desc(unchecked.date_))
     data = DBSession.execute(query).fetchall()
 
     if request.GET['format'] == 'geojson':
