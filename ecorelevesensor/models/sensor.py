@@ -139,3 +139,30 @@ class Gsm(Base):
             Index('idx_Tgsm_checked_ptt', checked, fk_ptt),
             {'schema': sensor_schema}
         )
+
+
+class ArgosEngineering(Base):
+    __tablename__ = 'Tgps_engineering'
+    pk_id = Column('PK_id', Integer, primary_key=True)
+    fk_ptt = Column('FK_ptt', Integer, nullable = False)
+    pttDate = Column('pttDate', DateTime, nullable = False)
+    txDate = Column('txDate', DateTime, nullable = False)
+    satId = Column(String)
+    txCount = Column(Integer)
+    temp = Column(Float)
+    batt = Column(Float)
+    fixTime = Column(Integer)
+    satCount = Column(Integer)
+    resetHours = Column(Integer)
+    fixDays = Column(Integer)
+    season = Column(Integer)
+    shunt = Column(Boolean)
+    mortalityGT = Column(Boolean)
+    seasonalGT = Column(Boolean)
+    latestLat = Column(Float)
+    latestLon = Column(Float)
+
+    __table_args__ = (
+        Index('idx_Tgps_engineering_pttDate_ptt', pttDate, fk_ptt),
+        {'schema': sensor_schema}
+    )
