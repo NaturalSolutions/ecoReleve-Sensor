@@ -69,7 +69,7 @@ PK_id
 ,SatelliteCount
 ,@ind
 ,@user
-,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+FORMAT(DateTime,'yyyyMMddHHmmss')
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),DateTime,112),'/',''),'/0','/')+replace(''+convert(varchar(5),DateTime,108),':','')
 FROM T_DataGsm d WHERE PK_id in (
 select * from [dbo].[XML_extractID_1] (@listID)
 ) and checked = 0
@@ -86,7 +86,7 @@ output inserted.TSta_PK_ID,inserted.FieldWorker1 into @output
 select 
 27
 ,'Automatic data acquisition'
-,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+FORMAT(date_,'yyyyMMddHHmmss')
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date_,112),'/',''),'/0','/')+replace(''+convert(varchar(5),date_,108),':','')
 ,date_
 ,lat
 ,lon

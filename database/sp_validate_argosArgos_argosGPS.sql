@@ -53,7 +53,7 @@ SELECT
 ,[nbMsg],[nbMsg120],[bestLevel],[passDuration],[nopc],[freq],
 [errorRadius],[semiMajor],[semiMinor],[orientation],[hdop]
 ,[speed],[course], [type]
-,@ind,@user,'ARGOS_'+CAST([FK_ptt] as varchar(55))+'_'+FORMAT(date,'yyyyMMddHHmmss')
+,@ind,@user,'ARGOS_'+CAST([FK_ptt] as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date,112),'/',''),'/0','/')+replace(''+convert(varchar(5),date,108),':','')
 FROM ecoreleve_sensor.dbo.T_argosgps WHERE PK_id in (
 select * from [dbo].[XML_extractID_1] (@listID)
 ) and checked = 0
@@ -70,7 +70,7 @@ output inserted.TSta_PK_ID,inserted.FieldWorker1, inserted.Name_DistanceFromObs 
 select 
 27
 ,'Automatic data acquisition'
-,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+FORMAT(date_,'yyyyMMddHHmmss')
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date_,112),'/',''),'/0','/')+replace(''+convert(varchar(5),date_,108),':','')
 ,date_
 ,lat
 ,lon

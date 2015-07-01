@@ -21,6 +21,7 @@ requires = [
    'transaction',
    'waitress',
    'zope.sqlalchemy',
+   'pywin32'
    ]
 
 setup(name='ecorelevesensor',
