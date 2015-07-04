@@ -1,6 +1,7 @@
 -- =============================================
 -- Author:		Romain FABBRO
 -- Create date: 2015-02-27
+-- Last Update : 2015-09-04
 -- Description: create procedure to auto validate GSM 1 data/hour
 -- =============================================
 
@@ -16,6 +17,7 @@ ALTER PROCEDURE [dbo].[sp_auto_validate_gsm]
 	@ptt int,
 	@ind int,
 	@user int,
+	@freq int,
 	@nb_insert int OUTPUT,
 	@exist int OUTPUT,
 	@error int OUTPUT
@@ -57,7 +59,7 @@ BEGIN
 	-- Gather not validated data.
 	WITH data AS (
 		SELECT *
-			, ROW_NUMBER() OVER (PARTITION BY CONVERT(DATE, date_), DATEPART(hour, date_) ORDER BY date_) as r
+			, ROW_NUMBER() OVER (PARTITION BY CONVERT(DATE, date_), DATEPART(hour, date_),  DATEPART(minute, date_)/@freq ORDER BY date_) as r
 		FROM V_dataGSM_with_IndivEquip where ind_id = @ind and ptt=@ptt and checked = 0 
 	)
 

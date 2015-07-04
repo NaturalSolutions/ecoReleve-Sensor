@@ -1,6 +1,7 @@
 -- =============================================
 -- Author:		Romain FABBRO
 -- Create date: 2015-03-19
+-- Last Update : 2015-09-04
 -- Description:	stored procedure for all Argos (argos/GPS) auto validation 1/hour/type
 -- =============================================
 
@@ -17,6 +18,7 @@ ALTER PROCEDURE [dbo].[sp_auto_validate_argosArgos_argosGPS]
 	@ptt int , 
 	@ind int,
 	@user int,
+	@freq int,
 	@nb_insert int OUTPUT,
 	@exist int output, 
 	@error int output
@@ -44,7 +46,7 @@ BEGIN
 
 WITH data AS (
 		SELECT data_PK_ID
-			, ROW_NUMBER() OVER (PARTITION BY CONVERT(DATE, date_), DATEPART(hour, date_), type_ ORDER BY date_) as r
+			, ROW_NUMBER() OVER (PARTITION BY CONVERT(DATE, date_), DATEPART(hour, date_),  DATEPART(minute, date_)/@freq, type_ ORDER BY date_) as r
 		FROM V_dataARGOS_GPS_with_IndivEquip where ind_id = @ind and ptt=@ptt and checked = 0 
 	)
 

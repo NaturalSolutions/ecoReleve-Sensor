@@ -219,9 +219,9 @@ V_Individuals_History = Table('V_Individuals_History', Base.metadata,
 										Column('label', String))
 
 V_Individuals_Stations = Table('V_Individuals_Stations', Base.metadata,
-										 Column('ind_id', Integer),
-										 Column('sta_id', Integer),
-										 Column('fk_sta_type', Integer))
+										 Column('indID', Integer),
+										 Column('staID', Integer),
+										 Column('staType', Integer))
 
 class ViewRfid(Base):
 	__tablename__ = 'TViewRFID'

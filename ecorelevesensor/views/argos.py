@@ -113,10 +113,16 @@ def data_argos_validation_auto(request):
         ind_id = request.matchdict['ind_id']
         type_ = request.matchdict['type']
         print (ind_id)
+
+        print ('\n*************** AUTO VALIDATE *************** \n')
+        param = request.json_body
+        freq = param['frequency']
+
         if ind_id != None: 
+
             ind_id = asInt(ind_id)
-            nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_)
-            return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+            nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_,freq)
+            return str(nb_insert)+' stations/protocols inserted, '+str(exist)+' existing and '+str(error)+' error(s)'
         else : 
             return error_response(None)
     except  Exception as err :
@@ -136,6 +142,8 @@ def error_response (err) :
 def data_argos_ALL_validation_auto(request):
     unchecked_list = argos_unchecked_list(request)
     type_ = request.matchdict['type']
+    param = request.json_body
+    freq = param['frequency']
     Total_nb_insert = 0
     Total_exist = 0
     Total_error = 0
@@ -146,12 +154,12 @@ def data_argos_ALL_validation_auto(request):
             ind_id = row['ind_id']
 
             if ind_id != None : 
-                nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_)
+                nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_,freq)
                 Total_exist += exist
                 Total_nb_insert += nb_insert
                 Total_error += error
         stop = time.time()
-        return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
+        return str(Total_nb_insert)+' stations/protocols inserted, '+str(Total_exist)+' existing and '+str(Total_error)+' error(s)'
     except  Exception as err :
 
         msg = err.args[0] if err.args else ""
@@ -159,13 +167,15 @@ def data_argos_ALL_validation_auto(request):
         response.status_int = 500
         return response
 
-def auto_validate_argos_gps (ptt,ind_id,user,type_) :
+def auto_validate_argos_gps (ptt,ind_id,user,type_,freq) :
+
+
     start = time.time()
     stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
 
-        exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_argosArgos_argosGPS] :ptt , :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
+        exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_argosArgos_argosGPS] :ptt , :ind_id , :user ,:freq , @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
             SELECT @nb_insert, @exist, @error; """
-        ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user))
+        ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user),bindparam('freq', freq))
     nb_insert, exist , error= DBSession.execute(stmt).fetchone()
     transaction.commit()
 

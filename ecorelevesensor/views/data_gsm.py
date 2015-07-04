@@ -126,12 +126,14 @@ def data_gsm_unchecked_validation_auto(request):
 
     ptt = request.matchdict['id']
     ind_id = request.matchdict['ind_id']
+    param = request.json_body
+    freq = param['frequency']
     try : 
         ind_id = asInt(ind_id)
         if isinstance( ind_id, int ): 
-            nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+            nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid,freq)
             transaction.commit()
-            return str(nb_insert)+' stations/protocols was inserted, '+str(exist)+' are already existing and '+str(error)+' error(s)'
+            return str(nb_insert)+' stations/protocols inserted, '+str(exist)+' existing and '+str(error)+' error(s)'
         else : 
             return error_response(None)
     except  Exception as err :
@@ -144,19 +146,21 @@ def data_gsm_uncheckedALL_validation_auto(request):
     Total_exist = 0
     Total_error = 0
     start = time.time()
+    param = request.json_body
+    freq = param['frequency']
     try : 
 
         for row in unchecked_list : 
             ptt = row['platform_']
             ind_id = row['ind_id']
             if ind_id != None : 
-                nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid)
+                nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid,freq)
                 Total_exist += exist
                 Total_nb_insert += nb_insert
                 Total_error += error
         transaction.commit()
         stop = time.time()
-        return str(Total_nb_insert)+' stations/protocols was inserted, '+str(Total_exist)+' are already existingand '+str(Total_error)+' error(s)'
+        return str(Total_nb_insert)+' stations/protocols inserted, '+str(Total_exist)+' existing and '+str(Total_error)+' error(s)'
     except  Exception as err :
         return error_response(err)
 
@@ -172,9 +176,9 @@ def error_response (err) :
 def auto_validate_gsm (ptt,ind_id,user) :
 
     stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
-        exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user , @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
+        exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user ,:freq, @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
             SELECT @nb_insert, @exist, @error; """
-        ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user))
+        ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user),bindparam('freq', freq))
     nb_insert, exist , error= DBSession.execute(stmt).fetchone()
     transaction.commit()
     return nb_insert, exist , error
