@@ -11,6 +11,7 @@ from ecorelevesensor.models import (AnimalLocation,V_ProtocolIndividualEquipment
 from ecorelevesensor.models.data import (
    ProtocolArgos,
    ProtocolGps)
+from ecorelevesensor.models.sensor import Gsm, GsmEngineering
 from ecorelevesensor.utils.generator import Generator
 
 from ecorelevesensor.utils.distance import haversine
@@ -246,7 +247,7 @@ def get_gps_toInsert(file_obj) :
     filename=file_obj.filename
     ptt_pattern = re.compile('[0]*(?P<platform>[0-9]+)g')
     platform = int(ptt_pattern.search(filename).group('platform'))
-    print(platform)
+
     csv_data = pd.read_csv(file, sep='\t',
             index_col=0,
             parse_dates=True,
@@ -257,26 +258,28 @@ def get_gps_toInsert(file_obj) :
         )
     # Remove the lines containing NaN
     csv_data.dropna(inplace=True)
+    print(csv_data.columns)
+
     #go to insert data in the database
     return insert_GPS(platform, csv_data)
 
 def insert_GPS(platform, csv_data) :
 
     if (type(platform) is list) :
-        query = select([DataGsm.date]).where(DataGsm.platform_.in_(platform))
+        query = select([Gsm.date]).where(Gsm.platform_.in_(platform))
     elif (type(platform) is int) :
-        query = select([DataGsm.date]).where(DataGsm.platform_ == platform) 
+        query = select([Gsm.date]).where(Gsm.platform_ == platform) 
     else : return 'error type : "platform" '
     ## Read dates that are already in the database
-    df = pd.DataFrame.from_records(DBSession.execute(query).fetchall(), index=DataGsm.date.name, columns=[DataGsm.date.name])
+    df = pd.DataFrame.from_records(DBSession.execute(query).fetchall(), index=Gsm.date.name, columns=[Gsm.date.name])
     ### Filter data with no elevation by converting the column to numeric type
-    csv_data[DataGsm.ele.name] = csv_data[DataGsm.ele.name].convert_objects(convert_numeric=True)
+    csv_data[Gsm.ele.name] = csv_data[Gsm.ele.name].convert_objects(convert_numeric=True)
 
     ### Get the data to insert
     data_to_insert = csv_data[~csv_data.index.isin(df.index)]
     #### Add the platform to the DataFrame
     if (type(platform) is int) :
-        data_to_insert[DataGsm.platform_.name] = platform
+        data_to_insert[Gsm.platform_.name] = platform
         res = {'new GPS data inserted' : data_to_insert.shape[0]}
     else : 
         if (data_to_insert.shape[0] != 0) :
@@ -286,9 +289,19 @@ def insert_GPS(platform, csv_data) :
         else : 
             res = {'new GPS data inserted' : 0}
     ### Add the platform to the DataFrame
-    data_to_insert.rename(columns={'GSM_ID':DataGsm.platform_.name}, inplace = True)
+    data_to_insert.rename(columns={'GSM_ID':Gsm.platform_.name}, inplace = True)
+    data_to_insert['DateTime'] = data_to_insert.index
     ### Write into the database
-    data_to_insert.to_sql(DataGsm.__table__.name, DBSession.get_bind(), if_exists='append')
+    data_to_insert = json.loads(data_to_insert.to_json(orient='records',date_format='iso'))
+
+    ##### Build block insert statement and returning ID of new created stations #####
+    if len(data_to_insert) != 0 :
+        stmt = Gsm.__table__.insert().values(data_to_insert)
+        result = DBSession.execute(stmt)
+    #     result = list(map(lambda y: y[0], res))
+    # else : 
+    #     result = []
+    # data_to_insert.to_sql(Gsm.__table__.name, DBSession.get_bind(), if_exists='append')
     return res
 
 def get_eng_toInsert(file_obj) :
@@ -324,32 +337,34 @@ def get_ALL_eng_toInsert(file_obj) :
 
 def insert_ENG(platform, csv_data):
     if (type(platform) is list) :
-        query = select([EngineeringData.date]).where(EngineeringData.platform_.in_(platform))
+        query = select([GsmEngineering.date]).where(GsmEngineering.platform_.in_(platform))
     elif (type(platform) is int) :
-        query = select([EngineeringData.date]).where(EngineeringData.platform_== platform)
+        query = select([GsmEngineering.date]).where(GsmEngineering.platform_== platform)
     else : return 'error type : "platform" '
-    # Read dates that are already in the database
-    df = pd.DataFrame.from_records(DBSession.execute(query).fetchall(), index=EngineeringData.date.name, columns=[EngineeringData.date.name])
+
+    '''# Read dates that are already in the database'''
+    df = pd.DataFrame.from_records(DBSession.execute(query).fetchall(), index=GsmEngineering.date.name, columns=[GsmEngineering.date.name])
         
     data_to_insert = csv_data[~csv_data.index.isin(df.index)]
     # Rename columns and Date index
-    data_to_insert.rename(columns = {'Temperature_C':'TArE_TEMP','BatteryVoltage_V':'TArE_BATT','ActivityCount':'TArE_TX_CNT'}, inplace=True)       
-    data_to_insert.index.rename('TArE_TXDATE', inplace = True)
+    # data_to_insert.rename(columns = {'Temperature_C':'TArE_TEMP','BatteryVoltage_V':'TArE_BATT','ActivityCount':'TArE_TX_CNT'}, inplace=True)       
+    # data_to_insert.index.rename('TArE_TXDATE', inplace = True)
     # Add the platform to the DataFrame
     if (type(platform) is int) :
-        data_to_insert[EngineeringData.platform_.name] = platform
+        data_to_insert[GsmEngineering.platform_.name] = platform
         res = {'new Engineering data inserted' : data_to_insert.shape[0]}
     else :
-        data_to_insert.rename(columns = {'GSM_ID':EngineeringData.platform_.name}, inplace = True)
+        data_to_insert.rename(columns = {'GSM_ID':GsmEngineering.platform_.name}, inplace = True)
         if (data_to_insert.shape[0] != 0) :
-            platform_count = data_to_insert.groupby(EngineeringData.platform_.name)[EngineeringData.platform_.name].agg(['count'])
+            platform_count = data_to_insert.groupby(GsmEngineering.platform_.name)[GsmEngineering.platform_.name].agg(['count'])
             res = platform_count.to_dict()
             res = {'new Engineering data inserted': res['count']}
         else : 
             res = {'new Engineering data inserted' : 0}
-    data_to_insert[EngineeringData.creation_date.name] = datetime.datetime.now()
+    data_to_insert[GsmEngineering.file_date.name] = datetime.datetime.now()
+    print (data_to_insert.columns)
     # Write into the database
-    data_to_insert.to_sql(EngineeringData.__table__.name, DBSession.get_bind(), if_exists='append')
+    data_to_insert.to_sql(GsmEngineering.__table__.name, DBSession.get_bind(), if_exists='append')
     return res
 
 @view_config(route_name=prefix + 'details', renderer='json')

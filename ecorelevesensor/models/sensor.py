@@ -118,29 +118,46 @@ class ArgosGps(Base):
 class Gsm(Base):
     __tablename__ = 'Tgsm'
     pk_id = Column('PK_id', Integer, primary_key=True)
-    fk_ptt = Column('FK_ptt', Integer, nullable = False)
-    date = Column('date_', DateTime, nullable = False)
-    lat = Column(Numeric(9, 5), nullable = False)
-    lon = Column(Numeric(9, 5), nullable = False)
-    ele = Column(Integer)
-    speed = Column(Integer)
-    course = Column(Integer)
+    platform_ = Column('platform_', Integer, nullable = False)
+    date = Column('DateTime', DateTime, nullable = False)
+    lat = Column('Latitude_N',Numeric(9, 5), nullable = False)
+    lon = Column('Longitude_E',Numeric(9, 5), nullable = False)
+    ele = Column('Altitude_m',Integer)
+    Speed = Column(Integer)
+    Course = Column(Integer)
     checked = Column(Boolean, nullable=False, default=False)
     imported = Column(Boolean, nullable=False, default=False)
+    SatelliteCount = Column(Integer)
+    HDOP = Column(Integer)
+    VDOP = Column(Integer)
+
     if dialect.startswith('mssql'):
         __table_args__ = (
-            Index('idx_Tgsm_checked_with_pk_ptt_date', checked, fk_ptt,
+            Index('idx_Tgsm_checked_with_pk_ptt_date', checked, platform_,
                 mssql_include=[pk_id, date]
             ),
             {'schema': sensor_schema}
         )
     else:
         __table_args__ = (
-            Index('idx_Tgsm_checked_ptt', checked, fk_ptt),
+            Index('idx_Tgsm_checked_ptt', checked, platform_),
             {'schema': sensor_schema}
         )
 
+class GsmEngineering (Base) :
+    __tablename__ = 'Tengineering_gsm'
+    PK_id = Column(Integer, Sequence('seq_Tengineering_gsm_id'), primary_key=True)
+    platform_ = Column(Integer , nullable = False)
+    date = Column('DateTime', DateTime, nullable = False) 
+    ActivityCount = Column(Integer, )
+    Temperature_C = Column(Numeric)
+    BatteryVoltage_V = Column(Numeric)
+    file_date = Column(DateTime) 
 
+    __table_args__ = (
+        Index('idx_Tengineering_gsm_pttDate_ptt', date, platform_),
+        {'schema': sensor_schema}
+    )
 class ArgosEngineering(Base):
     __tablename__ = 'Tgps_engineering'
     pk_id = Column('PK_id', Integer, primary_key=True)
