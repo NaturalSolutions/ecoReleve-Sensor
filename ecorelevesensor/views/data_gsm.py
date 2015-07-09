@@ -130,13 +130,16 @@ def data_gsm_unchecked_validation_auto(request):
     param = request.json_body
     freq = param['frequency']
     try : 
-        ind_id = asInt(ind_id)
-        if isinstance( ind_id, int ): 
-            nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid,freq)
-            transaction.commit()
-            return str(nb_insert)+' stations/protocols inserted, '+str(exist)+' existing and '+str(error)+' error(s)'
-        else : 
-            return error_response(None)
+
+        if ind_id == None or ind_id == 'null' : 
+            ind_id = None
+        else :
+            ind_id = int(ind_id)
+
+        nb_insert, exist , error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid,freq)
+        transaction.commit()
+        return str(nb_insert)+' stations/protocols inserted, '+str(exist)+' existing and '+str(error)+' error(s)'
+
     except  Exception as err :
         return error_response(err)
 
@@ -147,7 +150,7 @@ def data_gsm_uncheckedALL_validation_auto(request):
     Total_exist = 0
     Total_error = 0
     start = time.time()
-    param = request.params
+    param = request.json_body
     freq = param['frequency']
 
     print(freq)
@@ -156,11 +159,16 @@ def data_gsm_uncheckedALL_validation_auto(request):
         for row in unchecked_list : 
             ptt = row['platform_']
             ind_id = row['ind_id']
-            if ind_id != None : 
-                nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid,freq)
-                Total_exist += exist
-                Total_nb_insert += nb_insert
-                Total_error += error
+
+            if ind_id == None or ind_id == 'null' : 
+                ind_id = None
+            else :
+                ind_id = int(ind_id)
+
+            nb_insert, exist, error = auto_validate_gsm(ptt,ind_id,request.authenticated_userid,freq)
+            Total_exist += exist
+            Total_nb_insert += nb_insert
+            Total_error += error
         transaction.commit()
         stop = time.time()
         return str(Total_nb_insert)+' stations/protocols inserted, '+str(Total_exist)+' existing and '+str(Total_error)+' error(s)'
@@ -178,14 +186,22 @@ def error_response(err):
 
 def auto_validate_gsm (ptt,ind_id,user,freq) :
 
-    stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
-        exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user ,:freq, @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
-            SELECT @nb_insert, @exist, @error; """
-        ).bindparams(bindparam('ptt',ptt),bindparam('ind_id',ind_id),bindparam('user',user),bindparam('freq',freq))
-    nb_insert,exist,error= DBSession.execute(stmt).fetchone()
-    transaction.commit()
-    return nb_insert,exist,error
-    
+    if ind_id is not None : 
+
+        stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
+            exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user ,:freq, @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
+                SELECT @nb_insert, @exist, @error; """
+            ).bindparams(bindparam('ptt',ptt),bindparam('ind_id',ind_id),bindparam('user',user),bindparam('freq',freq))
+        nb_insert,exist,error= DBSession.execute(stmt).fetchone()
+        transaction.commit()
+        return nb_insert,exist,error
+    else :
+        table = V_dataGSM_withIndivEquip
+        stmt = update(table).where(and_(table.ind_id == None, table.ptt == ptt)).values(checked =1)
+        DBSession.execute(stmt)
+        transaction.commit()
+        return 0,0,0
+
 def asInt(s):
     try:
         return int(s)

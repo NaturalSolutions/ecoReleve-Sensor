@@ -2,7 +2,7 @@ from array import array
 
 from pyramid.view import view_config
 from pyramid.response import Response
-from sqlalchemy import func, desc, select, union, union_all, and_, bindparam, update, or_, literal_column, join, text
+from sqlalchemy import func, desc, select, union, union_all, and_, bindparam, update, or_, literal_column, join, text, update
 import json
 from pyramid.httpexceptions import HTTPBadRequest
 from ecorelevesensor.utils.data_toXML import data_to_XML
@@ -108,7 +108,7 @@ def argos_manual_validate(request) :
 
 @view_config(route_name=route_prefix + 'import/auto', renderer='json', request_method='POST')
 def data_argos_validation_auto(request):
-    try :
+    # try :
         ptt = request.matchdict['id']
         ind_id = request.matchdict['ind_id']
         type_ = request.matchdict['type']
@@ -117,16 +117,21 @@ def data_argos_validation_auto(request):
         print ('\n*************** AUTO VALIDATE *************** \n')
         param = request.json_body
         freq = param['frequency']
+        if freq == 'all' :
+            freq = 1
 
-        if ind_id != None: 
+        if ind_id == None or ind_id == 'null' : 
+            ind_id = None
+        else :
+            ind_id = int(ind_id)
 
-            ind_id = asInt(ind_id)
-            nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_,freq)
-            return str(nb_insert)+' stations/protocols inserted, '+str(exist)+' existing and '+str(error)+' error(s)'
-        else : 
-            return error_response(None)
-    except  Exception as err :
-        return error_response(err)
+        # ind_id = asInt(ind_id)
+        nb_insert, exist , error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid,type_,freq)
+        return str(nb_insert)+' stations/protocols inserted, '+str(exist)+' existing and '+str(error)+' error(s)'
+        # else : 
+        #     return error_response(None) 
+    # except  Exception as err :
+    #     return error_response(err)
 
 def error_response (err) : 
         
@@ -155,11 +160,15 @@ def data_argos_ALL_validation_auto(request):
             ptt = row['platform_']
             ind_id = row['ind_id']
 
-            if ind_id != None : 
-                nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_,freq)
-                Total_exist += exist
-                Total_nb_insert += nb_insert
-                Total_error += error
+            if ind_id == None or ind_id == 'null' : 
+                ind_id = None
+            else :
+                ind_id = int(ind_id)
+                
+            nb_insert, exist, error = auto_validate_argos_gps(ptt,ind_id,request.authenticated_userid, type_,freq)
+            Total_exist += exist
+            Total_nb_insert += nb_insert
+            Total_error += error
         stop = time.time()
         return str(Total_nb_insert)+' stations/protocols inserted, '+str(Total_exist)+' existing and '+str(Total_error)+' error(s)'
     except  Exception as err :
@@ -171,18 +180,25 @@ def data_argos_ALL_validation_auto(request):
 
 def auto_validate_argos_gps (ptt,ind_id,user,type_,freq) :
 
+    if ind_id is not None : 
+        start = time.time()
+        stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
 
-    start = time.time()
-    stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
+            exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_argosArgos_argosGPS] :ptt , :ind_id , :user ,:freq , @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
+                SELECT @nb_insert, @exist, @error; """
+            ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user),bindparam('freq', freq))
+        nb_insert, exist , error= DBSession.execute(stmt).fetchone()
+        transaction.commit()
 
-        exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_argosArgos_argosGPS] :ptt , :ind_id , :user ,:freq , @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
-            SELECT @nb_insert, @exist, @error; """
-        ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user),bindparam('freq', freq))
-    nb_insert, exist , error= DBSession.execute(stmt).fetchone()
-    transaction.commit()
+        stop = time.time()
+        return nb_insert, exist , error
+    else :
+        table = V_dataARGOS_GPS_with_IndivEquip
+        stmt = update(table).where(and_(table.ind_id == None, table.ptt == ptt)).values(checked =1)
+        DBSession.execute(stmt)
+        transaction.commit()
+        return 0,0,0
 
-    stop = time.time()
-    return nb_insert, exist , error
 
 @view_config(route_name = 'argos/check', renderer = 'json')
 def argos_check(request):
@@ -352,8 +368,8 @@ def parseDSFileAndInsert(full_filename):
     out_path = os.path.join(os.path.expanduser('~%s' % username),
      "AppData", "Local", "Temp",os.path.splitext(os.path.basename(full_filename))[0])
 
-    EngToInsert = None
-    GPSToInsert = None 
+    EngData = None
+    GPSData = None 
 
     if not os.path.exists(out_path):
         os.makedirs(out_path)
@@ -397,42 +413,49 @@ def parseDSFileAndInsert(full_filename):
             usecols= ['txDate','pttDate','satId','activity','txCount','temp','batt','fixTime','satCount','resetHours','fixDays','season','shunt','mortalityGT','seasonalGT']
             tempEng = pd.read_csv(filename,sep='\t',parse_dates=True,header = None, skiprows = [0])
             if len(tempEng.columns )== 17:
-
                 usecols.append('latestLat')
                 usecols.append('latestLon')
+
             tempEng.columns = usecols
             tempEng['ptt'] = ptt
             try:
                 EngData = EngData.append(tempEng)
             except :
                 EngData = tempEng
+
     os.remove(full_filename)
-    if EngToInsert is not None : 
+    if EngData is not None : 
         EngToInsert = checkExistingEng(EngData)
         dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
-
+        print (EngToInsert.to_records(index= False))
         for i in range(len(dataEng_to_insert)) :
+            print (type(dataEng_to_insert[i]['txDate']))
+            
             try :
                 dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%m-%d %H:%M:%S')
                 dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%m-%d %H:%M:%S')
-            except : 
+            except Exception as e : 
+                print(e)
+                print (dataEng_to_insert[i]['pttDate'])
                 dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%d-%m %H:%M:%S')
                 dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%d-%m %H:%M:%S')
+
 
         if len(dataEng_to_insert) != 0 :
             stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
             res = DBSession.execute(stmt,dataEng_to_insert)
 
     if GPSData is not None :
+        GPSData = GPSData.replace("neg alt",-999, inplace = True)
         DFToInsert = checkExistingGPS(GPSData)
         dataGPS_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
 
         if len(dataGPS_to_insert) != 0 :
             stmt = ArgosGps.__table__.insert()#.values(dataGPS_to_insert[0:2])
             res = DBSession.execute(stmt,dataGPS_to_insert)
-
-        shutil.rmtree(out_path)
-        return len(dataGPS_to_insert)
+            l = len(dataGPS_to_insert)
+    shutil.rmtree(out_path)
+    return l
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
