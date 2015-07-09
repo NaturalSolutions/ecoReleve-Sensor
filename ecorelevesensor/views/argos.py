@@ -349,7 +349,12 @@ def parseDSFileAndInsert(full_filename):
     workDir = os.path.dirname(os.path.dirname(os.path.abspath(ecorelevesensor.__file__)))
     con_file = os.path.join(workDir,'init.txt')
     MTI_path = os.path.join(workDir,'MTIwinGPS.exe')
-    out_path = os.path.join(os.path.expanduser('~%s' % username), "AppData", "Local", "Temp",os.path.splitext(os.path.basename(full_filename))[0])
+    out_path = os.path.join(os.path.expanduser('~%s' % username),
+     "AppData", "Local", "Temp",os.path.splitext(os.path.basename(full_filename))[0])
+
+    EngToInsert = None
+    GPSToInsert = None 
+
     if not os.path.exists(out_path):
         os.makedirs(out_path)
 
@@ -362,8 +367,8 @@ def parseDSFileAndInsert(full_filename):
         f.write(full_filename)
 
     args = [MTI_path]
-    os.startfile(args[0])
-    # p = subprocess.Popen([args[0]])
+    # os.startfile(args[0])
+    subprocess.Popen([args[0]])
     hwnd = 0
     while hwnd == 0 :
         sleep(0.3)
@@ -401,33 +406,43 @@ def parseDSFileAndInsert(full_filename):
                 EngData = EngData.append(tempEng)
             except :
                 EngData = tempEng
+    os.remove(full_filename)
+    if EngToInsert is not None : 
+        EngToInsert = checkExistingEng(EngData)
+        dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
 
-    EngToInsert = checkExistingEng(EngData)
-    dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
+        for i in range(len(dataEng_to_insert)) :
+            try :
+                dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%m-%d %H:%M:%S')
+                dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%m-%d %H:%M:%S')
+            except : 
+                dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%d-%m %H:%M:%S')
+                dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%d-%m %H:%M:%S')
 
-    for i in range(len(dataEng_to_insert)) :
-        dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%m-%d %H:%M:%S')
-        dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%m-%d %H:%M:%S')
+        if len(dataEng_to_insert) != 0 :
+            stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
+            res = DBSession.execute(stmt,dataEng_to_insert)
 
-    if len(dataEng_to_insert) != 0 :
-        stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
-        res = DBSession.execute(stmt,dataEng_to_insert)
+    if GPSData is not None :
+        DFToInsert = checkExistingGPS(GPSData)
+        dataGPS_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
 
-    DFToInsert = checkExistingGPS(GPSData)
-    dataGPS_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
+        if len(dataGPS_to_insert) != 0 :
+            stmt = ArgosGps.__table__.insert()#.values(dataGPS_to_insert[0:2])
+            res = DBSession.execute(stmt,dataGPS_to_insert)
 
-    if len(dataGPS_to_insert) != 0 :
-        stmt = ArgosGps.__table__.insert()#.values(dataGPS_to_insert[0:2])
-        res = DBSession.execute(stmt,dataGPS_to_insert)
-
-    shutil.rmtree(out_path)
-
-    return len(dataGPS_to_insert)
+        shutil.rmtree(out_path)
+        return len(dataGPS_to_insert)
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
-    maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%m-%d %H:%M:%S')
-    minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%m-%d %H:%M:%S')
+    try : 
+        maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%m-%d %H:%M:%S')
+        minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%m-%d %H:%M:%S')
+    except :
+        maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%d-%m %H:%M:%S')
+        minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%d-%m %H:%M:%S')
+
 
     queryEng = select([ArgosEngineering.fk_ptt, ArgosEngineering.pttDate, ArgosEngineering.txDate])
     queryEng = queryEng.where(and_(ArgosEngineering.pttDate >= minDate , ArgosEngineering.pttDate <= maxDate))
@@ -539,7 +554,7 @@ def parseDIAGFileAndInsert(full_filename):
     if len(data_to_insert) != 0 :
         stmt = ArgosGps.__table__.insert()#.values(data_to_insert[0:2])
         res = DBSession.execute(stmt,data_to_insert)
-
+    os.remove(full_filename)
     return len(data_to_insert)
 
 def checkExistingArgos (dfToCheck) :
