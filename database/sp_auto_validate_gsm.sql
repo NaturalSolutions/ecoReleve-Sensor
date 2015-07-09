@@ -1,7 +1,7 @@
 -- =============================================
 -- Author:		Romain FABBRO
 -- Create date: 2015-02-27
--- Last Update : 2015-09-04
+-- Last Update : 2015-07-04
 -- Description: create procedure to auto validate GSM 1 data/hour
 -- =============================================
 

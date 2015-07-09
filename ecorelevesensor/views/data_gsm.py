@@ -147,8 +147,10 @@ def data_gsm_uncheckedALL_validation_auto(request):
     Total_exist = 0
     Total_error = 0
     start = time.time()
-    param = request.json_body
+    param = request.params
     freq = param['frequency']
+
+    print(freq)
     try : 
 
         for row in unchecked_list : 
@@ -165,8 +167,8 @@ def data_gsm_uncheckedALL_validation_auto(request):
     except  Exception as err :
         return error_response(err)
 
-def error_response (err) : 
-        if err !=None : 
+def error_response(err): 
+        if err != None:
             msg = err.args[0] if err.args else ""
             response=Response('Problem occurs : '+str(type(err))+' = '+msg)
         else : 
@@ -174,15 +176,15 @@ def error_response (err) :
         response.status_int = 500
         return response
 
-def auto_validate_gsm (ptt,ind_id,user) :
+def auto_validate_gsm (ptt,ind_id,user,freq) :
 
     stmt = text(""" DECLARE @nb_insert int , @exist int , @error int;
         exec """+ dbConfig['data_schema'] + """.[sp_auto_validate_gsm] :ptt , :ind_id , :user ,:freq, @nb_insert OUTPUT, @exist OUTPUT, @error OUTPUT;
             SELECT @nb_insert, @exist, @error; """
-        ).bindparams(bindparam('ptt', ptt), bindparam('ind_id', ind_id),bindparam('user', user),bindparam('freq', freq))
-    nb_insert, exist , error= DBSession.execute(stmt).fetchone()
+        ).bindparams(bindparam('ptt',ptt),bindparam('ind_id',ind_id),bindparam('user',user),bindparam('freq',freq))
+    nb_insert,exist,error= DBSession.execute(stmt).fetchone()
     transaction.commit()
-    return nb_insert, exist , error
+    return nb_insert,exist,error
     
 def asInt(s):
     try:

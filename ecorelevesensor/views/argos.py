@@ -144,6 +144,8 @@ def data_argos_ALL_validation_auto(request):
     type_ = request.matchdict['type']
     param = request.json_body
     freq = param['frequency']
+    if freq == 'all':
+        freq = 1
     Total_nb_insert = 0
     Total_exist = 0
     Total_error = 0
@@ -370,8 +372,6 @@ def parseDSFileAndInsert(full_filename):
     btnHnd= win32gui.FindWindowEx(hwnd, 0 , "Button", "Run")
 
     win32api.SendMessage(btnHnd, win32con.BM_CLICK, 0, 0)
-    
-    
 
     filenames = [os.path.join(out_path,fn) for fn in next(os.walk(out_path))[2]]
     win32api.SendMessage(hwnd, win32con.WM_CLOSE, 0,0);
@@ -404,6 +404,11 @@ def parseDSFileAndInsert(full_filename):
 
     EngToInsert = checkExistingEng(EngData)
     dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
+
+    for i in range(len(dataEng_to_insert)) :
+        dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%m-%d %H:%M:%S')
+        dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%m-%d %H:%M:%S')
+
     if len(dataEng_to_insert) != 0 :
         stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
         res = DBSession.execute(stmt,dataEng_to_insert)
@@ -421,8 +426,8 @@ def parseDSFileAndInsert(full_filename):
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
-    maxDate = EngData['pttDate'].max(axis=1)
-    minDate = EngData['pttDate'].min(axis=1)
+    maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%m-%d %H:%M:%S')
+    minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%m-%d %H:%M:%S')
 
     queryEng = select([ArgosEngineering.fk_ptt, ArgosEngineering.pttDate, ArgosEngineering.txDate])
     queryEng = queryEng.where(and_(ArgosEngineering.pttDate >= minDate , ArgosEngineering.pttDate <= maxDate))
@@ -445,10 +450,7 @@ def checkExistingGPS (GPSData) :
     minDateGPS = GPSData['datetime'].min(axis=1)
     GPSData['Latitude(N)'] = np.round(GPSData['Latitude(N)'],decimals = 5)
     GPSData['Longitude(E)'] = np.round(GPSData['Longitude(E)'],decimals = 5)
-    
-    
-    print ('\n\n********************* DATE **********************\n')
-    # print(GPSData['datetime'][:0])
+
     queryGPS = select([ArgosGps.pk_id, ArgosGps.date, ArgosGps.lat, ArgosGps.lon, ArgosGps.ptt]).where(ArgosGps.type_ == 'gps')
     queryGPS = queryGPS.where(and_(ArgosGps.date >= minDateGPS , ArgosGps.date <= maxDateGPS))
     data = DBSession.execute(queryGPS).fetchall()
