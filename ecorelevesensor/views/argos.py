@@ -370,6 +370,8 @@ def parseDSFileAndInsert(full_filename):
 
     EngData = None
     GPSData = None 
+    l = 0
+
 
     if not os.path.exists(out_path):
         os.makedirs(out_path)
@@ -411,7 +413,7 @@ def parseDSFileAndInsert(full_filename):
 
         if filename.endswith("e.txt"):
             usecols= ['txDate','pttDate','satId','activity','txCount','temp','batt','fixTime','satCount','resetHours','fixDays','season','shunt','mortalityGT','seasonalGT']
-            tempEng = pd.read_csv(filename,sep='\t',parse_dates=True,header = None, skiprows = [0])
+            tempEng = pd.read_csv(filename,sep='\t',parse_dates=[0,1],header = None, skiprows = [0])
             if len(tempEng.columns )== 17:
                 usecols.append('latestLat')
                 usecols.append('latestLon')
@@ -427,18 +429,18 @@ def parseDSFileAndInsert(full_filename):
     if EngData is not None : 
         EngToInsert = checkExistingEng(EngData)
         dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
-        print (EngToInsert.to_records(index= False))
-        for i in range(len(dataEng_to_insert)) :
-            print (type(dataEng_to_insert[i]['txDate']))
+        # print (EngToInsert.to_records(index= False))
+        # for i in range(len(dataEng_to_insert)) :
+        #     print (type(dataEng_to_insert[i]['txDate']))
             
-            try :
-                dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%m-%d %H:%M:%S')
-                dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%m-%d %H:%M:%S')
-            except Exception as e : 
-                print(e)
-                print (dataEng_to_insert[i]['pttDate'])
-                dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%d-%m %H:%M:%S')
-                dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%d-%m %H:%M:%S')
+        #     try :
+        #         dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%m-%d %H:%M:%S')
+        #         dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%m-%d %H:%M:%S')
+        #     except Exception as e : 
+        #         print(e)
+        #         print (dataEng_to_insert[i]['pttDate'])
+        #         dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%d-%m %H:%M:%S')
+        #         dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%d-%m %H:%M:%S')
 
 
         if len(dataEng_to_insert) != 0 :
@@ -446,7 +448,9 @@ def parseDSFileAndInsert(full_filename):
             res = DBSession.execute(stmt,dataEng_to_insert)
 
     if GPSData is not None :
-        GPSData = GPSData.replace("neg alt",-999, inplace = True)
+
+        GPSData = GPSData.replace(["neg alt"],[-999])
+
         DFToInsert = checkExistingGPS(GPSData)
         dataGPS_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
 
@@ -459,12 +463,16 @@ def parseDSFileAndInsert(full_filename):
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
-    try : 
-        maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%m-%d %H:%M:%S')
-        minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%m-%d %H:%M:%S')
-    except :
-        maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%d-%m %H:%M:%S')
-        minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%d-%m %H:%M:%S')
+    # try : 
+    #     maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%m-%d %H:%M:%S')
+    #     minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%m-%d %H:%M:%S')
+    # except :
+    #     maxDate =  datetime.strptime(EngData['pttDate'].max(axis=1),'%Y-%d-%m %H:%M:%S')
+    #     minDate =  datetime.strptime(EngData['pttDate'].min(axis=1),'%Y-%d-%m %H:%M:%S')
+    # EngData['pttDate'] = EngData.apply(lambda row: np.datetime64(row['pttDate']).astype(datetime), axis=1)
+
+    maxDate =  EngData['pttDate'].max(axis=1)
+    minDate =  EngData['pttDate'].min()
 
 
     queryEng = select([ArgosEngineering.fk_ptt, ArgosEngineering.pttDate, ArgosEngineering.txDate])
@@ -477,6 +485,7 @@ def checkExistingEng(EngData) :
     merge = pd.merge(EngData,EngRecords, left_on = ['pttDate','txDate','ptt'], right_on = ['pttDate','txDate','FK_ptt'])
     DFToInsert = EngData[~EngData['id'].isin(merge['id'])]
     DFToInsert['FK_ptt'] = DFToInsert['ptt']
+
     DFToInsert = DFToInsert.drop(['id','ptt'],1)
 
     return DFToInsert
