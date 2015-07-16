@@ -110,7 +110,7 @@ def add_routes(config):
     config.add_route('monitoredSite/id', 'ecoReleve-Core/monitoredSite/id')
     config.add_route('monitoredSite/list', 'ecoReleve-Core/monitoredSite/list')
     config.add_route('monitoredSite/info', 'ecoReleve-Core/monitoredSite/info')
-    config.add_route('monitoredSite/search', 'ecoReleve-Core/monitoredSite/search')
+    config.add_route('monitoredSite/search', 'ecoReleve-Core/monitoredSite/search/')
     config.add_route('monitoredSite/getFilters', 'ecoReleve-Core/monitoredSite/getFilters')
     config.add_route('monitoredSite/search_geoJSON', 'ecoReleve-Core/monitoredSite/search_geoJSON')
     config.add_route('monitoredSite/detail', 'ecoReleve-Core/monitoredSite/detail/{id}')

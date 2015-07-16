@@ -130,7 +130,7 @@ class Generator :
         if len(order_by_clause) > 0:
             query = query.order_by(*order_by_clause)
         else :
-            col= self.table.c[self.table.c.__dict__['_all_columns'][0].name].asc()
+            col= self.table.c[self.table.c.keys()[0]].asc()
             query = query.order_by(col)
 
         # Define the limit and offset if exist
@@ -162,7 +162,11 @@ class Generator :
                     Col=obj['Column']
                 
                 query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
-        data=DBSession.execute(query.where(self.table.c['LAT'] != None)).fetchall()
+        
+        try :
+            data=DBSession.execute(query.where(self.table.c['LAT'] != None)).fetchall()
+        except :
+            data=DBSession.execute(query.where(self.table.c['lat'] != None)).fetchall()
 
         tmp = data[0]
         print(tmp)
@@ -179,7 +183,8 @@ class Generator :
                 properties = {}
                 if cols_for_properties != None :
                     for col in cols_for_properties :
-                        properties[col.replace('_',' ')]
+                        properties[col.replace('_',' ')] = row[col]
+
                 geoJson.append({'type':'Feature', 'properties':properties, 'geometry':{'type':'Point', 'coordinates':[row[lon],row[lat]]}})
             transaction.commit()
             return {'type':'FeatureCollection', 'features': geoJson}
