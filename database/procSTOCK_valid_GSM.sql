@@ -69,7 +69,7 @@ PK_id
 ,SatelliteCount
 ,@ind
 ,@user
-,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),DateTime,112),'/',''),'/0','/')+replace(''+convert(varchar(5),DateTime,108),':','')
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),DateTime,112),'/',''),'/0','/')+replace(''+convert(varchar,DateTime,108),':','')
 FROM T_DataGsm d WHERE PK_id in (
 select * from [dbo].[XML_extractID_1] (@listID)
 ) and checked = 0
@@ -81,12 +81,12 @@ from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.d
 
 
 -- insert data creating new station and linked Tsta_PK_ID to data_id using FieldWorker1
-Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate,FieldWorker1)
+Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate,Precision,FieldWorker1)
 output inserted.TSta_PK_ID,inserted.FieldWorker1 into @output
 select 
 27
 ,'Automatic data acquisition'
-,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date_,112),'/',''),'/0','/')+replace(''+convert(varchar(5),date_,108),':','')
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date_,112),'/',''),'/0','/')+replace(''+convert(varchar,date_,108),':','')
 ,date_
 ,lat
 ,lon
@@ -94,6 +94,10 @@ select
 ,getdate()
 ,creator
 ,0
+,CASE
+	WHEN hdop is null then 26
+	ELSE hdop
+END
 ,data_id
 from @data_to_insert where data_id not in (select data_id from @data_duplicate)
 SET @NbINserted=@@ROWCOUNT

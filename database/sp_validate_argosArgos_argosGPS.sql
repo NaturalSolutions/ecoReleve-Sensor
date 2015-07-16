@@ -4,6 +4,8 @@
 -- Description:	stored procedure for all Argos (argos/GPS) manual validation 
 -- =============================================
 
+
+/****** Object:  StoredProcedure [dbo].[sp_validate_argosArgos_argosGPS]    Script Date: 16/07/2015 09:32:24 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -13,7 +15,9 @@ GO
 
 
 
-ALTER PROCEDURE [dbo].[sp_validate_argosArgos_argosGPS]
+
+
+CREATE PROCEDURE [dbo].[sp_validate_argosArgos_argosGPS]
 	@listID xml,
 	@ind int,
 	@user int,
@@ -53,7 +57,7 @@ SELECT
 ,[nbMsg],[nbMsg120],[bestLevel],[passDuration],[nopc],[freq],
 [errorRadius],[semiMajor],[semiMinor],[orientation],[hdop]
 ,[speed],[course], [type]
-,@ind,@user,'ARGOS_'+CAST([FK_ptt] as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date,112),'/',''),'/0','/')+replace(''+convert(varchar(5),date,108),':','')
+,@ind,@user,'ARGOS_'+CAST([FK_ptt] as varchar(55))+'_'+ replace(replace(' '+convert(varchar(10),Date,112),'/',''),'/0','/')+replace(''+convert(varchar,Date,108),':','')
 FROM ecoreleve_sensor.dbo.T_argosgps WHERE PK_id in (
 select * from [dbo].[XML_extractID_1] (@listID)
 ) and checked = 0
@@ -65,12 +69,12 @@ from @data_to_insert d join TStations s on d.lat=s.LAT and d.lon = s.LON and d.d
 
 
 -- insert data creating new station and linked Tsta_PK_ID to data_id using FieldWorker1
-Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate, FieldWorker1,Name_DistanceFromObs)
+Insert into TStations (FieldActivity_ID,FieldActivity_Name,Name,DATE, LAT,LON,ELE,Creation_date, Creator,regionUpdate,Precision, FieldWorker1,Name_DistanceFromObs)
 output inserted.TSta_PK_ID,inserted.FieldWorker1, inserted.Name_DistanceFromObs into @output
 select 
 27
 ,'Automatic data acquisition'
-,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+replace(replace(' '+convert(varchar(10),date_,112),'/',''),'/0','/')+replace(''+convert(varchar(5),date_,108),':','')
+,'ARGOS_'+CAST(platform_ as varchar(55))+'_'+ replace(replace(' '+convert(varchar(10),Date_,112),'/',''),'/0','/')+replace(''+convert(varchar,Date_,108),':','')
 ,date_
 ,lat
 ,lon
@@ -78,9 +82,20 @@ select
 ,getdate()
 ,creator
 ,0
+, CASE 
+	WHEN type_ = 'gps' then 
+		CASE WHEN hdop is null then 26
+		ELSE hdop
+		END
+	ELSE loc.[TLocCl_Precision]
+ END	
 ,data_id
 ,type_
-from @data_to_insert where data_id not in (select data_id from @data_duplicate)
+from @data_to_insert i
+LEFT JOIN ecoReleve_Sensor.dbo.TLocationClass loc 
+
+ON loc.TLocCl_Classe = i.lc COLLATE SQL_Latin1_General_CP1_CI_AS
+where i.data_id not in (select data_id from @data_duplicate)
 SET @NbINserted=@@ROWCOUNT
 
 -- insert in TProtocol_ArgosDataArgos data Argos From type = 'ARGOS'
@@ -125,6 +140,8 @@ SET @error=@@ERROR
 
 RETURN
 END
+
+
 
 
 
