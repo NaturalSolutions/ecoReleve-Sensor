@@ -212,8 +212,12 @@ def asInt(s):
 def data_gsm_all(request):
     #Import unchecked GSM data.
     response = 'Success'
+
+    # detect if is a row file retrieve directly from mail 
     ptt_pattern = re.compile('[0]*(?P<platform>[0-9]+)g')
     eng_pattern = re.compile('[0]*(?P<platform>[0-9]+)e')
+
+    # detect if is concatenated file retrieve from exctract GSM python software
     ALL_ptt_pattern = re.compile('GPS')
     ALL_eng_pattern = re.compile('Engineering')
 
@@ -249,14 +253,16 @@ def get_ALL_gps_toInsert(file_obj) :
         csv_data = pd.read_csv(file, sep='\t',
             index_col=0,
             parse_dates=True,
+            na_values=['No Fix', 'Batt Drain', 'Low Voltage']
             )
         # Remove the lines containing NaN and columns 
         csv_data.dropna(inplace=True)
-        csv_data.drop(['SatelliteCount','ShowInKML','file_date'], axis=1, inplace=True)
+        csv_data.drop(['ShowInKML','file_date'], axis=1, inplace=True)
         # get list of ptt
         platform_df = csv_data[['GSM_ID']]
         platform_df = platform_df.groupby('GSM_ID')['GSM_ID'].agg(['count'])
-        platform_list = platform_df.index.get_values().tolist()             
+        platform_list = platform_df.index.get_values().tolist()
+        print('Parse File')
         #go to insert data in the database
         return insert_GPS(platform_list, csv_data)
         
@@ -284,6 +290,7 @@ def get_gps_toInsert(file_obj) :
 def insert_GPS(platform, csv_data) :
 
     if (type(platform) is list) :
+        print ('is list GSM')
         query = select([Gsm.date]).where(Gsm.platform_.in_(platform))
     elif (type(platform) is int) :
         query = select([Gsm.date]).where(Gsm.platform_ == platform) 
@@ -308,18 +315,21 @@ def insert_GPS(platform, csv_data) :
             res = {'new GPS data inserted' : 0}
     ### Add the platform to the DataFrame
     data_to_insert.rename(columns={'GSM_ID':Gsm.platform_.name}, inplace = True)
-    data_to_insert['DateTime'] = data_to_insert.index
+    # data_to_insert['DateTime'] = data_to_insert.index
     ### Write into the database
-    data_to_insert = json.loads(data_to_insert.to_json(orient='records',date_format='iso'))
+    # data_to_insert = json.loads(data_to_insert.to_json(orient='records',date_format='iso'))
 
     ##### Build block insert statement and returning ID of new created stations #####
     if len(data_to_insert) != 0 :
-        stmt = Gsm.__table__.insert().values(data_to_insert)
-        result = DBSession.execute(stmt)
+        # stmt = Gsm.__table__.insert().values(data_to_insert)
+
+        # result = DBSession.execute(stmt)
+        data_to_insert.to_sql(Gsm.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'] )
+        print('INSERTED')
     #     result = list(map(lambda y: y[0], res))
     # else : 
     #     result = []
-    # data_to_insert.to_sql(Gsm.__table__.name, DBSession.get_bind(), if_exists='append')
+    # 
     return res
 
 def get_eng_toInsert(file_obj) :
@@ -382,7 +392,7 @@ def insert_ENG(platform, csv_data):
     data_to_insert[GsmEngineering.file_date.name] = datetime.datetime.now()
     print (data_to_insert.columns)
     # Write into the database
-    data_to_insert.to_sql(GsmEngineering.__table__.name, DBSession.get_bind(), if_exists='append')
+    data_to_insert.to_sql(GsmEngineering.__table__.name, DBSession.get_bind(), if_exists='append',schema = dbConfig['sensor_schema'])
     return res
 
 @view_config(route_name=prefix + 'details', renderer='json')

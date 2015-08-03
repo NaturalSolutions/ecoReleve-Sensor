@@ -125,12 +125,13 @@ class Gsm(Base):
     ele = Column('Altitude_m',Integer)
     Speed = Column(Integer)
     Course = Column(Integer)
-    checked = Column(Boolean, nullable=False, default=False)
-    imported = Column(Boolean, nullable=False, default=False)
+    checked = Column(Boolean, nullable=False, server_default='0')
+    imported = Column(Boolean, nullable=False, server_default='0')
     SatelliteCount = Column(Integer)
     HDOP = Column(Integer)
     VDOP = Column(Integer)
-
+    validated = Column(Boolean, nullable=False, server_default='0')
+    
     if dialect.startswith('mssql'):
         __table_args__ = (
             Index('idx_Tgsm_checked_with_pk_ptt_date', checked, platform_,
