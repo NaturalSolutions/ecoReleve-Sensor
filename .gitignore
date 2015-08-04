@@ -6,3 +6,5 @@ ecorelevesensor.egg-info/*
 build/*
 dist/*
 init.txt
+ecoReleve_import/Argos/*
+ecoReleve_import/uploaded_file/*

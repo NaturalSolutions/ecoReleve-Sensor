@@ -8,7 +8,7 @@ from pyramid.httpexceptions import HTTPBadRequest
 from ecorelevesensor.utils.data_toXML import data_to_XML
 import pandas as pd
 import numpy as np
-import transaction, time
+import transaction, time, signal
 from ecorelevesensor.models import DBSession
 from ecorelevesensor.models.sensor import Argos, Gps, ArgosGps,ArgosEngineering
 from ecorelevesensor.models import Individual, dbConfig
@@ -28,7 +28,7 @@ import win32con, win32gui, win32ui, win32service, os, time, re
 from win32 import win32api
 import shutil
 from time import sleep
-import subprocess 
+import subprocess , psutil
 from pyramid.security import NO_PERMISSION_REQUIRED
 import ecorelevesensor
 from datetime import datetime
@@ -335,24 +335,39 @@ def uploadFile(request) :
     import getpass
     username =  getpass.getuser()
 
-    tmp_path = os.path.join(os.path.expanduser('~%s' % username), "AppData", "Local", "Temp")
-    import_path = os.path.join(tmp_path, "ecoReleve_import")
-    if not os.path.exists(import_path):
-        os.makedirs(import_path)
+    workDir = os.path.dirname(os.path.dirname(os.path.abspath(ecorelevesensor.__file__)))
+    tmp_path = os.path.join(workDir, "ecoReleve_import")
+    # tmp_path = os.path.join(os.path.expanduser('~%s' % username), "AppData", "Local", "Temp")
 
-    DS_path = os.path.join(tmp_path, "ecoReleve_import")
+    import_path = os.path.join(tmp_path, "uploaded_file")
+    # if not os.path.exists(import_path):
+    #     os.makedirs(import_path)
 
-    if not os.path.exists(DS_path):
-        os.makedirs(DS_path)
+    # DS_path = os.path.join(tmp_path, "Argos")
+
+    # if not os.path.exists(DS_path):
+    #     os.makedirs(DS_path)
 
     file_obj = request.POST['file']
     filename = request.POST['file'].filename
     input_file = request.POST['file'].file
 
-    full_filename = os.path.join(DS_path, filename)
+    unic_time = int(time.time())
+    full_filename = os.path.join(import_path, filename)
+
+    if os.path.exists(full_filename) :
+        os.remove(full_filename)
+
+    temp_file_path = full_filename + '~'
+
+    if os.path.exists(temp_file_path) :
+        os.remove(temp_file_path)
+
     input_file.seek(0)
-    with open(full_filename, 'wb') as output_file :
+    with open(temp_file_path, 'wb') as output_file :
         shutil.copyfileobj(input_file, output_file)
+
+    os.rename(temp_file_path, full_filename)
 
     if 'DIAG' in filename :
         return parseDIAGFileAndInsert(full_filename)
@@ -365,28 +380,38 @@ def parseDSFileAndInsert(full_filename):
     workDir = os.path.dirname(os.path.dirname(os.path.abspath(ecorelevesensor.__file__)))
     con_file = os.path.join(workDir,'init.txt')
     MTI_path = os.path.join(workDir,'MTIwinGPS.exe')
-    out_path = os.path.join(os.path.expanduser('~%s' % username),
-     "AppData", "Local", "Temp",os.path.splitext(os.path.basename(full_filename))[0])
+    out_path = os.path.join(workDir,"ecoReleve_import","Argos",os.path.splitext(os.path.basename(full_filename))[0])
 
     EngData = None
     GPSData = None 
-    l = 0
+    nb_gps_data = 0
 
-
+    print (MTI_path)
     if not os.path.exists(out_path):
         os.makedirs(out_path)
 
+    # if os.path.exists(con_file) :
+    try:
+        os.remove(con_file)
+    except : 
+        pass
+
+    cc = {'full_filename':full_filename}
+    cc['out'] = out_path
+    cc['ini'] = con_file
+
     with open(con_file,'w') as f: 
         f.write("-eng\n")
-        f.write("-argos\n")
+        # f.write("-argos\n")
         f.write("-title\n")
         f.write("-out\n")
         f.write(out_path+"\n")
         f.write(full_filename)
 
+
     args = [MTI_path]
     # os.startfile(args[0])
-    subprocess.Popen([args[0]])
+    proc = subprocess.Popen([args[0]])
     hwnd = 0
     while hwnd == 0 :
         sleep(0.3)
@@ -394,11 +419,20 @@ def parseDSFileAndInsert(full_filename):
 
     btnHnd= win32gui.FindWindowEx(hwnd, 0 , "Button", "Run")
 
-    win32api.SendMessage(btnHnd, win32con.BM_CLICK, 0, 0)
 
+    win32api.SendMessage(btnHnd, win32con.BM_CLICK, 0, 0)
     filenames = [os.path.join(out_path,fn) for fn in next(os.walk(out_path))[2]]
     win32api.SendMessage(hwnd, win32con.WM_CLOSE, 0,0);
 
+    pid = proc.pid
+    cc['pid'] = pid
+    parent = psutil.Process(pid)
+    for child in parent.children(recursive=True):  # or parent.children() for recursive=False
+        child.kill()
+    parent.kill()
+    # p.kill()
+    # proc.kill()
+    # os.kill(pid,signal.SIGKILL) #or signal.SIGKILL
     for filename in filenames:
         fullname = os.path.splitext(os.path.basename(filename))[0]
         ptt = int(fullname[0:len(fullname)-1])
@@ -425,7 +459,6 @@ def parseDSFileAndInsert(full_filename):
             except :
                 EngData = tempEng
 
-    os.remove(full_filename)
     if EngData is not None : 
         EngToInsert = checkExistingEng(EngData)
         dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
@@ -442,7 +475,6 @@ def parseDSFileAndInsert(full_filename):
         #         dataEng_to_insert[i]['txDate'] = datetime.strptime(dataEng_to_insert[i]['txDate'],'%Y-%d-%m %H:%M:%S')
         #         dataEng_to_insert[i]['pttDate'] = datetime.strptime(dataEng_to_insert[i]['pttDate'],'%Y-%d-%m %H:%M:%S')
 
-
         if len(dataEng_to_insert) != 0 :
             stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
             res = DBSession.execute(stmt,dataEng_to_insert)
@@ -450,16 +482,18 @@ def parseDSFileAndInsert(full_filename):
     if GPSData is not None :
 
         GPSData = GPSData.replace(["neg alt"],[-999])
-
         DFToInsert = checkExistingGPS(GPSData)
         dataGPS_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
 
         if len(dataGPS_to_insert) != 0 :
             stmt = ArgosGps.__table__.insert()#.values(dataGPS_to_insert[0:2])
             res = DBSession.execute(stmt,dataGPS_to_insert)
-            l = len(dataGPS_to_insert)
+            nb_gps_data = len(dataGPS_to_insert)
+
+    os.remove(full_filename)
     shutil.rmtree(out_path)
-    return l
+
+    return nb_gps_data
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
