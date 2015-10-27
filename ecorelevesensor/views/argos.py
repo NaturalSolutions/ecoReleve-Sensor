@@ -32,6 +32,7 @@ import subprocess , psutil
 from pyramid.security import NO_PERMISSION_REQUIRED
 import ecorelevesensor
 from datetime import datetime
+import itertools
 
 route_prefix = 'argos/'
 def asInt(s):
@@ -577,13 +578,13 @@ def parseDIAGFileAndInsert(full_filename):
     for block in blockPosition :
         
         block = re.sub('[\n\r]+',"",block)
-        block = re.sub('[a-zA-Z]\s+Lat'," Lat",block)
-        block = re.sub('[a-zA-Z]\s+Lon'," Lon",block)
+        # block = re.sub('[a-zA-VX-Z]\s+Lat'," Lat",block)
+        # block = re.sub('[a-zA-DF-Z]\s+Lon'," Lon",block)
         block = re.sub('[a-zA-Z]\s+Nb'," Nb",block)
         block = re.sub('[a-zA-Z]\s+NOPC'," NOPC",block)
         block = re.sub('IQ',"#IQ",block)
-        block = re.sub('[a-zA-Z]\s[a-zA-Z]',"O",block)
-
+        # block = re.sub('[a-zA-Z]\s[a-zA-Z]',"O",block)
+        # print(block)
         split = '\#?[a-zA-Z0-9\-\>]+\s:\s'
         splitParameters = re.split(split,block)
         curDict = {}
@@ -591,30 +592,38 @@ def parseDIAGFileAndInsert(full_filename):
         for i in range(len(splitParameters)) :
             if re.search('[?]+([a-zA-Z]+)?',splitParameters[i]) :
                 splitParameters[i] = re.sub('[?]+([a-zA-Z]{1,2})?',"NaN",splitParameters[i])
-
             if re.search('[0-9]',splitParameters[i]):
-                splitParameters[i] = re.sub('[a-zA-Z\s]'," ",splitParameters[i])
-
+                splitParameters[i] = re.sub('[a-zA-DF-MO-RT-VX-Z]'," ",splitParameters[i])
+                print(splitParameters[i])
             if colsInBlock[i] == 'date' :
                 curDict[colsInBlock[i]] = datetime.strptime(splitParameters[i],'%d.%m.%y %H:%M:%S ')
             else:
+                
                 try :
-                    curDict[colsInBlock[i]] = int(splitParameters[i])   
+                    splitParameters[i] = re.sub('[\s]',"",splitParameters[i])
+                    # print(splitParameters)
+                    a = 1 
+                    if colsInBlock[i] in ['lon1','lon2','lat1','lat2']:
+                        print('in lat lon')
+                        if 'W' in splitParameters[i] or 'S' in splitParameters[i]:
+                            a = -1
+                        splitParameters[i] = re.sub('[a-zA-Z]'," ",splitParameters[i])
+                    curDict[colsInBlock[i]] = a*float(splitParameters[i])
                 except :
                     try :
-                        splitParameters[i] = re.sub('[\s]',"",splitParameters[i])
-                        curDict[colsInBlock[i]] = float(splitParameters[i])
+                        splitParameters[i] = re.sub('[a-zA-Z]'," ",splitParameters[i])
+                        curDict[colsInBlock[i]] = int(splitParameters[i])
                     except :
                         curDict[colsInBlock[i]] = splitParameters[i]
+        print(curDict)
         ListOfdictParams.append(curDict)
 
     df = pd.DataFrame.from_dict(ListOfdictParams)
-
     df = df.dropna(subset=['lat1', 'lon1','lat2', 'lon2','date'])
     DFToInsert = checkExistingArgos(df)
-    DFToInsert['type']='arg'
+    DFToInsert['type']=list(itertools.repeat('arg',len(DFToInsert.index))) 
     DFToInsert = DFToInsert.drop(['id','lat1','lat2','lon1','lon2'],1)
-
+    print(DFToInsert)
     data_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
 
     if len(data_to_insert) != 0 :
@@ -638,6 +647,8 @@ def checkExistingArgos (dfToCheck) :
     ArgosRecords = pd.DataFrame.from_records(data
         ,columns=[ArgosGps.pk_id.name, ArgosGps.date.name, ArgosGps.lat.name, ArgosGps.lon.name, ArgosGps.ptt.name]
         , coerce_float=True )
+    ArgosRecords['lat'] = np.round(ArgosRecords['lat'], decimals=3)
+    ArgosRecords['lon'] = np.round(ArgosRecords['lon'], decimals=3)
     merge = pd.merge(dfToCheck,ArgosRecords, left_on = ['date','lat','lon','FK_ptt'], right_on = ['date','lat','lon','FK_ptt'])
     DFToInsert = dfToCheck[~dfToCheck['id'].isin(merge['id'])]
 

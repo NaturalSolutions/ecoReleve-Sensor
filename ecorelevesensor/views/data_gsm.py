@@ -36,7 +36,11 @@ def data_gsm_unchecked_list(request):
     unchecked = select([DataGsm.platform_,
         DataGsm.date]).alias()
     unchecked = V_dataGSM_withIndivEquip
-    unchecked_with_ind = select([unchecked.ptt.label('platform_'), unchecked.ind_id, unchecked.begin_date, unchecked.end_date, func.count().label('nb'), func.max(unchecked.date_).label('max_date'), func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
+    unchecked_with_ind = select([unchecked.ptt.label('platform_'), 
+        unchecked.ind_id, unchecked.begin_date, unchecked.end_date,
+         func.count().label('nb'), func.max(unchecked.date_).label('max_date'), 
+         func.min(unchecked.date_).label('min_date')]).where(unchecked.checked == 0
+         ).group_by(unchecked.ptt, unchecked.ind_id, unchecked.begin_date, unchecked.end_date).order_by(unchecked.ptt)
     data = DBSession.execute(unchecked_with_ind).fetchall()
     return [dict(row) for row in data]
 
@@ -54,7 +58,8 @@ def data_gsm_unchecked(request):
         unchecked.lat,
         unchecked.lon,
         unchecked.date_.label('date'),
-        unchecked.ele]).where(and_(unchecked.checked == 0,and_(unchecked.ptt == platform,unchecked.ind_id == ind_id))).order_by(desc(unchecked.date_))
+        unchecked.ele]).where(and_(unchecked.checked == 0,and_(unchecked.ptt == platform,unchecked.ind_id == ind_id))
+        ).order_by(desc(unchecked.date_))
     data = DBSession.execute(query).fetchall()
 
     if request.GET['format'] == 'geojson':
@@ -120,6 +125,7 @@ def gsm_unchecked_validation(ptt,ind_id,user,xml_to_insert):
     nb_insert, exist , error = DBSession.execute(stmt).fetchone()
     transaction.commit()
     stop = time.time()
+    print('inserted : '+str(nb_insert)+' exist:'+str(exist)+' error : '+str(error))
     return nb_insert, exist, error
     
 @view_config(route_name=prefix + 'unchecked/import/auto', renderer='json', request_method='POST')
@@ -317,16 +323,17 @@ def insert_GPS(platform, csv_data) :
     data_to_insert.rename(columns={'GSM_ID':Gsm.platform_.name}, inplace = True)
     # data_to_insert['DateTime'] = data_to_insert.index
     ### Write into the database
-    # data_to_insert = json.loads(data_to_insert.to_json(orient='records',date_format='iso'))
+    #data_to_insert = json.loads(data_to_insert.to_json(orient='records',date_format='iso'))
 
     ##### Build block insert statement and returning ID of new created stations #####
     if len(data_to_insert) != 0 :
         # stmt = Gsm.__table__.insert().values(data_to_insert)
-
+        print("--------------------------------\n\n")
+        print(data_to_insert)
         # result = DBSession.execute(stmt)
         data_to_insert.to_sql(Gsm.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'] )
         print('INSERTED')
-    #     result = list(map(lambda y: y[0], res))
+        result = list(map(lambda y: y[0], res))
     # else : 
     #     result = []
     # 

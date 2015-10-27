@@ -52,11 +52,8 @@ class EngineeringData (Base) :
 	__tablename__ = 'TArgosEngineeringData'
 	id = Column('TArE_PK_ID',Integer, Sequence('seq_TArgosEngineeringData_id'), primary_key=True)
 	platform_ = Column('TArE_PTT', Integer , nullable = False)
-	date = Column('TArE_TXDATE', DateTime, nullable = False) 
+	date = Column('TArE_TXDATE', DateTime, nullable = False)
 	count = Column('TArE_TX_CNT', Integer, nullable = False)
 	temperature = Column('TArE_TEMP', Numeric)
 	battery = Column('TArE_BATT', Numeric)
 	creation_date = Column(DateTime) 
-
-
-
