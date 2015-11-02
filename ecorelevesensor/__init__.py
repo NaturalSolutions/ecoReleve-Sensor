@@ -191,7 +191,7 @@ def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
     settings['sqlalchemy.url'] = settings['cn.dialect'] + quote_plus(settings['sqlalchemy.url'])
-    engine = engine_from_config(settings, 'sqlalchemy.')
+    engine = engine_from_config(settings, 'sqlalchemy.',legacy_schema_aliasing=False)
     dbConfig['data_schema'] = settings['data_schema']
     dbConfig['sensor_schema'] = settings['sensor_schema']
     dbConfig['url'] = settings['sqlalchemy.url']
