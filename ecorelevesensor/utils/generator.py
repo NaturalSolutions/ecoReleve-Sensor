@@ -38,65 +38,43 @@ class Generator :
             return op1.like('%'+op2+'%')
         return self.get_operator_fn(operator)(op1, op2)
 
-
     def get_col(self,columnsList=False, checked=False):
-        
         ###### model of columnsList #####
-
-
         final=[]
-
         for obj in columnsList :
-
             field_name=obj['name']
             field_label=obj['label']
             display=obj['display']
             edit=obj['edit']
-
             field_type=str(self.table.c[field_name].type).split('(')[0]
-
             if field_type in self.dictCell:        
                 cell_type=self.dictCell[field_type]  
             else:
                 cell_type='string'
-
             final.append({'name':field_name,
                 'label':field_label,
                 'cell':cell_type,
                 'renderable':display,
                 'editable':edit})
-
             self.cols.append({'name':field_name,'type_grid':cell_type})
-
         if(checked):
             final.append({'name': 'import','label': 'Import', 'cell': 'select-row', 'headerCell' : 'select-all'})
-
         return final
 
     def where (self,query,col,operator,value):
-
         return query.where(self.eval_binary_expr(self.table.c[col], operator, value))
 
-
     def get_search(self,criteria={},offset=None,per_page=None, order_by=None) :
-
         query = select(self.table.c)
         result=[]
         total=None
-
         for obj in criteria:
-
             if obj['Value'] != None and obj['Value']!='':
-
                 try:
                     Col=dictio[key]
                 except: 
                     Col=obj['Column']
-                
                 query=self.where(query,Col, obj['Operator'], obj['Value'])
-
-            
-
         if offset!=None:
             query, total=self.get_page(query,offset,per_page, order_by)
 
@@ -110,14 +88,9 @@ class Generator :
         transaction.commit()
         return result
 
-
     def get_page(self,query,offset,limit,order_by):
-
         total = DBSession.execute(select([func.count()]).select_from(query.alias())).scalar()
         order_by_clause = []
-
-
-
         for obj in order_by:
             column, order = obj.split(':')
             #if column in dictio :
@@ -132,25 +105,20 @@ class Generator :
         else :
             col= self.table.c[self.table.c.keys()[0]].asc()
             query = query.order_by(col)
-
         # Define the limit and offset if exist
         if limit > 0:
             query = query.limit(limit)
         if offset > 0:
             query = query.offset(offset)
-
         return query, total
 
     def update_data(self,model,id_name) : 
-
         id_=model[id_name]
         if model['patch']!={} :   
             r=update(self.table).where(self.table.c[id_name]==id_).values(model['patch'])
             DBSession.execute(r)
     
     def get_geoJSON(self,criteria={},offset=None,per_page=None, order_by=None, cols_for_properties=None) :
-        print('mother fucker ________________________________________')
-
         query = select(self.table.c)
         result=[]
         total=None
@@ -160,22 +128,15 @@ class Generator :
                     Col=dictio[key]
                 except: 
                     Col=obj['Column']
-                
                 query=query.where(self.eval_binary_expr(self.table.c[Col], obj['Operator'], obj['Value']))
-        
         try :
             data=DBSession.execute(query.where(self.table.c['LAT'] != None)).fetchall()
         except :
             data=DBSession.execute(query.where(self.table.c['lat'] != None)).fetchall()
-
         tmp = data[0]
-        print(tmp)
 
         lat = self.case(tmp, 'LAT')
         lon = self.case(tmp, 'LON')
-
-        print(lat)
-
 
         if(len(data) <= 20000):
             geoJson=[]
@@ -190,7 +151,7 @@ class Generator :
             return {'type':'FeatureCollection', 'features': geoJson}
         else :
             return False
-        
+
     def case(self, row, arg) :
         if( arg in row ) :
             return arg

@@ -386,8 +386,12 @@ def parseDSFileAndInsert(full_filename):
     out_path = os.path.join(workDir,"ecoReleve_import","Argos",os.path.splitext(os.path.basename(full_filename))[0])
 
     EngData = None
-    GPSData = None 
-    nb_gps_data = 0
+    GPSData = None
+    EngDataBis = None
+    nb_gps_data = None
+    nb_existingGPS = None
+    nb_eng = None
+    nb_existingEng = None
 
     print (MTI_path)
     if not os.path.exists(out_path):
@@ -452,64 +456,93 @@ def parseDSFileAndInsert(full_filename):
 
         if filename.endswith("e.txt"):
             usecols= ['txDate','pttDate','satId','activity','txCount','temp','batt','fixTime','satCount','resetHours','fixDays','season','shunt','mortalityGT','seasonalGT']
-            tempEng = pd.read_csv(filename,sep='\t',parse_dates=[0,1],header = None, skiprows = [0])
-            if len(tempEng.columns )== 17:
-                usecols.append('latestLat')
-                usecols.append('latestLon')
+            usecolsBis= ['txDate','resetHours','cycle','season']
+            try: 
+                tempEng = pd.read_csv(filename,sep='\t',parse_dates=[0,1],header = None, skiprows = [0])
+                if len(tempEng.columns )== 17:
+                    usecols.append('latestLat')
+                    usecols.append('latestLon')
+                tempEng.columns = usecols
+            except:
+                print('\n\nFORM BISSSSSS EEEEEEEEE')
+                tempEng = pd.read_csv(filename,sep='\t',parse_dates=[0],header = None, skiprows = [0])
+                tempEng.columns = usecolsBis
 
-            tempEng.columns = usecols
             tempEng['ptt'] = ptt
             try:
                 EngData = EngData.append(tempEng)
             except :
                 EngData = tempEng
 
+        if filename.endswith("d.txt"):
+            usecols= ['txDate','temp','batt','txCount','activity']
+            tempEng = pd.read_csv(filename,sep='\t',parse_dates=[0],header = None, skiprows = [0])
+            tempEng.columns = usecols
+            tempEng['ptt'] = ptt
+            tempEng['pttDate'] = tempEng['txDate']
+            try:
+                EngDataBis = EngDataBis.append(tempEng)
+            except :
+                EngDataBis = tempEng
+
+    if EngDataBis is not None : 
+        EngBisToInsert = checkExistingEng(EngDataBis)
+        # dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
+        if EngBisToInsert.shape[0] != 0 :
+            # stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
+            # res = DBSession.execute(stmt,dataEng_to_insert)
+            EngBisToInsert.to_sql(ArgosEngineering.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'],index=False )
+
     if EngData is not None : 
         EngToInsert = checkExistingEng(EngData)
         # dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
-
+        nb_eng = EngToInsert.shape[0]
+        nb_existingEng = EngData.shape[0] - EngToInsert.shape[0]
         if EngToInsert.shape[0] != 0 :
+            try: EngToInsert = EngToInsert.drop(['cycle'],1)
+            except : pass
+            EngToInsert['pttDate'] = EngToInsert['txDate']
             # stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
             # res = DBSession.execute(stmt,dataEng_to_insert)
             EngToInsert.to_sql(ArgosEngineering.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'],index=False )
+            
 
     if GPSData is not None :
-
         GPSData = GPSData.replace(["neg alt"],[-999])
         DFToInsert = checkExistingGPS(GPSData)
         # dataGPS_to_insert = json.loads(DFToInsert.to_json(orient='records',date_format='iso'))
-
+        nb_gps_data = DFToInsert.shape[0]
+        nb_existingGPS = GPSData.shape[0] - DFToInsert.shape[0]
         if DFToInsert.shape[0] != 0 :
             # stmt = ArgosGps.__table__.insert()#.values(dataGPS_to_insert[0:2])
             # res = DBSession.execute(stmt,dataGPS_to_insert)
             DFToInsert.to_sql(ArgosGps.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'], index=False)
-
-            nb_gps_data = DFToInsert.shape[0]
-
     os.remove(full_filename)
     shutil.rmtree(out_path)
 
-    return nb_gps_data
+    return {'inserted GPS':nb_gps_data, 'existing GPS': nb_existingGPS,'inserted Engineering':nb_eng, 'existing Engineering': nb_existingEng}
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
-    EngData = EngData.dropna()
+    # EngData = EngData.dropna()
     try :
-        EngData['pttDate'] = EngData.apply(lambda row: np.datetime64(row['pttDate']).astype(datetime), axis=1)
-        maxDate =  EngData['pttDate'].max()
-        minDate =  EngData['pttDate'].min()
+        EngData['txDate'] = EngData.apply(lambda row: np.datetime64(row['txDate']).astype(datetime), axis=1)
+        maxDate =  EngData['txDate'].max()
+        minDate =  EngData['txDate'].min()
 
-        queryEng = select([ArgosEngineering.fk_ptt, ArgosEngineering.pttDate, ArgosEngineering.txDate])
-        queryEng = queryEng.where(and_(ArgosEngineering.pttDate >= minDate , ArgosEngineering.pttDate <= maxDate))
+        queryEng = select([ArgosEngineering.fk_ptt, ArgosEngineering.txDate])
+        queryEng = queryEng.where(and_(ArgosEngineering.txDate >= minDate , ArgosEngineering.txDate <= maxDate))
         data = DBSession.execute(queryEng).fetchall()
 
         EngRecords = pd.DataFrame.from_records(data
-            ,columns=[ArgosEngineering.fk_ptt.name, ArgosEngineering.pttDate.name, ArgosEngineering.txDate.name])
+            ,columns=[ArgosEngineering.fk_ptt.name,ArgosEngineering.txDate.name])
 
-        merge = pd.merge(EngData,EngRecords, left_on = ['pttDate','txDate','ptt'], right_on = ['pttDate','txDate','FK_ptt'])
-        DFToInsert = EngData[~EngData['id'].isin(merge['id'])]
+        if EngRecords.shape[0] != 0 :
+            merge = pd.merge(EngData,EngRecords, left_on = ['txDate','ptt'], right_on = ['txDate','FK_ptt'])
+            DFToInsert = EngData[~EngData['id'].isin(merge['id'])]
+        else:
+            DFToInsert = EngData
         DFToInsert['FK_ptt'] = DFToInsert['ptt']
-
         DFToInsert = DFToInsert.drop(['id','ptt'],1)
     except:
         print_exc()
@@ -533,8 +566,8 @@ def checkExistingGPS (GPSData) :
         ,columns=[ArgosGps.pk_id.name, ArgosGps.date.name, ArgosGps.lat.name, ArgosGps.lon.name, ArgosGps.ptt.name]
         , coerce_float=True )
 
-    GPSrecords['lat'] = np.round(GPSrecords['lat'].astype(float),decimals = 3)
-    GPSrecords['lon'] = np.round(GPSrecords['lon'].astype(float),decimals = 3)
+    GPSrecords['lat'] = np.round(GPSrecords['lat'],decimals = 3)
+    GPSrecords['lon'] = np.round(GPSrecords['lon'],decimals = 3)
 
     merge = pd.merge(GPSData,GPSrecords, left_on = ['datetime','Latitude(N)','Longitude(E)','ptt'], right_on = ['date','lat','lon','FK_ptt'])
     DFToInsert = GPSData[~GPSData['id'].isin(merge['id'])]
@@ -542,9 +575,9 @@ def checkExistingGPS (GPSData) :
     DFToInsert = DFToInsert.drop(['id','datetime'],1)
     DFToInsert.columns = ['date','lat','lon','speed','course','ele','FK_ptt']
 
-    DFToInsert = DFToInsert.replace('2D fix',np.nan )
-    DFToInsert = DFToInsert.replace('low alt',np.nan )
-    DFToInsert.loc[:,('type')]=list(itertools.repeat('arg',len(DFToInsert.index)))
+    DFToInsert = DFToInsert.replace('2D fix',np.nan)
+    DFToInsert = DFToInsert.replace('low alt',np.nan)
+    DFToInsert.loc[:,('type')]=list(itertools.repeat('gps',len(DFToInsert.index)))
     DFToInsert.loc[:,('checked')]=list(itertools.repeat(0,len(DFToInsert.index)))
     DFToInsert.loc[:,('imported')]=list(itertools.repeat(0,len(DFToInsert.index)))
 
