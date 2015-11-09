@@ -520,7 +520,7 @@ def parseDSFileAndInsert(full_filename):
     os.remove(full_filename)
     shutil.rmtree(out_path)
 
-    return {'inserted GPS':nb_gps_data, 'existing GPS': nb_existingGPS,'inserted Engineering':nb_eng, 'existing Engineering': nb_existingEng}
+    return {'inserted':nb_gps_data, 'existing': nb_existingGPS} #,'inserted Engineering':nb_eng, 'existing Engineering': nb_existingEng}
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
@@ -657,7 +657,7 @@ def parseDIAGFileAndInsert(full_filename):
         DFToInsert.to_sql(ArgosGps.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'],index=False)
 
     os.remove(full_filename)
-    return DFToInsert.shape[0]
+    return {'inserted':DFToInsert.shape[0], 'existing':df.shape[0] - DFToInsert.shape[0]}
 
 def checkExistingArgos (dfToCheck) :
 
