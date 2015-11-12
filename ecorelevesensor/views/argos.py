@@ -352,7 +352,7 @@ def uploadFile(request) :
     #     os.makedirs(DS_path)
 
     file_obj = request.POST['file']
-    filename = request.POST['file'].filename
+    filename = request.POST['file'].filename.replace(' ','_')
     input_file = request.POST['file'].file
 
     unic_time = int(time.time())
@@ -390,8 +390,8 @@ def parseDSFileAndInsert(full_filename):
     EngDataBis = None
     nb_gps_data = None
     nb_existingGPS = None
-    nb_eng = None
-    nb_existingEng = None
+    nb_eng = 0
+    nb_existingEng = 0
 
     print (MTI_path)
     if not os.path.exists(out_path):
@@ -408,13 +408,7 @@ def parseDSFileAndInsert(full_filename):
     cc['ini'] = con_file
 
     with open(con_file,'w') as f: 
-        f.write("-eng\n")
-        # f.write("-argos\n")
-        f.write("-title\n")
-        f.write("-out\n")
-        f.write(out_path+"\n")
-        f.write(full_filename)
-
+        print('-eng\n-title\n-out\n'+out_path+'\n'+full_filename, file=f)
 
     args = [MTI_path]
     # os.startfile(args[0])
@@ -437,8 +431,11 @@ def parseDSFileAndInsert(full_filename):
     try:
         for child in parent.children(recursive=True):  # or parent.children() for recursive=False
             child.kill()
-        parent.kill()
     except: pass
+
+    try : parent.kill()
+    except: pass
+
     # p.kill()
     # proc.kill()
     # os.kill(pid,signal.SIGKILL) #or signal.SIGKILL
@@ -488,24 +485,27 @@ def parseDSFileAndInsert(full_filename):
     if EngDataBis is not None : 
         EngBisToInsert = checkExistingEng(EngDataBis)
         # dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
+        nb_existingEng += EngDataBis.shape[0]
+
         if EngBisToInsert.shape[0] != 0 :
+            nb_eng += EngBisToInsert.shape[0]
             # stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
             # res = DBSession.execute(stmt,dataEng_to_insert)
             EngBisToInsert.to_sql(ArgosEngineering.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'],index=False )
 
     if EngData is not None : 
         EngToInsert = checkExistingEng(EngData)
+        nb_existingEng += EngData.shape[0]
+
         # dataEng_to_insert = json.loads(EngToInsert.to_json(orient='records',date_format='iso'))
-        nb_eng = EngToInsert.shape[0]
-        nb_existingEng = EngData.shape[0] - EngToInsert.shape[0]
         if EngToInsert.shape[0] != 0 :
+            nb_eng += EngToInsert.shape[0]
             try: EngToInsert = EngToInsert.drop(['cycle'],1)
             except : pass
             EngToInsert['pttDate'] = EngToInsert['txDate']
             # stmt = ArgosEngineering.__table__.insert()#.values(dataGPS_to_insert[0:2])
             # res = DBSession.execute(stmt,dataEng_to_insert)
             EngToInsert.to_sql(ArgosEngineering.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'],index=False )
-            
 
     if GPSData is not None :
         GPSData = GPSData.replace(["neg alt"],[-999])
@@ -517,10 +517,10 @@ def parseDSFileAndInsert(full_filename):
             # stmt = ArgosGps.__table__.insert()#.values(dataGPS_to_insert[0:2])
             # res = DBSession.execute(stmt,dataGPS_to_insert)
             DFToInsert.to_sql(ArgosGps.__table__.name, DBSession.get_bind(), if_exists='append', schema = dbConfig['sensor_schema'], index=False)
-    os.remove(full_filename)
-    shutil.rmtree(out_path)
+    # os.remove(full_filename)
+    # shutil.rmtree(out_path)
 
-    return {'inserted':nb_gps_data, 'existing': nb_existingGPS} #,'inserted Engineering':nb_eng, 'existing Engineering': nb_existingEng}
+    return {'inserted':nb_gps_data, 'existing': nb_existingGPS,'inserted Engineering':nb_eng, 'existing Engineering': nb_existingEng - nb_eng }
 
 def checkExistingEng(EngData) :
     EngData['id'] = range(EngData.shape[0])
